@@ -52,7 +52,7 @@ String JSON::jsonGetString(String key) {
 	return value;
 }
 
-String JSON::jsonGetInt(String key) {
+String JSON::jsonGetValue(String key) {
 
 	/*Serial.print("json = ");
 	Serial.println(json);
@@ -92,11 +92,30 @@ String JSON::jsonGetInt(String key) {
 
 	if (end < 0) return "";
 
-	String value = json.substring(0, end - 1);
+	String value = json.substring(0, end);
 	value.trim();
 
-	//Serial.print("value = ");
-	//Serial.println(value);
+	Serial.print("value = ");
+	Serial.println(value);
 	return value;
+}
+
+int JSON::jsonGetInt(String key) {
+	String value = jsonGetValue(key);
+	return value.toInt();
+}
+
+long JSON::jsonGetLong(String key) {
+	String value = jsonGetValue(key);
+	char tarray[20]; // numero di digit del long
+	value.toCharArray(tarray, sizeof(tarray));
+	Serial.print("tarray = ");
+	Serial.println(tarray);
+	long longval = value.toInt();
+	//long longval = atol(tarray);
+
+	Serial.print("longval = ");
+	Serial.println(longval);
+	return longval;
 }
 

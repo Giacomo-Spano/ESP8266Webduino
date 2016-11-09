@@ -3,6 +3,7 @@
 
 Settings::Settings()
 {
+	serverPort = 8080;
 }
 
 

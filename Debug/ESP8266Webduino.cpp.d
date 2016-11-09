@@ -51,6 +51,12 @@ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.2.0\cores\esp8266/Server.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.2.0\libraries\ESP8266WiFi\src/WiFiClientSecure.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.2.0\libraries\ESP8266WiFi\src/include/ssl.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.2.0\libraries\ESP8266mDNS/ESP8266mDNS.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.2.0\libraries\ESP8266WiFi\src/WiFiUdp.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.2.0\cores\esp8266/Udp.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.2.0\cores\esp8266/Stream.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.2.0\libraries\ESP8266WiFi\src/include/slist.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.2.0\libraries\ArduinoOTA/ArduinoOTA.h \
  C:\Users\Giacomo\ Spanò\Documents\Arduino\libraries\OneWire/OneWire.h \
  C:\Users\Giacomo\ Spanò\Documents\Arduino\libraries\DallasTemperature/DallasTemperature.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.2.0\libraries\EEPROM/EEPROM.h \
@@ -64,8 +70,6 @@ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_
  C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\wol.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.2.0\libraries\Ethernet\src/Dhcp.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.2.0\libraries\Ethernet\src/EthernetUdp.h \
- C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.2.0\cores\esp8266/Udp.h \
- C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.2.0\cores\esp8266/Stream.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.2.0\libraries\Ethernet\src/Dns.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.2.0\libraries\Ethernet\src/EthernetUdp.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.2.0\libraries\Ethernet\src/Ethernet.h \
@@ -75,6 +79,10 @@ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.2.0\libraries\Ethernet\src/EthernetClient.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.2.0\libraries\Ethernet\src/EthernetServer.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.2.0\libraries\Ethernet\src/EthernetUDP.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\Logger.h \
+ C:\Users\Giacomo\ Spanò\Documents\Arduino\libraries\Time/Time.h \
+ C:\Users\Giacomo\ Spanò\Documents\Arduino\libraries\Time/TimeLib.h \
+ C:\Users\Giacomo\ Spanò\Documents\Arduino\libraries\Time/TimeLib.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\HttpHelper.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\JSON.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\OneWireSensors.h \

@@ -1,6 +1,6 @@
-C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\HttpHelper.cpp.o: \
- C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\HttpHelper.cpp \
- C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\HttpHelper.h \
+C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\Logger.cpp.o: \
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\Logger.cpp \
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\Logger.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.2.0\cores\esp8266/Arduino.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.2.0\cores\esp8266/stdlib_noniso.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.2.0\cores\esp8266/binary.h \
@@ -31,6 +31,12 @@ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.2.0\cores\esp8266/debug.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.2.0\variants\nodemcu/pins_arduino.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.2.0\variants\nodemcu/../generic/common.h \
+ C:\Users\Giacomo\ Spanò\Documents\Arduino\libraries\Time/Time.h \
+ C:\Users\Giacomo\ Spanò\Documents\Arduino\libraries\Time/TimeLib.h \
+ C:\Users\Giacomo\ Spanò\Documents\Arduino\libraries\Time/TimeLib.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\Command.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\Settings.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\HttpHelper.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.2.0\libraries\ESP8266WiFi\src/ESP8266WiFi.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.2.0\libraries\ESP8266WiFi\src/include/wl_definitions.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.2.0\cores\esp8266/IPAddress.h \
@@ -51,7 +57,8 @@ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.2.0\cores\esp8266/Server.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.2.0\libraries\ESP8266WiFi\src/WiFiClientSecure.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.2.0\libraries\ESP8266WiFi\src/include/ssl.h \
- C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\Logger.h \
- C:\Users\Giacomo\ Spanò\Documents\Arduino\libraries\Time/Time.h \
- C:\Users\Giacomo\ Spanò\Documents\Arduino\libraries\Time/TimeLib.h \
- C:\Users\Giacomo\ Spanò\Documents\Arduino\libraries\Time/TimeLib.h
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\OneWireSensors.h \
+ C:\Users\Giacomo\ Spanò\Documents\Arduino\libraries\OneWire/OneWire.h \
+ C:\Users\Giacomo\ Spanò\Documents\Arduino\libraries\DallasTemperature/DallasTemperature.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\JSON.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\Program.h

@@ -9,10 +9,13 @@ public:
 	JSON(String json);
 	~JSON();
 
-	String jsonGetInt(String key);
+	
+	int jsonGetInt(String key);
+	long jsonGetLong(String key);
 	String jsonGetString(String key);
 
 private:
 	String json;
+	String jsonGetValue(String key);
 };
 
