@@ -23,5 +23,6 @@ public:
 
 	bool releStatus = false;
 	bool oldReleStatus = false;
+	//int actuatorAddress = 0;
 };
 

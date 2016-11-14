@@ -1,11 +1,8 @@
 
 #include <ESP8266WiFi.h>
-
-//#include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
-
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <string.h>
@@ -20,21 +17,27 @@
 #include "Settings.h"
 #include "Command.h"
 #include "Program.h"
-
+#include "Actuator.h"
+#include "DS18S20Sensor.h"
 #include <Time.h>
+#include "TimeLib.h"
 
-extern uint8_t provapin = D4;
+extern uint8_t OneWirePin = D4;
+extern OneWire oneWire(OneWirePin);
+extern DallasTemperature sensors(&oneWire);
 
 #define Versione "0.99"
 const char SWVERSION[] = "1.01";
 
-Logger logger;// = Logger;// ("ESP8266Webduino");
+Logger logger;
 
-#define			notification_statuschange		1
+String sensorNames = "";
+
+/*#define			notification_statuschange		1
 #define			notification_restarted			2
 #define			notification_programend			3
 #define			notification_relestatuschange	4
-#define			notification_offline			5
+#define			notification_offline			5*/
 
 #define			relestatus_off		0
 #define			relestatus_on		1
@@ -42,20 +45,19 @@ Logger logger;// = Logger;// ("ESP8266Webduino");
 #define			relestatus_enabled	3
 
 String tag = "Webduino";
-
 const char *ssidAP = "ES8266";
 const char *passwordAP = "thereisnospoon";
+const char* ssid = "xxBUBBLES";
+/*   da eliminare*/
+byte mac[] = { 0x00, 0xA0, 0xB0, 0xC0, 0xD0, 0x90 };
 
 extern const char* statusStr[] = { "unused", "idle", "program", "manual", "disabled", "restarted" };
-OneWireSensors ows = OneWireSensors();
 Settings settings;
 Program programSettings;
 
 void initEPROM();
 void readEPROM();
 void writeEPROM();
-
-
 void showPage(String data);
 int memoryFree();
 void getPostdata(char *data, int maxposdata);
@@ -69,7 +71,6 @@ String softwareReset();
 void setRemoteTemperature(String param);
 void enableRele(boolean on);
 
-const char* ssid = "xxBUBBLES";
 
 // Create an instance of the server
 // specify the port to listen on as an argument
@@ -77,8 +78,8 @@ WiFiServer server(80);
 WiFiClient client;
 
 const int relePin = D5; // rel? pin
-const bool RELE_ON = LOW;//LOW
-const bool RELE_OFF = HIGH;//LOW
+const bool RELE_ON = HIGH;//LOW
+const bool RELE_OFF = LOW;//LOW
 
 int activeProgram = -1;
 int activeTimerange = -1;
@@ -91,8 +92,6 @@ const byte EEPROM_ID = 0x99; // used to identify if valid data in EEPROM
 const int ID_ADDR = 0; // the EEPROM address used to store the ID
 const int TIMERTIME_ADDR = 1; // the EEPROM address used to store the pin
 
-/*   da eliminare*/
-byte mac[] = { 0x00, 0xA0, 0xB0, 0xC0, 0xD0, 0x90 };
 
 const int maxposdata = 101; // massimo numero di caratteri della variabile posdata
 const int maxvaluesize = maxposdata - 1/*10*/; // massimo numero di digit del valore di una variabile nel POS data
@@ -102,15 +101,18 @@ bool statusChangeSent = true;
 float targetTemperature = 0.0;
 float remoteTemperature = 0;
 
-unsigned long lastFlash = 0;
 const int flash_interval = 30000;
-unsigned long lastStatusChange = 0;
-const int lastStatusChange_interval = 600000; // timeout retry invio status change
+unsigned long lastFlash = 0;//-flash_interval;
+const int lastStatusChange_interval = 60000; // timeout retry invio status change
+unsigned long lastStatusChange = 0;//-lastStatusChange_interval;// 0;
 unsigned long lastNotification = 0;
 const int Notification_interval = 20000;
 
 unsigned long lastSendLog = 0;
 const int SendLog_interval = 10000;// 10 secondi
+
+unsigned long lastTimeSync = 0;
+const int timeSync_interval = 60000;// 60 secondi
 
 int offlineCounter = 0;
 
@@ -125,12 +127,14 @@ extern void *__brkval;
 
 int temperatureSensor = sensor_local;
 int sendRestartNotification = 0;
-
 bool shieldRegistered = false; // la shield si registra all'inizio e tutte le volte che va offline
-
 unsigned long totalConsumptionTime = 0;
 unsigned long lastConsumptionEnableTime = 0;
 unsigned long ConsumptionStartTime;
+
+
+
+
 
 void writeEPROM() {
 
@@ -169,10 +173,17 @@ void writeEPROM() {
 	res = EEPROM_writeAnything(addr, settings.boardname);
 	addr += res;
 	// sensor names
-	for (int i = 0; i < ows.sensorCount; i++) {
-		res = EEPROM_writeAnything(addr, ows.sensorname[i]);
-		addr += res;
+	String str = "";
+	for (int i = 0; i < settings.sensorList.count; i++) {
+		DS18S20Sensor* sensor = (DS18S20Sensor*)settings.sensorList.get(i);
+		str += String(sensor->sensorname);
+		str += ";";		
 	}
+	logger.print(tag, "\n\tstr=" + str);
+	char buffer[100];
+	str.toCharArray(buffer, sizeof(buffer));
+	res = EEPROM_writeAnything(addr, buffer);
+	addr += res;
 	EEPROM.commit();
 }
 
@@ -210,10 +221,18 @@ void readEPROM() {
 	res = EEPROM_readAnything(addr, settings.boardname);
 	addr += res;
 	// sensor names
-	for (int i = 0; i < ows.sensorCount; i++) {
-		res = EEPROM_writeAnything(addr, ows.sensorname[i]);
+	char buffer[100];
+	res = EEPROM_readAnything(addr, buffer);
+	addr += res;
+	sensorNames = String(buffer);
+	logger.print(tag, "\n\tsensorNames=" + sensorNames);
+	/*char buffer[100];
+	for (int i = 0; i < settings.sensorList.count; i++) {
+		DS18S20Sensor* sensor = (DS18S20Sensor*)settings.sensorList.get(i);
+		res = EEPROM_writeAnything(addr, buffer);
+		sensor->sensorname = String(buffer);
 		addr += res;
-	}
+	}*/
 }
 
 void initEPROM()
@@ -349,24 +368,19 @@ const char* password = "6oGzjkdMJU2q9XoQLfWiV3nj";
 void setup()
 {
 	Serial.begin(115200);
-	Serial.println("RESTARTING.... \n");
-
 	delay(10);
 	Serial.println("");
 	Serial.println("");
 	Serial.println("RESTARTING.... \n");
   
-	logger.print(tag,"\n\n\\n");
-	logger.println(tag, "*******************RESTART************************--");
-	//Serial.print("starting.... ");
-
-
-	String str = "starting.... Versione ";
+	logger.print(tag,"\n\n\"*******************RESTARTING************************--");
+	
+	String str = "\n\nstarting.... Versione ";
 	str += Versione;
-	logger.println(tag, str);
+	logger.print(tag, str);
 
 	// get MAC Address
-	logger.println(tag, "\n\tMAC Address=");
+	logger.print(tag, "\n\tMAC Address=");
 	WiFi.macAddress(settings.MAC_array);
 	for (int i = 0; i < sizeof(settings.MAC_array); ++i) {
 		if (i > 0) sprintf(settings.MAC_char, "%s:", settings.MAC_char);
@@ -374,30 +388,23 @@ void setup()
 
 	}
 	logger.print(tag, settings.MAC_char);
-
-	// rele
-	pinMode(relePin, OUTPUT);
-	enableRele(false);
+	
 	
 	initEPROM();
-	ows.discoverOneWireDevices();
-
+	logger.print(tag, "\n\tSensorNames=" + sensorNames);
+	
 	// Connect to WiFi network
-	logger.println(tag, "\n\nConnecting to ");
-	logger.println(tag, settings.networkSSID);
-	logger.println(tag, settings.networkPassword);
-
-
+	logger.print(tag, "\n\nConnecting to " + String(settings.networkSSID) + " " + String(settings.networkPassword));
+	
 	WiFi.mode(WIFI_STA);//??????
 	WiFi.begin(settings.networkSSID, settings.networkPassword);
 	if (testWifi() == 20/*WL_CONNECTED*/) {
-	//if (WiFi.waitForConnectResult() != WL_CONNECTED) {
 
 		checkOTA();
 
 		// Start the server
 		server.begin();
-		logger.println(tag, "Server started");
+		logger.print(tag, "Server started");
 		settings.localIP = WiFi.localIP().toString();
 		// Print the IP address
 		logger.println(tag, settings.localIP);
@@ -405,24 +412,29 @@ void setup()
 		wdt_disable();
 		wdt_enable(WDTO_8S);
 
+		// rele
+		pinMode(relePin, OUTPUT);
+		enableRele(false);
+		//Temperature sensor
+		settings.addOneWireSensors(sensorNames);
+		settings.addActuators();
 
 		programSettings.currentStatus = Program::STATUS_IDLE;
 
 		Command command;
 		command.setServer(settings.servername, settings.serverPort);
-		settings.id = command.registerShield(settings, ows);
+		settings.id = command.registerShield(settings);
+		logger.print(tag, "\n\tsettings.id");
+		logger.print(tag, String(settings.id));
 		if (settings.id != -1) {			
 			shieldRegistered = true;	
 
-			logger.println(tag, "SHIELD REGISTERED");
-
+			logger.println(tag, "SHIELD REGISTERED" + String(settings.id));
 		}
 		else {
 			shieldRegistered = false;
 			logger.println(tag, "SHIELD NOT REGISTERED");
 		}
-
-
 	}
 	else {
 		logger.println(tag, "\nIMPOSSIBILE COLLEGARSI ALLA RETE\n");
@@ -438,7 +450,6 @@ void setup()
 	}
 
  ConsumptionStartTime = millis();
-
 }
 
 void enableRele(boolean on) {
@@ -449,14 +460,14 @@ void enableRele(boolean on) {
 
 	programSettings.oldReleStatus = programSettings.releStatus;
 	if (on) {
-		logger.println(tag, F("rele on"));
+		logger.print(tag, F("\n\tenableRele:: RELE ON"));
 		digitalWrite(relePin, RELE_ON);
 		programSettings.releStatus = true;
 
 		lastConsumptionEnableTime = millis();
 	}
 	else {
-		logger.println(tag, F("rele off"));
+		logger.print(tag, F("\n\tenableRele:: RELE OFF"));
 		digitalWrite(relePin, RELE_OFF);
 		programSettings.releStatus = false;
 	}
@@ -662,13 +673,12 @@ String showRele(String GETparam) {
 
 void flash() {
 
-	logger.print(tag, F("FLASH............ "));
+	logger.println(tag, F("FLASH............ "));
 
 	time_t currentTime = millis();
 	
-	settings.localTemperature = ows.readTemperatures();
-	settings.localAvTemperature = ows.getAverageTemperature(0);
-
+	settings.readTemperatures();
+	
 	logger.print(tag, "\n\tConsumptionStartTime=");
 	logger.print(tag, String(ConsumptionStartTime));
 	logger.print(tag, "\n\ttotalConsumptionTime=");
@@ -689,6 +699,7 @@ void flash() {
 	logger.print(tag, String(temperatureSensor, DEC));
 	logger.print(tag, "\n\tremoteTemperature=");
 	logger.print(tag, String(remoteTemperature));
+	logger.print(tag, "\n\t");
 
 	if (programSettings.currentStatus == Program::STATUS_MANUAL) {
 
@@ -728,9 +739,11 @@ void flash() {
 		}
 	}
 	else{
-		logger.println(tag, "INACTIVE-rele OFF");
+		logger.print(tag, "INACTIVE-rele OFF");
 		enableRele(false);
 	}
+
+	logger.print(tag, F("\n\tEND FLASH............ \n\t"));
 }
 
 void loop()
@@ -742,28 +755,28 @@ void loop()
 	Command command;
 
 	if (settings.id >= 0 && !WiFi.localIP().toString().equals(settings.localIP)) {
-		logger.println(tag, "\n\tIP ADDRESS ERROR - re-register shield");
-		command.registerShield(settings, ows);
+		logger.println(tag, "IP ADDRESS ERROR - re-register shield");
+		command.registerShield(settings);
 		settings.localIP = WiFi.localIP().toString();
 	}
 	
 	if (programSettings.oldReleStatus != programSettings.releStatus) {// notifica il server se è cambiato lo stato del rele
 
-		logger.println(tag, "\n\tSEND ACTUATOR UPDATE - rele status changed");
+		logger.println(tag, "SEND ACTUATOR UPDATE - rele status changed");
 		char buf[10];
 		sprintf(buf, "relestatus=%d", programSettings.releStatus);
-		command.sendActuatorStatus(settings, ows, programSettings);
+		command.sendActuatorStatus(settings, programSettings);
 		programSettings.oldReleStatus = programSettings.releStatus;
 		return;
 	}
 	
 	if (programSettings.currentStatus != programSettings.oldcurrentstatus) { // notifica il server se è cambiato lo status
 
-		logger.println(tag, "\n\tSEND ACTUATOR UPDATE - status changed");
+		logger.println(tag, "SEND ACTUATOR UPDATE - status changed");
 		if (programSettings.currentStatus == Program::STATUS_DISABLED) {
 			char buf[10];
 			sprintf(buf, "status=%d", 0);
-			command.sendActuatorStatus(settings, ows, programSettings);
+			command.sendActuatorStatus(settings, programSettings);
 		}
 		programSettings.oldcurrentstatus = programSettings.currentStatus;
 		return;
@@ -775,7 +788,7 @@ void loop()
 	if (programSettings.currentStatus == Program::STATUS_PROGRAMACTIVE || programSettings.currentStatus == Program::STATUS_MANUAL) {
 
 		if (temperatureSensor != sensor_local && (currMillis - last_RemoteSensor) > remoteSensorTimeout) {
-			logger.println(tag, "\n\tREMOTE SENSOR TIMEOUT");
+			logger.println(tag, "REMOTE SENSOR TIMEOUT");
 			enableRele(false);
 			// � iniutile mandare un sendstatus perch� tanto cambia lo stato dopo e verrebbe inviato due volte
 			remoteTemperature = 0;
@@ -784,7 +797,7 @@ void loop()
 
 		}
 		else if (currMillis - programSettings.programStartTime > programSettings.programDuration) {
-			logger.println(tag, "\n\tEND PROGRAM");
+			logger.println(tag, "END PROGRAM");
 			enableRele(false);
 			// � iniutile mandare un sendstatus perch� tanto cambia lo stato dopo e verrebbe inviato due volte
 			programSettings.currentStatus = Program::STATUS_IDLE;
@@ -798,18 +811,22 @@ void loop()
 		flash();
 		Command command;
 		if (settings.id <= 0) {
-			logger.println(tag, F("\n\tID NON VALIDO"));
-			settings.id = command.registerShield(settings, ows);
+			logger.println(tag, F("ID NON VALIDO"));
+			settings.id = command.registerShield(settings);
 		} else {
 
-			if (settings.oldLocalAvTemperature != settings.localAvTemperature) {
+			//if (settings.oldLocalAvTemperature != settings.localAvTemperature) {
+			if (settings.temperatureChanged) {
 
-				logger.print(tag, "\n\tSEND TEMPERATURE UPDATE - average temperature changed");
+				logger.println(tag, "SEND TEMPERATURE UPDATE - average temperature changed");
 				logger.print(tag, "\n\toldLocalAvTemperature=");
 				logger.print(tag, settings.oldLocalAvTemperature);
 				logger.print(tag, "\n\tlocalAvTemperature=");
-				logger.println(tag, settings.localAvTemperature);
-				command.sendSensorsStatus(settings, ows);
+				logger.print(tag, settings.localAvTemperature);
+				logger.print(tag, "\n\t");
+				command.sendSensorsStatus(settings);
+				settings.temperatureChanged = false; // qui bisognerebbe introdiurre il controllo del valore di ritorno della send
+														// cokmmand ed entualmente reinviare
 			}
 		}
 		return;
@@ -832,10 +849,11 @@ void loop()
 		logger.print(tag, " lastStatusChange=");
 		logger.print(tag, lastStatusChange);
 		logger.print(tag, "\n\tlastStatusChange_interval=");
-		logger.println(tag, lastStatusChange_interval);
+		logger.print(tag, lastStatusChange_interval);
+		logger.print(tag, "\n\t");
 
 		Command command;
-		if (command.sendActuatorStatus(settings, ows, programSettings)) {
+		if (command.sendActuatorStatus(settings, programSettings)) {
 			statusChangeSent = true;
 			settings.oldLocalAvTemperature = settings.localAvTemperature;
 		}
@@ -884,9 +902,14 @@ void loop()
 	}
 
 
+	if (currMillis - lastTimeSync > timeSync_interval) {
+		lastTimeSync = currMillis;
+		command.timeSync(String(settings.servername), settings.serverPort);
+		return;
+	}
+
 	if (currMillis - lastSendLog > SendLog_interval) {
 		lastSendLog = currMillis;
-		//WiFi.ho
 		logger.send(settings.id,String(settings.servername),settings.serverPort);
 		return;
 	}
@@ -895,8 +918,10 @@ void loop()
 
 void showPage(String data) {
 
+	logger.println(tag, "showPage ");
+
 	client.println(data);
-	//delay(100);
+	delay(1000);
 	//client.stop();
 }
 
@@ -928,18 +953,14 @@ String showMain(String param)
 	}
 	//client.print(F("<input type='submit' value='set'></form>"));
 	data += F("</td></tr>");
-	// status
-	
-	sprintf(buffer, "<tr><td>Status: </td><td>%s</td></tr>", statusStr[programSettings.currentStatus]);
-	data += String(buffer);
-	// rele
-	data += F("<tr><td>Rele </td><td>");
+	// status & rele	
+	data += "<tr><td>Actuator:</td><td>";
+	data += statusStr[programSettings.currentStatus];
+	data += " - Rele: ";
 	if (programSettings.releStatus) {
 		data += F("on - ");
-
 		time_t onStatusDuration = (millis() - programSettings.programStartTime) / 1000;
 		time_t remainingTime = (programSettings.programDuration / 1000 - onStatusDuration);
-
 		time_t hr = remainingTime / 3600L;
 		time_t mn = (remainingTime - hr * 3600L) / 60L;
 		time_t sec = (remainingTime - hr * 3600L) % 60L;
@@ -964,12 +985,11 @@ String showMain(String param)
 		sprintf(buffer, "%02d", sec);
 		data += String(buffer);
 
-		data += F("</td></tr>");
-
 	}
 	else {
-		data += F("off</td></tr>");
+		data += F("off");
 	}
+	data += F("</td></tr>");
 
 	// program
 	data += F("<tr><td>program </td><td>");
@@ -979,14 +999,14 @@ String showMain(String param)
 		data += F("timerange ");
 		data += activeTimerange;
 
-		sprintf(buffer, " Target: %d.%02d", (int)targetTemperature, (int)(targetTemperature * 100.0) % 100);
-		data += String(buffer);
+		data += " Target: " + String(targetTemperature) + "°C";
 		data += F(" Sensor: ");
 		if (temperatureSensor == sensor_local) {
 			data += F("Local");
 		}
 		else if (temperatureSensor != sensor_local) {
 			data += " Remote (" + String(temperatureSensor) + ")";
+			data += String(remoteTemperature) + "°C";
 		}
 		data += F("</td></tr>");
 	}
@@ -1027,27 +1047,37 @@ String showMain(String param)
 		data += F("</td><td>--");
 	}
 	data += F("</td></tr>");
-	// temperature
-	sprintf(buffer, "<tr><td>Local Temperature: </td><td>%d.%02d</td></tr>", (int)settings.localTemperature, (int)(settings.localTemperature * 100.0) % 100);
-	data += String(buffer);
-	sprintf(buffer, "<tr><td>Local Average Temperature: </td><td>%d.%02d</td></tr>", (int)settings.localAvTemperature, (int)(settings.localAvTemperature * 100.0) % 100);
-	data += String(buffer);
-	// targetTemperature
-	sprintf(buffer, "<tr><td>Target Temperature: </td><td>%d.%02d</td></tr>", (int)targetTemperature, (int)(targetTemperature * 100.0) % 100);
-	data += String(buffer);
+	// temperature sensor
+	int count = 0;
+	DS18S20Sensor* pSensor = (DS18S20Sensor*) settings.sensorList.getFirst();
+	while (pSensor != NULL) {
 
-	
+		logger.print(tag, "\n\tpSensor->sensorname=" + pSensor->sensorname);
+
+		count++;
+		data += "<tr><td>Sensor " + String(count) + " [" + pSensor->getSensorAddress() + "]</td>"
+			+ "<td>" + String(pSensor->temperature) + "°C (Av."
+			+ String(pSensor->avTemperature) + "°C)"
+			+ "<br><form action='/chstt' method='POST'>"
+			+ "<input type = 'num' name = 'sensor" + String(count) + "' value='" + pSensor->sensorname + "' "
+			+ "size='32' maxlength='32'>"
+			+ "<input type='submit' value='save'/>"
+			+ "</form></td></tr>";
+		pSensor = (DS18S20Sensor*)settings.sensorList.getNext();
+	}	
+	// targetTemperature
+	/*data += "<tr><td>Target Temperature: </td><td>" + String(targetTemperature)  + "°C</td></tr>";
 	// remote Sensor
-	sprintf(buffer, "<tr><td>Remote Sensor: </td><td>%d</td></tr>", temperatureSensor);
-	data += String(buffer);
+	data += "<tr><td>Remote Sensor: </td><td>" + String(temperatureSensor) + "(" + 
+		String(remoteTemperature)+ "°C)</td></tr>";
 	// remote temperature
-	sprintf(buffer, "<tr><td>Remote Temperature: </td><td>%d.%02d</td></tr>", (int)remoteTemperature, (int)(remoteTemperature * 100.0) % 100);
-	data += String(buffer);
+	//sprintf(buffer, "<tr><td>Remote Temperature: </td><td>%d.%02d</td></tr>", (int)remoteTemperature, (int)(remoteTemperature * 100.0) % 100);
+	//data += String(buffer);
 	// program update
 	sprintf(buffer, "<tr><td>Last program or temperature update: </td><td>%d msec</td></tr>", (millis() - last_RemoteSensor));
-	data += String(buffer);
+	data += String(buffer);*/
 	// wol
-	data += F("<tr><td>WOL</td><td><form action='/wol' method='POST'><input type='submit' value='send'></form></td></tr>");
+	//data += F("<tr><td>WOL</td><td><form action='/wol' method='POST'><input type='submit' value='send'></form></td></tr>");
 	// sofware reset
 	data += F("<tr><td>Software reset</td><td><form action='/reset' method='POST'><input type='submit' value='reset'></form></td></tr>");
 
@@ -1062,16 +1092,15 @@ String showMain(String param)
 	char ip1[20], ip2[20];
 	ip.toCharArray(ip1, sizeof(ip1));
 	settings.localIP.toCharArray(ip2, sizeof(ip2));
-	sprintf(buffer, "<tr><td>Local IP address: </td><td>%s (%s)</td></tr>", ip1, ip2);
-	data += String(buffer);
+	data += "<tr><td>Local IP: </td><td>" + WiFi.localIP().toString() +
+			"(" + settings.localIP + ")</td></tr>";
+	// id
+	data += "<tr><td>ID</td><td>" + String(settings.id) + "</td></tr>";
+
 	data += F("</table>");
 	
 	
 	data += F("<font color='#53669E' face='Verdana' size='2'><b>Impostazioni </b></font>\r\n<form action='/chstt' method='POST'><table width='80%' border='1'><colgroup bgcolor='#B6C4E9' width='20%' align='left'></colgroup><colgroup bgcolor='#FFFFFF' width='30%' align='left'></colgroup>");
-	// id
-	data += F("<tr><td>ID</td><td><input type='num' name='id' value='");
-	data += settings.id;
-	data += F("' size='2' maxlength='2'> </td></tr>");
 	// local port
 	data += F("<tr><td>Local port</td><td><input type='num' name='localport");
 	data += F("' value='");
@@ -1103,11 +1132,12 @@ String showMain(String param)
 	data += F("' maxlength='");
 	data += (settings.servernamelen - 1);
 	data += F("'> </td></tr>");
-	// local port
+	// server port
 	data += F("<tr><td>Server port</td><td><input type='num' name='serverport");
 	data += F("' value='");
-	data += (settings.serverPort);
+	data += String(settings.serverPort);
 	data += F("' size='4' maxlength='4'> </td></tr>");
+
 	data += F("</table><input type='submit' value='save'/></form>");
 
 	sprintf(buffer, "%s", Versione);
@@ -1131,39 +1161,64 @@ void showChangeSettings(String/*char**/ param) {
 	int val;
 	// localport
 	val = parsePostdata(databuff, "localport", posdata);
-	settings.localPort = val;
-	logger.print(tag, "\n\tlocalPort=");
-	logger.print(tag, settings.localPort);
+	if (val != -1) {
+		settings.localPort = val;
+		logger.print(tag, "\n\tlocalPort=");
+		logger.print(tag, settings.localPort);
+	}
 	// ssid
-	val = parsePostdata(databuff, "ssid", posdata);
-	memccpy_P(settings.networkSSID, posdata, '\0', sizeof(settings.networkSSID));
-	logger.print(tag, "\n\tnetworkSSID=");
-	logger.print(tag, settings.networkSSID);
+	if (val != -1) {
+		val = parsePostdata(databuff, "ssid", posdata);
+		memccpy_P(settings.networkSSID, posdata, '\0', sizeof(settings.networkSSID));
+		logger.print(tag, "\n\tnetworkSSID=");
+		logger.print(tag, settings.networkSSID);
+	}
 	// password
-	val = parsePostdata(databuff, "password", posdata);
-	memccpy_P(settings.networkPassword, posdata, '\0', sizeof(settings.networkPassword));
-	logger.print(tag, "\n\tnetworkPassword=");
+	if (val != -1) {
+		val = parsePostdata(databuff, "password", posdata);
+		memccpy_P(settings.networkPassword, posdata, '\0', sizeof(settings.networkPassword));
+		logger.print(tag, "\n\tnetworkPassword=");
+	}
 	// server name
 	val = parsePostdata(databuff, "servername", posdata);
-	memccpy_P(settings.servername, posdata, '\0', settings.servernamelen);
-	logger.print(tag, "\n\tservername ");
-	logger.print(tag, settings.servername);
+	if (val != -1) {
+		memccpy_P(settings.servername, posdata, '\0', settings.servernamelen);
+		logger.print(tag, "\n\tservername ");
+		logger.print(tag, settings.servername);
+	}
 	// server port
 	val = parsePostdata(databuff, "serverport", posdata);
-	logger.print(tag, "\n\tserver port ");
-	logger.print(tag, val);
-	settings.serverPort = val;
-	// id
-	val = parsePostdata(databuff, "id", posdata);
-	//Serial.print("server port ");
-	//Serial.println(val);
-	settings.id = val;
+	if (val != -1) {
+		logger.print(tag, "\n\tserver port ");
+		logger.print(tag, val);
+		settings.serverPort = val;
+	}
 	// board name
 	val = parsePostdata(databuff, "boardname", posdata);
-	memccpy_P(settings.boardname, posdata, '\0', settings.boardnamelen);
-	logger.print(tag, "\n\tboardname=");
-	logger.print(tag, settings.boardname);
+	if (val != -1) {
+		memccpy_P(settings.boardname, posdata, '\0', settings.boardnamelen);
+		logger.print(tag, "\n\tboardname=");
+		logger.print(tag, settings.boardname);
+	}
+	// sensor names
+	
+	for (int i = 0; i < settings.sensorList.count; i++) {
+		DS18S20Sensor*  sensor = (DS18S20Sensor*)settings.sensorList.get(i);
+		char buffer[20];
+		String str = "sensor" + String(i+1);
+		str.toCharArray(buffer, sizeof(buffer));
+		logger.print(tag, "\n\tbuffer=");
+		logger.print(tag, buffer);
+		val = parsePostdata(databuff, buffer, posdata);
+		if (val != -1) {
+			sensor->sensorname = String(posdata);
+			logger.print(tag, "\n\t" + String(buffer) + "=");
+			logger.print(tag, String(posdata));
+			logger.print(tag, "\n\tsensor->sensorname=");
+			logger.print(tag, sensor->sensorname);
 
+		}
+	}
 	String data;
 	data += "";
 	data += F("HTTP/1.1 200 OK\r\nContent-Type: text/html\n\n<html><head><meta HTTP-EQUIV='REFRESH' content='0; url=/main'><title>Timer</title></head><body></body></html>");
@@ -1299,16 +1354,13 @@ String getJsonStatus()
 	data += String(settings.id);
 
 	data += F(",\"temperature\":");
-	float temp = settings.localTemperature;
-	data += String(temp, DEC);
+	data += String(settings.localTemperature);
 
 	data += F(",\"avtemperature\":");
-	temp = settings.localAvTemperature;
-	data += String(temp);
+	data += String(settings.localAvTemperature);
 
 	data += F(",\"remotetemperature\":");
-	temp = remoteTemperature;
-	data += String(temp, DEC);
+	data += String(remoteTemperature);
 
 	char buf[50];
 	sprintf(buf, ",\"status\":\"%s\"", statusStr[programSettings.currentStatus]);
@@ -1353,7 +1405,7 @@ String getJsonStatus()
 
 void setRemoteTemperature(String param) {
 
-	logger.print(tag,F("called setRemoteTemperature: "));
+	logger.println(tag,F("called setRemoteTemperature: "));
 
 	getPostdata(databuff, maxposdataChangeSetting);
 	char posdata[maxposdata];
@@ -1363,12 +1415,16 @@ void setRemoteTemperature(String param) {
 	parsePostdata(databuff, "temperature", posdata);
 	String str = "";
 	str += posdata;
+	
+	logger.print(tag, F("\n\tstr="));
+	logger.print(tag, String(remoteTemperature));
+
 	remoteTemperature = str.toFloat();
 
 	last_RemoteSensor = millis();
 
-	logger.print(tag, F("remoteTemperature="));
-	logger.println(tag, remoteTemperature);
+	logger.print(tag, F("\n\tremoteTemperature="));
+	logger.print(tag, String(remoteTemperature));
 
 	String data;
 	/*data += "";

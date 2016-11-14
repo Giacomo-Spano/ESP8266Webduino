@@ -28,7 +28,7 @@ public:
 	String getSensorAddress(int n);
 
 	int sensorCount = 0; // numero di sensori collegati
-	char sensorname[maxSensorNumber][sensornamelen] = { "sensor1", "sensor2", "sensor3", "sensor4", "sensor5", "sensor6", "sensor7", "sensor8", "sensor9", "sensor10", };
+	String sensorname[maxSensorNumber] = { "sensor1", "sensor2", "sensor3", "sensor4", "sensor5", "sensor6", "sensor7", "sensor8", "sensor9", "sensor10", };
 	byte sensorAddr[maxSensorNumber][8]; // indirizzi sensori
 	int avTempCounter = avTempsize;
 	float avTemp[maxSensorNumber][avTempsize];

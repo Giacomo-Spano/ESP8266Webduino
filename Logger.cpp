@@ -7,24 +7,14 @@ Logger::Logger()
 {
 }
 
-/*Logger::Logger(String tag)
-{
-	this->tag = tag;
-}*/
-
-/*void Logger::setTag(String tag)
-{
-	this->tag = tag;
-}*/
-
-
 Logger::~Logger()
 {
 }
 
-void Logger::println(String tag, String txt) {
+/*void Logger::println(String tag, String txt) {
 	
-	if (line.equals("")) {
+	//if (line.equals("")) {
+	if (line.length() == 0 && txt != NULL && !txt.equals("")) {
 		line += getHeader(tag);
 	}
 	line += txt;
@@ -41,16 +31,42 @@ void Logger::println(String tag, String txt) {
 		}		
 	}	
 	line = "";
+}*/
+
+void Logger::println(String tag, String txt) {
+	txt = String("\n") + getHeader(tag) + txt;
+	print(tag, txt);
 }
 
 void Logger::print(String tag, String txt) {
 
-	if (line.equals("")) {
+	/*if (txt != NULL && !txt.equals("")) {
+		txt = getHeader(tag) + txt;
+	}*/
+	//line += txt;
+	Serial.print(txt);
+
+	if (!truncated) {
+
+		if (toBeSent.length() > maxLogbuffer) {
+			toBeSent += txt + "\n\n--- TRUNCATED ---\n\n";
+			truncated = true;
+		}
+		else {
+			toBeSent += txt;
+		}
+	}
+	//line = "";
+}
+
+/*void Logger::print(String tag, String txt) {
+
+	if (line.equals("") && txt != NULL && !txt.equals("")) {
 		line += getHeader(tag);
 	}	
 	Serial.print(txt);
 	line += txt;
-}
+}*/
 
 void Logger::print(String tag, char* buffer) {
 	String str = String(buffer);

@@ -1,12 +1,82 @@
 #include "Command.h"
 #include "Program.h"
 #include "Util.h"
+#include "DS18S20Sensor.h"
 
 extern Logger logger;
 
+//extern time_t getNtpTime();
 extern const char* statusStr[];
 char* boolStr[] = { "false", "true" };
 
+int packetcount = 1;
+
+Command* Command::getTimeObject;
+
+
+void digitalClockDisplay(){
+	// digital clock display of the time
+	/*Serial.print(hour());
+	printDigits(minute());
+	printDigits(second());
+	Serial.print(" ");
+	Serial.print(day());
+	Serial.print(" ");
+	Serial.print(month());
+	Serial.print(" ");
+	Serial.print(year());
+	Serial.println();*/
+}
+time_t serverTime =11111111;
+
+time_t Command::getNtpTime() {
+	return serverTime;
+}
+
+
+time_t xgetNtpTime() {
+
+
+	Serial.println("BBB");
+
+	String tag = "getNtpTime";
+
+	//logger.println(tag, F("getNtpTime"));
+#ifdef dopo
+	String str = "{";
+	//str += "\"id\":\"" + /*String(settings.id) + */"\"" + "}";
+
+	HttpHelper hplr;
+	String result;
+	boolean res = hplr.post(/*settings.servername*/"http://192.168.1.3",8080/*settings.serverPort*/, "/webduino/time", str, &result);
+	Serial.println("CCC");
+
+	//logger.print(tag, "\n\tanswer = ");
+	//logger.println(tag, result);
+
+	JSON json(result);
+	String resultvalue = json.jsonGetString("result");
+	//logger.print(tag, "\tresult = ");
+	//logger.println(tag, resultvalue);
+
+	if (resultvalue.equalsIgnoreCase("success")) {
+
+		serverTime = json.jsonGetLong("timesec");
+		Serial.println("serverTime=");
+		Serial.println(serverTime);
+		//setSyncProvider(globalGetNTPTime/*getNtpTime*/);
+	}
+#endif
+	return serverTime;
+}
+
+void printDigits(int digits){
+	// utility function for digital clock display: prints preceding colon and leading 0
+	Serial.print(":");
+	if (digits < 10)
+		Serial.print('0');
+	Serial.print(digits);
+}
 Command::Command()
 {
 	tag = "Command";
@@ -23,24 +93,6 @@ Command::~Command()
 {
 }
 
-
-time_t serverTime;
-
-time_t getNtpTime() {
-	tmElements_t tm;
-	tm.Day = 6;
-	tm.Month = 11;
-	tm.Year = 2016;
-	tm.Second = 0;
-	tm.Minute = 0;
-	tm.Hour = 0;
-	time_t t = makeTime(tm);
-
-	return serverTime;
-}
-
-int packetcount = 1;
-
 bool Command::sendLog(String log, int shieldid, String servername, int port)
 {
 	//Serial.println(F("SENDLOG"));
@@ -51,45 +103,18 @@ bool Command::sendLog(String log, int shieldid, String servername, int port)
 	String packetstart = "#START#";
 	String packetnumber = String(packetcount++);
 	String strid = String(shieldid);
-	if (packetcount > 99999) 
+	if (packetcount > 99999)
 		packetcount = 0;
-	/*for (int i = packetnumber.length(); i < 5; i++)
-	{
-		//packetend += " ";
-		packetstart += " ";
-	}*/
-
-	/*for (int i = strid.length(); i < 5; i++)
-	{
-		strid = "x"+ strid;
-	}*/
-	//strid += "y";	
-	//packetstart += ":" + packetnumber + ":" + strid + ":";
-	//packetend += packetnumber;
-
-	//const int terminatorsize = 24;//6+5 + 8+5;//int l = packetend.length();
-
-	//char   buffer[maxLogSize + terminatorsize];
-
-	//String json = packetstart + log + packetend;
-	/*String json = "{\"shieldid\":\"" + String(shieldid);
-	json += "\",\"#\":\"" + String(packetnumber);
-	json += "\",\"log\":\"" + log;
-	json += "\"}";*/
 
 	String json = packetstart + ":" + packetnumber + ":" + strid + ":" + log + ":" + packetend;
-		
+
 	HttpHelper hplr;
 	String result;
-	//boolean res = hplr.post(servername, port, "/webduino/log", buffer, sizeof(buffer), &result);
 	boolean res = hplr.post(servername, port, "/webduino/log", json, &result);
-	
-	//Serial.print("answer = ");
-	//Serial.println(result);
 
 	JSON jsonResult(result);
 	String resultvalue = jsonResult.jsonGetString("result");
-	
+
 	if (resultvalue.equalsIgnoreCase("success")) {
 
 		return true;
@@ -99,28 +124,36 @@ bool Command::sendLog(String log, int shieldid, String servername, int port)
 	}
 }
 
-int Command::registerShield(Settings settings, OneWireSensors ows)
+int Command::registerShield(Settings settings)
 {
-	logger.println(tag,F("REGISTER SHIELD"));
+	logger.println(tag, F("REGISTER SHIELD"));
 
-	const int buffersize = 500;
-	char   buffer[buffersize];
 	String str = "{";
 	str += "\"MAC\":\"" + String(settings.MAC_char) + "\"";
 	str += ",\"boardname\":\"" + String(settings.boardname) + "\"";
 	str += ",\"localIP\":\"" + settings.localIP + "\"";
 	str += ",\"localPort\":\"" + String(settings.localPort) + "\"";
 	str += ",\"sensors\":[";
-	for (int i = 0; i < ows.sensorCount; i++) {
 
-		if (i != 0)
-			str += ",";
+	DS18S20Sensor* elem = (DS18S20Sensor*) settings.sensorList.getFirst();
+	int count = 0;
+	while (elem != nullptr) {
+
+		logger.print(tag, "\n\telem->sensorname=" + elem->sensorname);
+		
+		if (count++ != 0)
+				str += ",";
 		str += "{\"name\":\"";
-		str += String(ows.sensorname[i]) + "\"";
+		str += String(elem->sensorname) + "\"";
 		str += ",\"type\":\"TemperatureSensor\"";
 		str += ",\"addr\":\"";
-		str += String(ows.getSensorAddress(i)) + "\"}";
+		str += String(elem->getSensorAddress()) + "\"}";
+	
+		elem = (DS18S20Sensor*)settings.sensorList.getNext();
 	}
+
+	logger.print(tag, "\n\t");
+
 	str += "]";
 
 	str += ",\"actuators\":[";
@@ -131,28 +164,31 @@ int Command::registerShield(Settings settings, OneWireSensors ows)
 
 	str += "}";
 
-	str.toCharArray(buffer, buffersize);
-
 	HttpHelper hplr;
 
 	String result;
-	boolean res = hplr.post(settings.servername, settings.serverPort, "/webduino/shield", buffer, str.length(), &result);
-	logger.print(tag, "\n\tanswer = ");
-	logger.println(tag, result);
+	boolean res = hplr.post(settings.servername, settings.serverPort, "/webduino/shield", str, &result);
+	//logger.print(tag, "\n\tanswer = ");
+	//logger.println(tag, result);
 
 	JSON json(result);
 	String resultvalue = json.jsonGetString("result");
 	logger.print(tag, "\tresult = ");
-	logger.println(tag, resultvalue);
+	logger.print(tag, resultvalue);
 
 	if (resultvalue.equalsIgnoreCase("success")) {
-		
+
 		int id = json.jsonGetInt("id");
-
+		logger.print(tag, "\n\tid = ");
+		logger.print(tag, String(id));
+		
 		serverTime = json.jsonGetLong("timesec");
+		getTimeObject = this;
+		//setSyncInterval(60);
 		setSyncProvider(getNtpTime);
-		digitalClockDisplay();
-
+		
+		logger.print(tag, "\n\tid = ");
+		logger.print(tag, String(id));
 		return id;
 	}
 	else {
@@ -160,31 +196,35 @@ int Command::registerShield(Settings settings, OneWireSensors ows)
 	}
 }
 
+int Command::timeSync(String servername, int port)
+{
+	logger.println(tag, F("timeSync"));
 
-void Command::digitalClockDisplay(){
-	// digital clock display of the time
-	Serial.print(hour());
-	printDigits(minute());
-	printDigits(second());
-	Serial.print(" ");
-	Serial.print(day());
-	Serial.print(" ");
-	Serial.print(month());
-	Serial.print(" ");
-	Serial.print(year());
-	Serial.println();
+	String str = "{";
+	str += "}";
+
+	HttpHelper hplr;
+
+	String result;
+	boolean res = hplr.post(servername, port, "/webduino/time", str, &result);
+	logger.print(tag, "\n\tanswer = ");
+	logger.print(tag, result);
+
+	JSON json(result);
+	String resultvalue = json.jsonGetString("result");
+	logger.print(tag, "\tresult = ");
+	logger.print(tag, resultvalue);
+
+	if (resultvalue.equalsIgnoreCase("success")) {
+		serverTime = json.jsonGetLong("timesec");
+		return serverTime;
+	}
+	else {
+		return 0;
+	}
 }
 
-void Command::printDigits(int digits){
-	// utility function for digital clock display: prints preceding colon and leading 0
-	Serial.print(":");
-	if (digits < 10)
-		Serial.print('0');
-	Serial.print(digits);
-}
-
-
-boolean Command::sendActuatorStatus(Settings settings, OneWireSensors ows, Program programSettings)
+boolean Command::sendActuatorStatus(Settings settings, Program programSettings)
 {
 	logger.println(tag, F("SEND ACTUATOR STATUS"));
 
@@ -195,52 +235,41 @@ boolean Command::sendActuatorStatus(Settings settings, OneWireSensors ows, Progr
 
 	time_t remaining = programSettings.programDuration - (millis() - programSettings.programStartTime);
 
-	const int buffersize = 500;
-	char   buffer[buffersize];
-
-	//Serial.println(statusStr[currentStatus]);
-	//Serial.println(boolStr[releStatus]);
+	//const int buffersize = 500;
+	//char   buffer[buffersize];
 
 	String str = "{";
 	str += "\"command\":\"status\",";
 	str += "\"id\":" + String(settings.id) + ",";
 	str += "\"addr\":\"" + HeaterActuatorSubaddress + "\",";
-	str += "\"temperature\":";
-	char temp[10];
-	sprintf(temp, "%d.%02d", (int)settings.localTemperature, (int)(settings.localTemperature * 100.0) % 100);
-	str += String(temp);
-	str += ",";
-	str += "\"avtemperature\":";
-	temp[10];
-	sprintf(temp, "%d.%02d", (int)settings.localAvTemperature, (int)(settings.localAvTemperature * 100.0) % 100);
-	str += String(temp);
-	str += ",";
+	//str += "\"temperature\":" + String(settings.localTemperature) + ",";
+	//str += "\"avtemperature\":" + String(settings.localAvTemperature) + ",";
 	str += "\"status\":\"" + String(statusStr[programSettings.currentStatus]) + "\",";
 	str += "\"type\":\"heater\",";
 	str += "\"relestatus\":\"" + String((programSettings.releStatus) ? boolStr[1] : boolStr[0]) + "\",";
 	str += "\"remaining\":" + String(remaining) + "";
 	str += "}";
 
-	str.toCharArray(buffer, buffersize);
+	//str.toCharArray(buffer, buffersize);
 
 	String result;
 	HttpHelper hplr;
-	hplr.post(settings.servername, settings.serverPort, "/webduino/actuator", buffer, str.length(), &result);
+	hplr.post(settings.servername, settings.serverPort, "/webduino/actuator", str, &result);
 	logger.print(tag, "\n\tanswer = ");
 	logger.println(tag, result);
 
 	return true;
 }
 
-boolean Command::sendSensorsStatus(Settings settings, OneWireSensors ows)
+boolean Command::sendSensorsStatus(Settings settings)
 {
 	logger.println(tag, F("SEND SENSOR STATUS"));
 
 	if (settings.id == 0) {
-		logger.println(tag, F("ID NON VALIDO"));
+		logger.print(tag, F("\n\tID NON VALIDO"));
 		return false;
-	}		
-	
+	}
+
 	const int buffersize = 500;
 	char   buffer[buffersize];
 	String str = "{";
@@ -254,31 +283,33 @@ boolean Command::sendSensorsStatus(Settings settings, OneWireSensors ows)
 	sprintf(temp, "%d.%02d", (int)settings.localAvTemperature, (int)(settings.localAvTemperature * 100.0) % 100);
 	str += String(temp);
 	str += ",\"sensors\":[";
-	for (int i = 0; i < ows.sensorCount; i++) {
-
+	for (int i = 0; i < settings.sensorList.count; i++) {
+		DS18S20Sensor* sensor = (DS18S20Sensor*)settings.sensorList.get(i);
 		if (i != 0)
 			str += ",";
 		str += "{";
 		str += "\"temperature\":";
-		str += Util::floatToString(ows.sensorTemperatures[i]);
+		str += Util::floatToString(sensor->temperature);
 		str += ",\"avtemperature\":";
-		str += Util::floatToString(ows.sensorAvTemperatures[i]);
+		str += Util::floatToString(sensor->avTemperature);
 		str += ",\"name\":\"";
-		str += String(ows.sensorname[i]) + "\"";
+		str += String(sensor->sensorname) + "\"";
 		str += ",\"type\":\"temperature\"";
 		str += ",\"addr\":\"";
-		str += String(ows.getSensorAddress(i)) + "\"}";
+		str += String(sensor->getSensorAddress()) + "\"}";
 	}
 	str += "]";
 	str += ",\"MAC\":\"" + String(settings.MAC_char) + "\"";
 	str += ",\"name\":\"" + String(settings.boardname) + "\"";
 	str += "}";
-	str.toCharArray(buffer, buffersize);
+	//str.toCharArray(buffer, buffersize);
+	logger.print(tag, F("\n\tjson="));
+	logger.print(tag, str);
 
 	String result;
 	HttpHelper hplr;
-	bool res = hplr.post(settings.servername, settings.serverPort, "/webduino/sensor", buffer, str.length(), &result);
+	bool res = hplr.post(settings.servername, settings.serverPort, "/webduino/sensor", str, &result);
 	logger.print(tag, "\n\tanswer = ");
-	logger.println(tag, result);
+	logger.print(tag, result);
 	return res;
 }

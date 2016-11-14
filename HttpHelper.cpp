@@ -25,7 +25,7 @@ bool HttpHelper::post(String host, int port, String path, String param, String *
 	WiFiClient client;
 
 	String data;
-	logger.print(tag, F("SEND POST"));
+	logger.print(tag, F("\n\tSEND POST"));
 	logger.print(tag, F(" host="));
 	logger.print(tag, host);
 	logger.print(tag, F(",port="));
@@ -74,7 +74,7 @@ bool HttpHelper::post(String host, int port, String path, String param, String *
 
 	}
 	else {
-		logger.println(tag, "-NON CONNESSO-");
+		logger.print(tag, "-NON CONNESSO-\n");
 		*result = "-NON CONNESSO-";
 		return false;
 	}
@@ -196,7 +196,7 @@ boolean HttpHelper::getNextPage(WiFiClient* pClient, WiFiServer* server, String*
 						logger.print(tag, " page=");
 						logger.print(tag, *page);
 						logger.print(tag, ",param=");
-						logger.println(tag, *param);
+						logger.print(tag, *param);
 					}
 				}
 				return true;

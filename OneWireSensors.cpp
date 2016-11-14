@@ -2,8 +2,8 @@
 
 // Data wire is plugged into port 2 on the Arduino
 #define ONE_WIRE_BUS D4
-extern uint8_t provapin;
-OneWire _oneWire(provapin);
+extern uint8_t OneWirePin;
+OneWire _oneWire(OneWirePin);
 // Pass our oneWire reference to Dallas Temperature. 
 DallasTemperature _sensors(&_oneWire);
 
@@ -67,8 +67,10 @@ float OneWireSensors::readTemperatures(){
 		float dallasTemperature = _sensors.getTempC(sensorAddr[i]);
 		Serial.println(dallasTemperature);
 
-		sensorTemperatures[i] = dallasTemperature;
-		avTemp[i][avTempCounter] = dallasTemperature;
+    float rounded = ((int)(dallasTemperature * 100 + .5) / 100.0);
+    
+		sensorTemperatures[i] = rounded;//dallasTemperature;
+		avTemp[i][avTempCounter] = rounded;//dallasTemperature;
 
 		sensorAvTemperatures[i] = getAverageTemperature(i);
 
@@ -89,6 +91,8 @@ float OneWireSensors::getAverageTemperature(int n) {
 		average += avTemp[n][i];
 	}
 	average = average / (avTempsize);
+  float rounded = ((int)(average * 100 + .5) / 100.0);
+  average = rounded;   
 
 	return average;
 }
@@ -108,4 +112,5 @@ String OneWireSensors::getSensorAddress(int n) {
 	}
 	return str;
 }
+
 

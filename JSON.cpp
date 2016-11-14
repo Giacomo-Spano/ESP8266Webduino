@@ -109,13 +109,13 @@ long JSON::jsonGetLong(String key) {
 	String value = jsonGetValue(key);
 	char tarray[20]; // numero di digit del long
 	value.toCharArray(tarray, sizeof(tarray));
-	Serial.print("tarray = ");
-	Serial.println(tarray);
+	//Serial.print("tarray = ");
+	//Serial.println(tarray);
 	long longval = value.toInt();
 	//long longval = atol(tarray);
 
-	Serial.print("longval = ");
-	Serial.println(longval);
+	//Serial.print("longval = ");
+	//Serial.println(longval);
 	return longval;
 }
 
