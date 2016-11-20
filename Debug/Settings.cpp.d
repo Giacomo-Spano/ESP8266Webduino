@@ -36,6 +36,8 @@ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_
  C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\Actuator.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\Sensor.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\List.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\HeaterActuator.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\Program.h \
  C:\Users\Giacomo\ Spanò\Documents\Arduino\libraries\OneWire/OneWire.h \
  C:\Users\Giacomo\ Spanò\Documents\Arduino\libraries\DallasTemperature/DallasTemperature.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\DS18S20Sensor.h \

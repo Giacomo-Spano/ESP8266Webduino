@@ -16,6 +16,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="ESP8266Webduino.ino" />
+    <None Include="index.html" />
+    <None Include="ESP8266.css" />
+    <None Include="prova.htm" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="__vm\.ESP8266Webduino.vsarduino.h">
@@ -57,6 +60,12 @@
     <ClInclude Include="List.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="HeaterActuator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="css.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="wol.cpp">
@@ -93,6 +102,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="List.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="HeaterActuator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

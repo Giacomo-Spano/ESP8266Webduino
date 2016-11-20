@@ -8,8 +8,8 @@
 class HttpHelper
 {
 private:
-	static const int MAX_PAGE_NAME_LEN = 12;
-	static const int MAX_PARAM_LEN = 12;//12;
+	static const int MAX_PAGE_NAME_LEN = 32;
+	static const int MAX_PARAM_LEN = 32;//12;
 	
 	//Logger logger;
 
@@ -25,6 +25,6 @@ String tag;
 	bool post(char* host, int port, char* path, char* param, int len, String *result);
 	bool post(String host, int port, String path, String param, String *result);
 	boolean getNextPage(WiFiClient* pClient, WiFiServer* server, String* page, String* param);
-	
+	bool downloadfile(String filename, String host, int port, String path, String param, String *result);
 };
 

@@ -1,5 +1,6 @@
 #include "DS18S20Sensor.h"
 #include "Logger.h"
+#include "Util.h"
 
 
 extern Logger logger;
@@ -34,19 +35,13 @@ void DS18S20Sensor::readTemperature(){
 
 	//dallasTemperature = getTemp();
 
-	float rounded = ((int)(dallasTemperature * 100 + .5) / 100.0);
-	temperature = rounded;
+	/*float rounded = ((int)(dallasTemperature * 100 + .5) / 100.0);
+	temperature = rounded;*/
+	temperature = dallasTemperature;
 	logger.print(tag, "\n\tTemperature  is: ");
-	logger.print(tag, String(rounded));
-
-	/*dallasTemperature = getTemp();
-	rounded = ((int)(dallasTemperature * 100 + .5) / 100.0);
-	temperature = rounded;
-	logger.print(tag, "\n\tTemperature2  is: ");
-	logger.print(tag, String(rounded));*/
-
-
-	
+	//logger.print(tag, String(rounded));
+	logger.print(tag, String(temperature));
+		
 	if (avTempCounter < avTempsize) {
 		avTemp[avTempCounter] = temperature;
 		avTempCounter++;
@@ -60,18 +55,27 @@ void DS18S20Sensor::readTemperature(){
 	float average = 0.0;
 	for (int i = 0; i < avTempCounter; i++) {
 		average += avTemp[i];
-		//logger.print(tag, "\n\taverage =");
-		//logger.print(tag, String(avTemp[i]));
 	}
 	average = average / (avTempCounter);
-	//logger.print(tag, "\n\t -->average = ");
-	//logger.print(tag, String(average));
 	avTemperature = ((int)(average * 100 + .5) / 100.0);
-	//logger.print(tag, "\nt -->average = ");
-	//logger.print(tag, String(avTemperature));
-
+	
 	logger.print(tag, "\n\tAverage temperature  is: ");
 	logger.print(tag, String(avTemperature));
+}
+
+String DS18S20Sensor::getJSON() {
+	String json = "";
+	json += "{";
+	json += "\"temperature\":";
+	json += Util::floatToString(temperature);
+	json += ",\"avtemperature\":";
+	json += Util::floatToString(avTemperature);
+	json += ",\"name\":\"";
+	json += String(sensorname) + "\"";
+	json += ",\"type\":\"temperature\"";
+	json += ",\"addr\":\"";
+	json += String(getSensorAddress()) + "\"}";
+	return json;
 }
 
 

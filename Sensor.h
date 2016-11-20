@@ -8,6 +8,7 @@ public:
 	Sensor();
 	~Sensor();
 
+	String getJSON();
 	String getSensorAddress();
 
 	String sensorname = "sensorname";

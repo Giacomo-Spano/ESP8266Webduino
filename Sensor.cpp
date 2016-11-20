@@ -1,6 +1,7 @@
 #include "Sensor.h"
 
 
+
 Sensor::Sensor()
 {
 }
@@ -8,6 +9,9 @@ Sensor::Sensor()
 
 Sensor::~Sensor()
 {
+}
+
+String Sensor::getJSON() {
 }
 
 String Sensor::getSensorAddress() {

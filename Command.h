@@ -17,7 +17,7 @@ private:
 	//const String StatusUpdate = "statusupdate";
 	//const String StatusUpdate = "releupdate";
 public:
-	const String HeaterActuatorSubaddress = "01";
+	static String HeaterActuatorSubaddress;
 	static const int maxLogSize = 1000;
 	//
 	void digitalClockDisplay();
@@ -31,10 +31,11 @@ public:
 	~Command();
 
 	int registerShield(Settings settings);
-	boolean sendActuatorStatus(Settings settings, Program programSettings);
 	boolean sendSensorsStatus(Settings settings);
 	bool sendLog(String log, int shieldid, String servername, int port);
 	int timeSync(String servername, int port);
+	boolean sendActuatorStatus(Settings settings, HeaterActuator actuator);
+	boolean download(String filename, Settings settings);
 
 	//time_t getNtpTime();
 	static Command *getTimeObject;

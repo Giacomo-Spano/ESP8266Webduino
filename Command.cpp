@@ -7,11 +7,12 @@ extern Logger logger;
 
 //extern time_t getNtpTime();
 extern const char* statusStr[];
-char* boolStr[] = { "false", "true" };
+//char* boolStr[] = { "false", "true" };
 
 int packetcount = 1;
 
 Command* Command::getTimeObject;
+String Command::HeaterActuatorSubaddress = "01";
 
 
 void digitalClockDisplay(){
@@ -224,7 +225,7 @@ int Command::timeSync(String servername, int port)
 	}
 }
 
-boolean Command::sendActuatorStatus(Settings settings, Program programSettings)
+boolean Command::sendActuatorStatus(Settings settings, HeaterActuator actuator)
 {
 	logger.println(tag, F("SEND ACTUATOR STATUS"));
 
@@ -233,25 +234,21 @@ boolean Command::sendActuatorStatus(Settings settings, Program programSettings)
 		return false;
 	}
 
-	time_t remaining = programSettings.programDuration - (millis() - programSettings.programStartTime);
+	//time_t remaining = actuator.programDuration - (millis() - actuator.programStartTime);
+	time_t remaining = actuator.getRemaininTime();
 
-	//const int buffersize = 500;
-	//char   buffer[buffersize];
-
-	String str = "{";
+	String str = settings.getActuatorsStatusJson();
+	/*String str = "{";
 	str += "\"command\":\"status\",";
 	str += "\"id\":" + String(settings.id) + ",";
 	str += "\"addr\":\"" + HeaterActuatorSubaddress + "\",";
-	//str += "\"temperature\":" + String(settings.localTemperature) + ",";
-	//str += "\"avtemperature\":" + String(settings.localAvTemperature) + ",";
-	str += "\"status\":\"" + String(statusStr[programSettings.currentStatus]) + "\",";
+	str += "\"status\":\"" + String(statusStr[actuator.getStatus()]) + "\",";
 	str += "\"type\":\"heater\",";
-	str += "\"relestatus\":\"" + String((programSettings.releStatus) ? boolStr[1] : boolStr[0]) + "\",";
+	str += "\"relestatus\":\"" + String((actuator.getReleStatus()) ? boolStr[1] : boolStr[0]) + "\",";
 	str += "\"remaining\":" + String(remaining) + "";
-	str += "}";
+	str += "}";*/
 
-	//str.toCharArray(buffer, buffersize);
-
+	
 	String result;
 	HttpHelper hplr;
 	hplr.post(settings.servername, settings.serverPort, "/webduino/actuator", str, &result);
@@ -270,39 +267,19 @@ boolean Command::sendSensorsStatus(Settings settings)
 		return false;
 	}
 
-	const int buffersize = 500;
-	char   buffer[buffersize];
-	String str = "{";
+	String str = settings.getSensorsStatusJson();
+	/*String str = "{";
 	str += "\"id\":" + String(settings.id);// shieldid
-	str += ",\"temperature\":";
-	char temp[10];
-	sprintf(temp, "%d.%02d", (int)settings.localTemperature, (int)(settings.localTemperature * 100.0) % 100);
-	str += String(temp);
-	str += ",\"avtemperature\":";
-	temp[10];
-	sprintf(temp, "%d.%02d", (int)settings.localAvTemperature, (int)(settings.localAvTemperature * 100.0) % 100);
-	str += String(temp);
 	str += ",\"sensors\":[";
 	for (int i = 0; i < settings.sensorList.count; i++) {
 		DS18S20Sensor* sensor = (DS18S20Sensor*)settings.sensorList.get(i);
 		if (i != 0)
 			str += ",";
-		str += "{";
-		str += "\"temperature\":";
-		str += Util::floatToString(sensor->temperature);
-		str += ",\"avtemperature\":";
-		str += Util::floatToString(sensor->avTemperature);
-		str += ",\"name\":\"";
-		str += String(sensor->sensorname) + "\"";
-		str += ",\"type\":\"temperature\"";
-		str += ",\"addr\":\"";
-		str += String(sensor->getSensorAddress()) + "\"}";
+		str += sensor->getJSON();
 	}
 	str += "]";
-	str += ",\"MAC\":\"" + String(settings.MAC_char) + "\"";
-	str += ",\"name\":\"" + String(settings.boardname) + "\"";
-	str += "}";
-	//str.toCharArray(buffer, buffersize);
+	str += "}";*/
+
 	logger.print(tag, F("\n\tjson="));
 	logger.print(tag, str);
 
@@ -312,4 +289,25 @@ boolean Command::sendSensorsStatus(Settings settings)
 	logger.print(tag, "\n\tanswer = ");
 	logger.print(tag, result);
 	return res;
+}
+
+boolean Command::download(String filename, Settings settings)
+{
+	logger.println(tag, F("download"));
+
+	
+	String str = "{";
+	str += "\"filenamae\":\"status\",";
+	
+	str += "}";
+
+	
+	String result;
+	HttpHelper hplr;
+	hplr.downloadfile(filename, settings.servername, settings.serverPort, "/webduino/"+filename, str, &result);
+	//logger.print(tag, "\n\tanswer = ");
+	//logger.println(tag, result);
+	//Serial.print(result);
+
+	return true;
 }

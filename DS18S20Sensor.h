@@ -17,6 +17,7 @@ public:
 
 	DS18S20Sensor();
 	~DS18S20Sensor();
+	virtual String getJSON();
 
 	int avTempCounter = 0;
 	float avTemp[avTempsize];
@@ -26,7 +27,7 @@ public:
 	void readTemperature();
 	
 private:
-	void readAverageTemperature();
+	//void readAverageTemperature();
 	//float getTemp();
 	
 };

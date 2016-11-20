@@ -15,14 +15,14 @@ public:
 	Program();
 	~Program();
 
-	time_t programStartTime = 0;
-	time_t programDuration = 30000;
+	/*time_t programStartTime = 0;
+	time_t programDuration = 30000;*/
 
-	int currentStatus = STATUS_IDLE;
-	int oldcurrentstatus = currentStatus;
+	/*int currentStatus = STATUS_IDLE;
+	int oldcurrentstatus = currentStatus;*/
 
-	bool releStatus = false;
-	bool oldReleStatus = false;
+	//bool releStatus = false;
+	//bool oldReleStatus = false;
 	//int actuatorAddress = 0;
 };
 

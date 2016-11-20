@@ -1,6 +1,7 @@
 #include "Settings.h"
 #include "DS18S20Sensor.h"
 #include "Logger.h"
+#include "HeaterActuator.h"
 
 extern uint8_t OneWirePin;
 extern OneWire oneWire;
@@ -24,6 +25,38 @@ Settings::Settings()
 
 Settings::~Settings()
 {
+}
+
+String Settings::getSensorsStatusJson() {
+	String json = "{";
+	json += "\"id\":" + String(id);// shieldid
+	json += ",\"sensors\":[";
+	for (int i = 0; i < sensorList.count; i++) {
+		DS18S20Sensor* sensor = (DS18S20Sensor*)sensorList.get(i);
+		if (i != 0)
+			json += ",";
+		json += sensor->getJSON();
+	}
+	json += "]";
+	json += "}";
+	return json;
+}
+
+String Settings::getActuatorsStatusJson() {
+	String json = "{";
+	json += "\"id\":" + String(id);// shieldid
+	json += ",\"actuators\":[";
+	
+	hearterActuator.getJSON();
+	/*for (int i = 0; i < sensorList.count; i++) {
+		DS18S20Sensor* sensor = (DS18S20Sensor*)sensorList.get(i);
+		if (i != 0)
+			json += ",";
+		json += sensor->getJSON();
+	}*/
+	json += "]";
+	json += "}";
+	return json;
 }
 
 void Settings::addOneWireSensors(String sensorNames) {
@@ -98,31 +131,36 @@ void Settings::addActuators() {
 
 	logger.println(tag, "addActuator...\n\r");
 	ActuatorList.init();
+
+	//HeaterActuator* pActuatorNew = new HeaterActuator();
+	//pActuatorNew->sensorname = "riscaldamento";
 }
 
 
 void Settings::readTemperatures() {
 
-	logger.println(tag, "\n\t--START readTemperatures---\n");
-	sensorList.show();
+	logger.print(tag, "\n\treadTemperatures---");
+	//sensorList.show();
 	float oldTemperature;
 	for (int i = 0; i < sensorList.count; i++) {
 		DS18S20Sensor* pSensor = (DS18S20Sensor*)sensorList.get(i);		
-		logger.print(tag, "\n\n\t readTemperatures for sensor ");
+		logger.print(tag, "\n\t readTemperatures for sensor ");
 		logger.print(tag, pSensor->sensorname);
 		logger.print(tag, " addr: ");
 		logger.print(tag, pSensor->getSensorAddress());
 		oldTemperature = pSensor->avTemperature;
 		
-		sensorList.show();
+		//sensorList.show();
 		pSensor->readTemperature();
 		
-		if (oldLocalAvTemperature != pSensor->avTemperature)
+		if (oldTemperature != pSensor->avTemperature)
 			temperatureChanged = true;
 
-		sensorList.show();
+		// imposta la temperatura locale a quella del primo sensore (DA CAMBIARE)
+		if (i == 0)
+			hearterActuator.setLocalTemperature(pSensor->avTemperature);
+		//sensorList.show();
 	}
-
-	logger.print(tag, "\n\t---END readTemperatures---");
+	//logger.print(tag, "\n\t---END readTemperatures---");
 }
 

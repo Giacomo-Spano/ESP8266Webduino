@@ -1,8 +1,12 @@
 #pragma once
-class Actuator
+#include "Sensor.h"
+
+class Actuator :
+	public Sensor
 {
 public:
 	Actuator();
 	~Actuator();
+
 };
 

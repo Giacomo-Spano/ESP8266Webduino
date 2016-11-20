@@ -4,6 +4,7 @@
 #include "Actuator.h"
 #include "Sensor.h"
 #include "List.h"
+#include "HeaterActuator.h"
 
 #include <OneWire.h>
 #include <DallasTemperature.h>
@@ -21,6 +22,8 @@ public:
 
 	Settings();
 	~Settings();
+	String getSensorsStatusJson();
+	String getActuatorsStatusJson();
 
 	char networkSSID[32];// = "ssid";
 	char networkPassword[96];// = "password";
@@ -32,9 +35,7 @@ public:
 	char MAC_char[18];
 	int id = 0; // inizializzato a zero perchè viene impostato dalla chiamata a registershield
 
-	float localTemperature = 0;
-	float localAvTemperature = 0;
-	float oldLocalAvTemperature = 0;
+	
 
 	String localIP;
 
@@ -47,6 +48,8 @@ public:
 	void readTemperatures();
 
 	bool temperatureChanged = false; // indica se la temperatura è cambiata dall'ultima chiamata a flash()
+
+	HeaterActuator hearterActuator;
 
 private:
 	
