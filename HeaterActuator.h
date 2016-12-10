@@ -12,6 +12,8 @@ private:
 	const int relestatus_disabled = 2;
 	const int relestatus_enabled = 3;
 
+	String subaddress = "HeaterActuator-";
+
 	const int relePin = D5; // rel? pin
 	const bool RELE_ON = HIGH;//LOW
 	const bool RELE_OFF = LOW;//LOW
@@ -23,7 +25,7 @@ public:
 	HeaterActuator();
 	~HeaterActuator();
 	void updateReleStatus();
-	String getJSON();
+	virtual String getJSON() override;
 	void setStatus(int status);
 	int getStatus();
 	void setReleStatus(int status);
@@ -33,7 +35,7 @@ public:
 	bool releStatusChanged();
 	void saveOldReleStatus();
 	void saveOldStatus();
-	void init();
+	void init(String MACAddress);
 	void setTargetTemperature(float target);
 	float getTargetTemperature();
 	void setRemoteTemperature(float remote);
@@ -49,6 +51,7 @@ public:
 	int getActiveTimeRange();
 	void setLocalTemperature(float temperature);
 	void changeProgram(int status, long duration, bool manual, bool sensorRemote, float remotetemperature, int sensorId, float target, int program, int timerange, int localsensor);
+	virtual String getSensorAddress();
 
 	time_t programStartTime = 0;
 	time_t programDuration = 30000;

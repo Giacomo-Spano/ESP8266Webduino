@@ -8,8 +8,8 @@ public:
 	Sensor();
 	~Sensor();
 
-	String getJSON();
-	String getSensorAddress();
+	virtual String getJSON();
+	virtual String getSensorAddress();
 
 	String sensorname = "sensorname";
 	uint8_t sensorAddr[8]; // indirizzi sensori

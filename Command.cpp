@@ -12,7 +12,7 @@ extern const char* statusStr[];
 int packetcount = 1;
 
 Command* Command::getTimeObject;
-String Command::HeaterActuatorSubaddress = "01";
+//String Command::HeaterActuatorSubaddress = "01";
 
 
 void digitalClockDisplay(){
@@ -134,33 +134,23 @@ int Command::registerShield(Settings settings)
 	str += ",\"boardname\":\"" + String(settings.boardname) + "\"";
 	str += ",\"localIP\":\"" + settings.localIP + "\"";
 	str += ",\"localPort\":\"" + String(settings.localPort) + "\"";
+	
+
 	str += ",\"sensors\":[";
 
-	DS18S20Sensor* elem = (DS18S20Sensor*) settings.sensorList.getFirst();
-	int count = 0;
-	while (elem != nullptr) {
-
-		logger.print(tag, "\n\telem->sensorname=" + elem->sensorname);
-		
-		if (count++ != 0)
-				str += ",";
-		str += "{\"name\":\"";
-		str += String(elem->sensorname) + "\"";
-		str += ",\"type\":\"TemperatureSensor\"";
-		str += ",\"addr\":\"";
-		str += String(elem->getSensorAddress()) + "\"}";
-	
-		elem = (DS18S20Sensor*)settings.sensorList.getNext();
+	for (int i = 0; i < settings.sensorList.count; i++) {
+		DS18S20Sensor* sensor = (DS18S20Sensor*)settings.sensorList.get(i);
+		if (i != 0)
+			str += ",";
+		str += sensor->getJSON();
 	}
-
-	logger.print(tag, "\n\t");
-
+		
 	str += "]";
 
 	str += ",\"actuators\":[";
-	str += "{\"name\":\"HeaterRele\"";
-	str += ",\"type\":\"HeaterActuator\"";
-	str += ",\"addr\":\"" + HeaterActuatorSubaddress + "\"}";
+
+	str += settings.hearterActuator.getJSON();
+	
 	str += "]";
 
 	str += "}";
@@ -237,16 +227,16 @@ boolean Command::sendActuatorStatus(Settings settings, HeaterActuator actuator)
 	//time_t remaining = actuator.programDuration - (millis() - actuator.programStartTime);
 	time_t remaining = actuator.getRemaininTime();
 
-	String str = settings.getActuatorsStatusJson();
-	/*String str = "{";
+	//String str = settings.getActuatorsStatusJson();
+	String str = "{";
 	str += "\"command\":\"status\",";
 	str += "\"id\":" + String(settings.id) + ",";
-	str += "\"addr\":\"" + HeaterActuatorSubaddress + "\",";
+	str += "\"addr\":\"" + actuator.getSensorAddress() + "\",";
 	str += "\"status\":\"" + String(statusStr[actuator.getStatus()]) + "\",";
 	str += "\"type\":\"heater\",";
-	str += "\"relestatus\":\"" + String((actuator.getReleStatus()) ? boolStr[1] : boolStr[0]) + "\",";
+	str += "\"relestatus\":\"" + String((actuator.getReleStatus()) ? "true" : "false") + "\",";
 	str += "\"remaining\":" + String(remaining) + "";
-	str += "}";*/
+	str += "}";
 
 	
 	String result;

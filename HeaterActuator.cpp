@@ -8,23 +8,19 @@ extern const char* statusStr[];
 HeaterActuator::HeaterActuator()
 {
 	tag = "HeaterActuator";
-
-	
 }
 
 HeaterActuator::~HeaterActuator()
 {
 }
 
-void HeaterActuator::init()
+void HeaterActuator::init(String MACAddress)
 {
 	
 	ConsumptionStartTime = millis();
-
 	pinMode(relePin, OUTPUT);
-	//currentStatus = Program::STATUS_IDLE;
 	setStatus(Program::STATUS_IDLE);
-	//enableRele(false);
+	subaddress += MACAddress;
 
 }
 
@@ -268,13 +264,18 @@ void HeaterActuator::changeProgram(int status, long duration, bool manual, bool 
 	}
 }
 
+String HeaterActuator::getSensorAddress()
+{
+	return subaddress;
+}
+
 String HeaterActuator::getJSON() {
 	String json = "";
 	json += "{";
 
 	json += "\"command\":\"status\",";
 	//json += "\"id\":" + String(settings.id) + ",";
-	json += "\"addr\":\"" + Command::HeaterActuatorSubaddress + "\",";
+	json += "\"addr\":\"" + subaddress + "\",";
 	json += "\"status\":\"" + String(statusStr[getStatus()]) + "\",";
 	json += "\"type\":\"heater\",";
 	json += "\"relestatus\":\"" + String((getReleStatus()) ? "true" : "false") + "\",";

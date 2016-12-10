@@ -8,5 +8,7 @@ public:
 	Actuator();
 	~Actuator();
 
+	virtual String getJSON();
+
 };
 

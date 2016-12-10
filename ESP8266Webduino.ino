@@ -55,6 +55,7 @@ void getPostdata(char *data, int maxposdata);
 int parsePostdata(const char* data, const char* param, char* value);
 String getJsonStatus();
 String getJsonSensorsStatus();
+String getJsonActuatorsStatus();
 int findIndex(const char* data, const char* target);
 String showMain(String param);
 void showChangeSettings(String param);
@@ -415,7 +416,7 @@ void setup()
 		// rele
 		//pinMode(relePin, OUTPUT);
 		//enableRele(false);
-		settings.hearterActuator.init();
+		settings.hearterActuator.init(String(settings.MAC_char));
 		//Temperature sensor
 		settings.addOneWireSensors(sensorNames);
 		settings.addActuators();
@@ -469,6 +470,24 @@ void showwol(String param) {
 	data += F("</body></html>");
 	client.println(data);
 	client.stop();
+}
+
+String registerShield() {
+	logger.println(tag, F("register shield "));
+	
+	String data;
+	data += "";
+	data += F("HTTP/1.1 200 OK\r\nContent-Type: text/html");
+	data += F("\n\n<html><head><meta HTTP-EQUIV='REFRESH' content='0; url=/main?msg=2'><title>rele</title></head><body>");
+	data += F("REGISTER SHIELD - Attendere prego");
+	data += F("</body></html>");
+
+	//client.println(data);
+	//client.stop();
+	Command command;
+	command.registerShield(settings);
+	
+	return data;
 }
 
 String softwareReset() {
@@ -861,6 +880,10 @@ void loop()
 				data = softwareReset();
 				showPage(data);
 			}
+			else if (page.equalsIgnoreCase("register")) {
+				data = registerShield();
+				showPage(data);
+			}
 			else if (page.equalsIgnoreCase("index.html")) {
 				data = showIndex();
 				showPage(data);
@@ -1058,6 +1081,7 @@ String showMain(String param)
 	data += String(buffer);*/
 	// wol
 	//data += F("<tr><td>WOL</td><td><form action='/wol' method='POST'><input type='submit' value='send'></form></td></tr>");
+	
 	// sofware reset
 	data += F("<tr><td>Software reset</td><td><form action='/reset' method='POST'><input type='submit' value='reset'></form></td></tr>");
 
@@ -1075,7 +1099,8 @@ String showMain(String param)
 	data += "<tr><td>Local IP: </td><td>" + WiFi.localIP().toString() +
 		"(" + settings.localIP + ")</td></tr>";
 	// id
-	data += "<tr><td>ID</td><td>" + String(settings.id) + "</td></tr>";
+	//data += "<tr><td>ID</td><td>" + String(settings.id) + "</td></tr>";
+	data += "<tr><td>ID</td><td>" + String(settings.id) + "<form action='/register' method='POST'><input type='submit' value='register'></form></td></tr>";
 
 	data += F("</table>");
 

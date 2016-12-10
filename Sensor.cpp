@@ -12,6 +12,7 @@ Sensor::~Sensor()
 }
 
 String Sensor::getJSON() {
+	return "Sensor";
 }
 
 String Sensor::getSensorAddress() {

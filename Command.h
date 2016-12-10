@@ -17,11 +17,11 @@ private:
 	//const String StatusUpdate = "statusupdate";
 	//const String StatusUpdate = "releupdate";
 public:
-	static String HeaterActuatorSubaddress;
+	
 	static const int maxLogSize = 1000;
 	//
-	void digitalClockDisplay();
-	void printDigits(int digits);
+	//void digitalClockDisplay();
+	//void printDigits(int digits);
 
 	static String servername;
 	static int serverport;
