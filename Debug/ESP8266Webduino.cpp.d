@@ -1,5 +1,5 @@
-C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\ESP8266Webduino.cpp.o: \
- C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\ESP8266Webduino.cpp \
+C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\ESP8266Webduino.cpp.o: \
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\ESP8266Webduino.cpp \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/arduino.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/stdlib_noniso.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/binary.h \
@@ -60,7 +60,7 @@ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_
  C:\Users\Giacomo\ Spanò\Documents\Arduino\libraries\OneWire/OneWire.h \
  C:\Users\Giacomo\ Spanò\Documents\Arduino\libraries\DallasTemperature/DallasTemperature.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\libraries\EEPROM/EEPROM.h \
- C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\EEPROMAnything.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\EEPROMAnything.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0/tools/sdk/include/user_interface.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0/tools/sdk/include/os_type.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0/tools/sdk/include/ets_sys.h \
@@ -73,7 +73,7 @@ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0/tools/sdk/lwip/include/lwip/def.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0/tools/sdk/include/queue.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0/tools/sdk/include/spi_flash.h \
- C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\wol.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\wol.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\libraries\Ethernet\src/Dhcp.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\libraries\Ethernet\src/EthernetUdp.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\libraries\Ethernet\src/Dns.h \
@@ -85,20 +85,20 @@ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\libraries\Ethernet\src/EthernetClient.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\libraries\Ethernet\src/EthernetServer.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\libraries\Ethernet\src/EthernetUDP.h \
- C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\Logger.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Logger.h \
  C:\Users\Giacomo\ Spanò\Documents\Arduino\libraries\Time/Time.h \
  C:\Users\Giacomo\ Spanò\Documents\Arduino\libraries\Time/TimeLib.h \
  C:\Users\Giacomo\ Spanò\Documents\Arduino\libraries\Time/TimeLib.h \
- C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\HttpHelper.h \
- C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\JSON.h \
- C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\OneWireSensors.h \
- C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\Settings.h \
- C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\Actuator.h \
- C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\Sensor.h \
- C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\List.h \
- C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\HeaterActuator.h \
- C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\Program.h \
- C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\Command.h \
- C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\DS18S20Sensor.h \
- C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\css.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\HttpHelper.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\JSON.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\OneWireSensors.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Settings.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Actuator.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Sensor.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\List.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\HeaterActuator.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Program.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Command.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\DS18S20Sensor.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\css.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/FS.h

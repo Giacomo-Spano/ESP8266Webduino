@@ -1,6 +1,6 @@
-C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\Settings.cpp.o: \
- C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\Settings.cpp \
- C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\Settings.h \
+C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Settings.cpp.o: \
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Settings.cpp \
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Settings.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/Arduino.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/stdlib_noniso.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/binary.h \
@@ -33,15 +33,15 @@ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/debug.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\variants\nodemcu/pins_arduino.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\variants\nodemcu/../generic/common.h \
- C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\Actuator.h \
- C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\Sensor.h \
- C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\List.h \
- C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\HeaterActuator.h \
- C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\Program.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Actuator.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Sensor.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\List.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\HeaterActuator.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Program.h \
  C:\Users\Giacomo\ Spanò\Documents\Arduino\libraries\OneWire/OneWire.h \
  C:\Users\Giacomo\ Spanò\Documents\Arduino\libraries\DallasTemperature/DallasTemperature.h \
- C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\DS18S20Sensor.h \
- C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMicroBuilds\ESP8266Webduino\esp8266_nodemcuv2\Logger.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\DS18S20Sensor.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Logger.h \
  C:\Users\Giacomo\ Spanò\Documents\Arduino\libraries\Time/Time.h \
  C:\Users\Giacomo\ Spanò\Documents\Arduino\libraries\Time/TimeLib.h \
  C:\Users\Giacomo\ Spanò\Documents\Arduino\libraries\Time/TimeLib.h

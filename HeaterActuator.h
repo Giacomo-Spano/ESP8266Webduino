@@ -12,6 +12,9 @@ private:
 	const int relestatus_disabled = 2;
 	const int relestatus_enabled = 3;
 
+	
+	int manualMode;
+
 	String subaddress = "HeaterActuator-";
 
 	const int relePin = D5; // rel? pin
@@ -22,12 +25,18 @@ private:
 	unsigned long remoteSensorTimeout = 36000; // tempo dopo il quale il programa si disattiva
 
 public:
+	static const int MANUALMODE_DISABLED = 0;
+	static const int MANUALMODE_AUTO = 1;
+	static const int MANUALMODE_OFF = 2;
+
 	HeaterActuator();
 	~HeaterActuator();
 	void updateReleStatus();
 	virtual String getJSON() override;
 	void setStatus(int status);
+	void setManualMode(int status, int mode);
 	int getStatus();
+	int getManualMode();
 	void setReleStatus(int status);
 	int getReleStatus();
 	void enableRele(boolean on);
@@ -50,7 +59,7 @@ public:
 	int getActiveProgram();
 	int getActiveTimeRange();
 	void setLocalTemperature(float temperature);
-	void changeProgram(int status, long duration, bool manual, bool sensorRemote, float remotetemperature, int sensorId, float target, int program, int timerange, int localsensor);
+	void changeProgram(int status, long duration, int manual, bool sensorRemote, float remotetemperature, int sensorId, float target, int program, int timerange, int localsensor);
 	virtual String getSensorAddress();
 
 	time_t programStartTime = 0;

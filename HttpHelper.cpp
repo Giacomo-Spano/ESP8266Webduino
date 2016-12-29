@@ -22,9 +22,10 @@ bool HttpHelper::post(char* host, int port, char* path, char* param, int len, St
 
 bool HttpHelper::post(String host, int port, String path, String param, String *result)
 {
+	logger.println(tag, F("post"));
 	// Use WiFiClient class to create TCP connections
 	WiFiClient client;
-
+		
 	String data;
 	logger.print(tag, F("\n\tSEND POST"));
 	logger.print(tag, F(" host="));
@@ -60,8 +61,8 @@ bool HttpHelper::post(String host, int port, String path, String param, String *
 		client.print(data);
 		//Serial.println(F("post data sent"));
 		//Serial.println(data);
-
-		delay(3000);
+		
+		delay(300);
 
 		// Read all the lines of the reply from server and print them to Serial
 		while (client.available()){
@@ -72,7 +73,7 @@ bool HttpHelper::post(String host, int port, String path, String param, String *
 		//Serial.println();
 		//Serial.println("received answer - closing connection");
 		//delay(1000);
-
+		
 	}
 	else {
 		logger.print(tag, "-NON CONNESSO-\n");
@@ -80,6 +81,7 @@ bool HttpHelper::post(String host, int port, String path, String param, String *
 		return false;
 	}
 	client.stop();
+	logger.print(tag, "\n\tEND POST\n");
 	return true;
 }
 

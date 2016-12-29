@@ -234,15 +234,15 @@ boolean Command::sendActuatorStatus(Settings settings, HeaterActuator actuator)
 	str += "\"addr\":\"" + actuator.getSensorAddress() + "\",";
 	str += "\"status\":\"" + String(statusStr[actuator.getStatus()]) + "\",";
 	str += "\"type\":\"heater\",";
+	str += "\"name\":\"" + actuator.sensorname + "\",";
 	str += "\"relestatus\":\"" + String((actuator.getReleStatus()) ? "true" : "false") + "\",";
 	str += "\"remaining\":" + String(remaining) + "";
 	str += "}";
-
 	
 	String result;
 	HttpHelper hplr;
 	hplr.post(settings.servername, settings.serverPort, "/webduino/actuator", str, &result);
-	logger.print(tag, "\n\tanswer = ");
+	logger.println(tag, "\n\tanswer = ");
 	logger.println(tag, result);
 
 	return true;

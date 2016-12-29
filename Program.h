@@ -10,7 +10,9 @@ public:
 	static const int STATUS_MANUAL = 3;
 	static const int STATUS_DISABLED = 4;
 	static const int STATUS_RESTARTED = 5;
+	static const int STATUS_MANUAL_OFF = 6;
 
+	
 
 	Program();
 	~Program();

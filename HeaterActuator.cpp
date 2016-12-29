@@ -22,6 +22,8 @@ void HeaterActuator::init(String MACAddress)
 	setStatus(Program::STATUS_IDLE);
 	subaddress += MACAddress;
 
+	sensorname = "Riscaldamento";
+
 }
 
 void HeaterActuator::setTargetTemperature(float target)
@@ -144,7 +146,11 @@ void HeaterActuator::updateReleStatus() {
 		logger.print(tag, "\n\tSTATUS_MANUAL");
 		// se stato manuale accendi il rel� se sensore == locale e temperatura sensore locale < temperatura target oppure
 		// se sensore == remoto e temperature sensore remoto < temperatura target 
-		if ((!sensorRemote && localAvTemperature < targetTemperature) ||
+		if (manualMode == HeaterActuator::MANUALMODE_OFF) {
+			logger.print(tag, F("-MANUAL OFF"));
+			enableRele(false);
+		}
+		else if ((!sensorRemote && localAvTemperature < targetTemperature) ||
 			(sensorRemote && remoteTemperature < targetTemperature)) {
 
 			logger.print(tag, F("-LOW TEMPERATURE"));
@@ -181,7 +187,7 @@ void HeaterActuator::updateReleStatus() {
 	}
 }
 
-void HeaterActuator::changeProgram(int status, long duration, bool manual, bool sensorRemote, float remotetemperature, int sensorId, float target, int program, int timerange, int localsensor) {
+void HeaterActuator::changeProgram(int status, long duration, int manual, bool sensorRemote, float remotetemperature, int sensorId, float target, int program, int timerange, int localsensor) {
 
 	logger.println(tag, F("changeProgram"));
 
@@ -193,7 +199,7 @@ void HeaterActuator::changeProgram(int status, long duration, bool manual, bool 
 
 	if (status == relestatus_on && currentStatus != Program::STATUS_DISABLED) {
 
-		if (!manual) {
+		if (manual == HeaterActuator::MANUALMODE_DISABLED) {
 			logger.print(tag, F("\n\trele on "));
 			if (currentStatus != Program::STATUS_MANUAL) {
 				logger.print(tag, F("\n\tnot manual "));
@@ -208,7 +214,7 @@ void HeaterActuator::changeProgram(int status, long duration, bool manual, bool 
 				setStatus(Program::STATUS_PROGRAMACTIVE);				
 			}
 		}
-		else if (manual) {
+		else if (manual == HeaterActuator::MANUALMODE_AUTO || manual == HeaterActuator::MANUALMODE_OFF) {
 			logger.print(tag, F("\n\tmanual "));
 			enableRele(true);			
 			if (duration != -1)
@@ -216,13 +222,14 @@ void HeaterActuator::changeProgram(int status, long duration, bool manual, bool 
 			else
 				programDuration = 30000;
 			programStartTime = millis();
-			setStatus(Program::STATUS_MANUAL);
+			//setStatus(Program::STATUS_MANUAL);
+			setManualMode(Program::STATUS_MANUAL, manual/*HeaterActuator::MANUALMODE_AUTO*/);
 		}
 	}
 	else if (status == relestatus_off) {
 		logger.print(tag, F("\n\trele off "));
 		if (currentStatus == Program::STATUS_MANUAL) { // il programma è finito ma il dispositivo è in manual mode
-			if (manual) {
+			if (manual == HeaterActuator::MANUALMODE_AUTO || manual == HeaterActuator::MANUALMODE_OFF) {
 				logger.print(tag, F("\n\tmanual stop "));
 				enableRele(false);
 				setStatus(Program::STATUS_IDLE);
@@ -239,7 +246,7 @@ void HeaterActuator::changeProgram(int status, long duration, bool manual, bool 
 		}
 		else if (currentStatus == Program::STATUS_IDLE) {
 
-			if (!manual) {
+			if (manual == HeaterActuator::MANUALMODE_DISABLED) {
 				logger.print(tag, F("\n\trele off "));
 				logger.print(tag, F("\n\tnot manual "));
 				enableRele(false);
@@ -278,6 +285,7 @@ String HeaterActuator::getJSON() {
 	json += "\"addr\":\"" + subaddress + "\",";
 	json += "\"status\":\"" + String(statusStr[getStatus()]) + "\",";
 	json += "\"type\":\"heater\",";
+	json += "\"name\":\"" + sensorname + "\",";
 	json += "\"relestatus\":\"" + String((getReleStatus()) ? "true" : "false") + "\",";
 	json += "\"remaining\":" + String(getRemaininTime()) + "";
 	json += "}";
@@ -300,9 +308,19 @@ void HeaterActuator::setStatus(int status)
 	//updateReleStatus();
 }
 
+void HeaterActuator::setManualMode(int status, int mode)
+{
+	setStatus(status);
+	manualMode = mode;
+}
+
 int HeaterActuator::getStatus()
 {
 	return currentStatus;
+}
+int HeaterActuator::getManualMode()
+{
+	return manualMode;
 }
 
 void HeaterActuator::setReleStatus(int status)

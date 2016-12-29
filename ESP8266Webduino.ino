@@ -602,7 +602,7 @@ String download() {
 
 String showRele(String GETparam) {
 
-	logger.print(tag, F("\ncalled showRele "));
+	logger.print(tag, F("\n\n\ncalled showRele "));
 
 	getPostdata(databuff, maxposdataChangeSetting);
 	char posdata[maxposdata];
@@ -615,9 +615,11 @@ String showRele(String GETparam) {
 	long duration = parsePostdata(databuff, "duration", posdata);
 	logger.print(tag, F("\n\tduration="));
 	logger.print(tag, duration);
+	logger.print(tag, F(" minuti"));
 	duration = duration * 60 * 1000;
-	logger.print(tag, F("\n\tduration * 60 * 1000 ="));
+	logger.print(tag, F("\n\tduration ="));
 	logger.print(tag, duration);
+	logger.print(tag, F(" millisecondi"));
 	// target
 	int res = parsePostdata(databuff, "target", posdata);
 	//if (res != -1) {
@@ -656,8 +658,10 @@ String showRele(String GETparam) {
 	// manual
 	int manual = parsePostdata(databuff, "manual", posdata);
 	logger.print(tag, F("\n\tmanual="));
-	logger.print(tag, manual);
-	// manual
+	if (manual == -1)
+		manual = HeaterActuator::MANUALMODE_DISABLED;
+	logger.print(tag, manual); // 0=auto; 1=manual; 2=manualoff
+	// local sensor
 	int localSensor = parsePostdata(databuff, "localsensor", posdata);
 	logger.print(tag, F("\n\tlocalsensor="));
 	logger.print(tag, manual);
@@ -669,7 +673,7 @@ String showRele(String GETparam) {
 	logger.print(tag, json);
 
 	settings.hearterActuator.changeProgram(status,duration,
-									(manual == 1) ? true : false,
+									manual,
 									(sensorId>0) ? true : false,
 									remoteTemperature,
 									sensorId,
@@ -692,6 +696,8 @@ String showRele(String GETparam) {
 		data += F("</body></html>");
 		client.println(data);
 	}
+
+	logger.print(tag, F("\nend show rele\n\n\n"));
 }
 
 void flash() {
@@ -1014,11 +1020,16 @@ String showMain(String param)
 		data += F("</td></tr>");
 	}
 	else if (settings.hearterActuator.getStatus() == Program::STATUS_MANUAL) {
-		data += F("manual program");
+		data += F("program manual  ");
+		if (settings.hearterActuator.getManualMode() == HeaterActuator::MANUALMODE_AUTO)
+			data += F(" auto");
+		else if (settings.hearterActuator.getManualMode() == HeaterActuator::MANUALMODE_OFF)
+			data += F(" off");
+
 		data += F("</td></tr>");
 	}
 	// Manual
-	data += F("<tr><td>Manual ");
+	data += F("<tr><td>Manual-- ");
 	if (settings.hearterActuator.getStatus() == Program::STATUS_MANUAL) {
 
 		sprintf(buffer, "ON</td><td>Target: %d.%02d<BR>", (int)settings.hearterActuator.getTargetTemperature(), (int)(settings.hearterActuator.getTargetTemperature() * 100.0) % 100);
@@ -1049,6 +1060,12 @@ String showMain(String param)
 	else {
 		data += F("</td><td>--");
 	}
+	// manual off
+	data += F("<BR><form action='/rele' method='POST'>");
+	data += F("<input type='hidden' name='manual' value='2'>");
+	data += F("<input type='hidden' name='status' value='1'>");
+	data += F("<input type='submit' value='manual off'></form>");
+
 	data += F("</td></tr>");
 	// temperature sensor
 	int count = 0;
@@ -1098,9 +1115,9 @@ String showMain(String param)
 	settings.localIP.toCharArray(ip2, sizeof(ip2));
 	data += "<tr><td>Local IP: </td><td>" + WiFi.localIP().toString() +
 		"(" + settings.localIP + ")</td></tr>";
-	// id
+	// shield id
 	//data += "<tr><td>ID</td><td>" + String(settings.id) + "</td></tr>";
-	data += "<tr><td>ID</td><td>" + String(settings.id) + "<form action='/register' method='POST'><input type='submit' value='register'></form></td></tr>";
+	data += "<tr><td>Shield Id</td><td>" + String(settings.id) + "<form action='/register' method='POST'><input type='submit' value='register'></form></td></tr>";
 
 	data += F("</table>");
 
@@ -1371,6 +1388,9 @@ String getJsonStatus()
 	else
 		data += F("false");
 
+	data += F(",\"name\":");
+	data += settings.hearterActuator.sensorname;
+
 	if (settings.hearterActuator.getStatus() == Program::STATUS_PROGRAMACTIVE || settings.hearterActuator.getStatus() == Program::STATUS_MANUAL) {
 
 		data += F(",\"duration\":");
@@ -1398,8 +1418,8 @@ String getJsonStatus()
 	}
 	data += F("}");
 
-	logger.print(tag, F("\n\t json="));
-	logger.print(tag, data);
+	//logger.print(tag, F("\n\t json="));
+	//logger.print(tag, data);
 	return data;
 }
 
