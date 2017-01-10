@@ -7,7 +7,7 @@ public:
 
 	static const int STATUS_IDLE = 1;
 	static const int STATUS_PROGRAMACTIVE = 2;
-	static const int STATUS_MANUAL = 3;
+	static const int STATUS_MANUAL_AUTO = 3;
 	static const int STATUS_DISABLED = 4;
 	static const int STATUS_RESTARTED = 5;
 	static const int STATUS_MANUAL_OFF = 6;

@@ -10,6 +10,11 @@ Actuator::~Actuator()
 {
 }
 
+bool Actuator::checkStatus()
+{
+	return false;
+}
+
 String Actuator::getJSON()
 {
 	return "actuator";

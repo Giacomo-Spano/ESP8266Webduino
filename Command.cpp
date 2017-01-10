@@ -187,7 +187,7 @@ int Command::registerShield(Settings settings)
 	}
 }
 
-int Command::timeSync(String servername, int port)
+int Command::timeSync(/*String servername, int port*/)
 {
 	logger.println(tag, F("timeSync"));
 
@@ -196,8 +196,9 @@ int Command::timeSync(String servername, int port)
 
 	HttpHelper hplr;
 
+	Settings settings;
 	String result;
-	boolean res = hplr.post(servername, port, "/webduino/time", str, &result);
+	boolean res = hplr.post(settings.getServerName(), settings.getServerPort(), "/webduino/time", str, &result);
 	logger.print(tag, "\n\tanswer = ");
 	logger.print(tag, result);
 
@@ -215,33 +216,27 @@ int Command::timeSync(String servername, int port)
 	}
 }
 
-boolean Command::sendActuatorStatus(Settings settings, HeaterActuator actuator)
+boolean Command::sendActuatorStatus(HeaterActuator actuator)
 {
 	logger.println(tag, F("SEND ACTUATOR STATUS"));
 
-	if (settings.id == 0) {
+	//Settings settings;
+
+	if (Settings::getShieldId() == 0) {
 		logger.println(tag, F("ID NON VALIDO"));
 		return false;
 	}
 
-	//time_t remaining = actuator.programDuration - (millis() - actuator.programStartTime);
-	time_t remaining = actuator.getRemaininTime();
+	String jsonActuator = actuator.getJSON();
 
-	//String str = settings.getActuatorsStatusJson();
 	String str = "{";
-	str += "\"command\":\"status\",";
-	str += "\"id\":" + String(settings.id) + ",";
-	str += "\"addr\":\"" + actuator.getSensorAddress() + "\",";
-	str += "\"status\":\"" + String(statusStr[actuator.getStatus()]) + "\",";
-	str += "\"type\":\"heater\",";
-	str += "\"name\":\"" + actuator.sensorname + "\",";
-	str += "\"relestatus\":\"" + String((actuator.getReleStatus()) ? "true" : "false") + "\",";
-	str += "\"remaining\":" + String(remaining) + "";
-	str += "}";
+	str += "\"event\":\"update\",";
+	str += "\"actuator\": " + jsonActuator + "}";
 	
 	String result;
 	HttpHelper hplr;
-	hplr.post(settings.servername, settings.serverPort, "/webduino/actuator", str, &result);
+	
+	hplr.post(Settings::getServerName(), Settings::getServerPort(), "/webduino/actuator", str, &result);
 	logger.println(tag, "\n\tanswer = ");
 	logger.println(tag, result);
 
@@ -252,30 +247,19 @@ boolean Command::sendSensorsStatus(Settings settings)
 {
 	logger.println(tag, F("SEND SENSOR STATUS"));
 
-	if (settings.id == 0) {
+	if (Settings::getShieldId() == 0) {
 		logger.print(tag, F("\n\tID NON VALIDO"));
 		return false;
 	}
 
 	String str = settings.getSensorsStatusJson();
-	/*String str = "{";
-	str += "\"id\":" + String(settings.id);// shieldid
-	str += ",\"sensors\":[";
-	for (int i = 0; i < settings.sensorList.count; i++) {
-		DS18S20Sensor* sensor = (DS18S20Sensor*)settings.sensorList.get(i);
-		if (i != 0)
-			str += ",";
-		str += sensor->getJSON();
-	}
-	str += "]";
-	str += "}";*/
-
+	
 	logger.print(tag, F("\n\tjson="));
 	logger.print(tag, str);
 
 	String result;
 	HttpHelper hplr;
-	bool res = hplr.post(settings.servername, settings.serverPort, "/webduino/sensor", str, &result);
+	bool res = hplr.post(Settings::getServerName(), Settings::getServerPort(), "/webduino/sensor", str, &result);
 	logger.print(tag, "\n\tanswer = ");
 	logger.print(tag, result);
 	return res;

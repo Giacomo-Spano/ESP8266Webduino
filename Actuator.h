@@ -7,6 +7,7 @@ class Actuator :
 public:
 	Actuator();
 	~Actuator();
+	virtual bool checkStatus();
 
 	virtual String getJSON();
 

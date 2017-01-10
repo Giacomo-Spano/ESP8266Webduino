@@ -7,11 +7,13 @@ class HeaterActuator :
 {
 private:
 	String tag;
-	const int relestatus_off = 0;
-	const int relestatus_on = 1;
-	const int relestatus_disabled = 2;
-	const int relestatus_enabled = 3;
-
+	const int command_ProgramOff = 0;
+	const int command_ProgramOn = 1;
+	const int command_disabled = 2;
+	const int command_enabled = 3;
+	const int command_ManualOff = 4;
+	const int command_Manual = 5;
+	const int command_ManualEnd = 6;
 	
 	int manualMode;
 
@@ -25,18 +27,20 @@ private:
 	unsigned long remoteSensorTimeout = 36000; // tempo dopo il quale il programa si disattiva
 
 public:
-	static const int MANUALMODE_DISABLED = 0;
-	static const int MANUALMODE_AUTO = 1;
-	static const int MANUALMODE_OFF = 2;
+	static const int MANUALMODE_DISABLED = 0;  // modalità manuale disabilitata
+	static const int MANUALMODE_AUTO = 1;  // temperatura automatica >= alk sensorid
+	static const int MANUALMODE_OFF = 2; // sempre spento
+	static const int MANUALMODE_END = 3; // sempre spento
 
 	HeaterActuator();
 	~HeaterActuator();
 	void updateReleStatus();
 	virtual String getJSON() override;
+	virtual bool checkStatus() override;
 	void setStatus(int status);
-	void setManualMode(int status, int mode);
+	//void setManualMode(int status, int mode);
 	int getStatus();
-	int getManualMode();
+	//int getManualMode();
 	void setReleStatus(int status);
 	int getReleStatus();
 	void enableRele(boolean on);
@@ -56,10 +60,11 @@ public:
 	int getLocalSensorId();
 	bool programEnded();
 	time_t getRemaininTime();
+	time_t getProgramDuration();
 	int getActiveProgram();
 	int getActiveTimeRange();
 	void setLocalTemperature(float temperature);
-	void changeProgram(int status, long duration, int manual, bool sensorRemote, float remotetemperature, int sensorId, float target, int program, int timerange, int localsensor);
+	void changeProgram(int status, long duration/*, int manual*/, bool sensorRemote, float remotetemperature, int sensorId, float target, int program, int timerange, int localsensor);
 	virtual String getSensorAddress();
 
 	time_t programStartTime = 0;

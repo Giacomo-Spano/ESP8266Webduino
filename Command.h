@@ -33,8 +33,8 @@ public:
 	int registerShield(Settings settings);
 	boolean sendSensorsStatus(Settings settings);
 	bool sendLog(String log, int shieldid, String servername, int port);
-	int timeSync(String servername, int port);
-	boolean sendActuatorStatus(Settings settings, HeaterActuator actuator);
+	int timeSync(/*String servername, int port*/);
+	boolean sendActuatorStatus(HeaterActuator actuator);
 	boolean download(String filename, Settings settings);
 
 	//time_t getNtpTime();

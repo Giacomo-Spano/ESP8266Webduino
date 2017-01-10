@@ -27,7 +27,10 @@ extern uint8_t OneWirePin = D4;
 extern OneWire oneWire(OneWirePin);
 extern DallasTemperature sensors(&oneWire);
 
-#define Versione "0.991"
+#define Versione 0.92
+//int buildVersion = 1;
+
+int EPROM_Table_Schema_Version = 5;
 const char SWVERSION[] = "1.01";
 
 Logger logger;
@@ -43,7 +46,7 @@ const char* ssid = "xxBUBBLES";
 /*   da eliminare*/
 byte mac[] = { 0x00, 0xA0, 0xB0, 0xC0, 0xD0, 0x90 };
 
-extern const char* statusStr[] = { "unused", "idle", "program", "manual", "disabled", "restarted" };
+extern const char* statusStr[] = { "unused", "idle", "program", "manual", "disabled", "restarted", "manualoff" };
 Settings settings;
 
 
@@ -58,6 +61,9 @@ String getJsonSensorsStatus();
 String getJsonActuatorsStatus();
 int findIndex(const char* data, const char* target);
 String showMain(String param);
+String showSettings(String param);
+String showIODevices(String param);
+void showChangeIODevices(String param);
 void showChangeSettings(String param);
 void showPower(String param);
 String softwareReset();
@@ -117,7 +123,22 @@ void writeEPROM() {
 
 	// dummy
 	byte dummy;
+	dummy = 3;
 	EEPROM.write(addr++, dummy);
+
+	// build version
+	hiByte = highByte(EPROM_Table_Schema_Version);
+	loByte = lowByte(EPROM_Table_Schema_Version);
+	EEPROM.write(addr++, hiByte);
+	EEPROM.write(addr++, loByte);
+
+	for (int i = 0; i < 10; i++) {
+		hiByte = highByte(Settings::getIODevice(i));
+		loByte = lowByte(Settings::getIODevice(i));
+		EEPROM.write(addr++, hiByte);
+		EEPROM.write(addr++, loByte);
+	}
+	
 	// local port
 	hiByte = highByte(settings.localPort);
 	loByte = lowByte(settings.localPort);
@@ -166,6 +187,34 @@ void readEPROM() {
 	int addr = TIMERTIME_ADDR;
 	// dummy
 	byte dummy = EEPROM.read(addr++);
+
+	logger.print(tag, "\ndummy=");
+	logger.print(tag, String(dummy));
+
+	logger.print(tag, "\EPROM_Table_Schema_Version=");
+	logger.print(tag, String(EPROM_Table_Schema_Version));
+
+	int epromversion = 0;
+	// build version
+	hiByte = EEPROM.read(addr++);
+	lowByte = EEPROM.read(addr++);
+	epromversion = word(hiByte, lowByte);
+	logger.print(tag, "\nepromversion=");
+	logger.print(tag, String(epromversion));
+	
+	if (epromversion >= EPROM_Table_Schema_Version) {
+		for (int i = 0; i < Settings::getMaxIoDevices(); i++) {
+			hiByte = EEPROM.read(addr++);
+			lowByte = EEPROM.read(addr++);
+			Settings::setIODevice(i,word(hiByte, lowByte));
+			
+			logger.print(tag, "\ni=");
+			logger.print(tag, String(i));
+			logger.print(tag, ", dev=");
+			logger.print(tag, String(Settings::getIODevice(i)));
+		}
+	}
+
 	// local port
 	hiByte = EEPROM.read(addr++);
 	lowByte = EEPROM.read(addr++);
@@ -377,7 +426,7 @@ void setup()
 
 
 	String str = "\n\nstarting.... Versione ";
-	str += Versione;
+	str += String(Versione);
 	logger.print(tag, str);
 
 	// get MAC Address
@@ -629,12 +678,6 @@ String showRele(String GETparam) {
 	settings.hearterActuator.setTargetTemperature(target);
 	// sensor
 	int sensorId = parsePostdata(databuff, "sensor", posdata);
-	/*if (sensor_local) {
-		settings.hearterActuator.setSensorRemote(true, sensorId);
-	}
-	else {
-		settings.hearterActuator.setSensorRemote(false, 0);
-	}*/
 	// remote temperature
 	float remoteTemperature = -1;
 	res = parsePostdata(databuff, "temperature", posdata);
@@ -655,29 +698,27 @@ String showRele(String GETparam) {
 	int timerange = parsePostdata(databuff, "timerange", posdata);
 	logger.print(tag, F("\n\ttimerange="));
 	logger.print(tag, timerange);
-	// manual
-	int manual = parsePostdata(databuff, "manual", posdata);
-	logger.print(tag, F("\n\tmanual="));
-	if (manual == -1)
-		manual = HeaterActuator::MANUALMODE_DISABLED;
-	logger.print(tag, manual); // 0=auto; 1=manual; 2=manualoff
 	// local sensor
 	int localSensor = parsePostdata(databuff, "localsensor", posdata);
 	logger.print(tag, F("\n\tlocalsensor="));
-	logger.print(tag, manual);
 	
 	// jsonRequest
-	/// DA CAMBIARE. Controllarer in base all'header
+	// DA CAMBIARE. Controllarer in base all'header
 	int json = parsePostdata(databuff, "json", posdata);
 	logger.print(tag, F("\n\tjson="));
 	logger.print(tag, json);
 
 	settings.hearterActuator.changeProgram(status,duration,
-									manual,
+									/*manual,*/
 									(sensorId>0) ? true : false,
 									remoteTemperature,
 									sensorId,
 									target, program, timerange,localSensor);
+
+	
+	
+	//lastFlash = millis() - flash_interval;
+
 	//////////////////
 	if (json == 1) {
 		String data = getJsonStatus();
@@ -708,6 +749,8 @@ void flash() {
 
 	settings.readTemperatures();
 	
+	// se il sensore attivo è quello locale aggiorna lo stato
+	// del rele in base alla temperatur del sensore locale
 	if (!settings.hearterActuator.sensorIsRemote())
 		settings.hearterActuator.updateReleStatus();
 	
@@ -719,130 +762,10 @@ void loop()
 	ArduinoOTA.handle();  // questa chiamata deve essere messa in loop()
 	
 	wdt_enable(WDTO_8S);
-	Command command;
-
 	
-	if (settings.id >= 0 && !WiFi.localIP().toString().equals(settings.localIP)) {
-		logger.println(tag, "IP ADDRESS ERROR - re-register shield");
-		command.registerShield(settings);
-		settings.localIP = WiFi.localIP().toString();
-	}
-
-	// notifica il server se è cambiato lo stato del rele
-	if (settings.hearterActuator.releStatusChanged()/*programSettings.oldReleStatus != programSettings.releStatus*/) {
-
-		logger.println(tag, "SEND ACTUATOR UPDATE - rele status changed");
-		char buf[10];
-		sprintf(buf, "relestatus=%d", settings.hearterActuator.getReleStatus());
-		command.sendActuatorStatus(settings, settings.hearterActuator);
-		//programSettings.oldReleStatus = programSettings.releStatus;
-		settings.hearterActuator.saveOldReleStatus();
-		return;
-	}
-	
-	// notifica il server se è cambiato lo status
-	if (settings.hearterActuator.statusChanged()/*programSettings.currentStatus != programSettings.oldcurrentstatus*/) { 
-
-		logger.println(tag, "SEND ACTUATOR UPDATE - status changed");
-		if (settings.hearterActuator.getStatus() == Program::STATUS_DISABLED) {
-			char buf[10];
-			sprintf(buf, "status=%d", 0);
-			command.sendActuatorStatus(settings, settings.hearterActuator);
-		}
-		settings.hearterActuator.saveOldStatus();
-		//programSettings.oldcurrentstatus = programSettings.currentStatus;
-		return;
-	}
-
-	unsigned long currMillis = millis();
-	
-	// questo forse si può spostare all'inizio del loop porima di inivare lo stato
-	if (settings.hearterActuator.programEnded())
-		return;
-
-	/*if (settings.hearterActuator.getStatus() == Program::STATUS_PROGRAMACTIVE || settings.hearterActuator.getStatus() == Program::STATUS_MANUAL) {
-
-		if (temperatureSensor != sensor_local && (currMillis - last_RemoteSensor) > remoteSensorTimeout) {
-			logger.println(tag, "REMOTE SENSOR TIMEOUT");
-			settings.hearterActuator.enableRele(false);
-			// è inutile mandare un sendstatus perchè tanto cambia lo stato dopo e verrebbe inviato due volte
-			remoteTemperature = 0;
-			settings.hearterActuator.setStatus(Program::STATUS_IDLE);
-			return;
-
-		}
-		else if (currMillis - settings.hearterActuator.programStartTime > settings.hearterActuator.programDuration) {
-			logger.println(tag, "END PROGRAM");
-			settings.hearterActuator.enableRele(false);
-			// � iniutile mandare un sendstatus perch� tanto cambia lo stato dopo e verrebbe inviato due volte
-			settings.hearterActuator.setStatus(Program::STATUS_IDLE);
-			return;
-
-		}
-	}*/
-	
-	if (currMillis - lastFlash > flash_interval) {
-		lastFlash = currMillis;
-		flash();
-		Command command;
-		if (settings.id <= 0) {
-			logger.println(tag, F("ID NON VALIDO"));
-			settings.id = command.registerShield(settings);
-		}
-		else {
-
-			//if (settings.oldLocalAvTemperature != settings.localAvTemperature) {
-			if (settings.temperatureChanged) {
-
-				logger.println(tag, "SEND TEMPERATURE UPDATE - average temperature changed");
-				logger.print(tag, "\n\toldLocalAvTemperature=");
-				//logger.print(tag, settings.oldLocalAvTemperature);
-				//logger.print(tag, "\n\tlocalAvTemperature=");
-				//logger.print(tag, settings.localAvTemperature);
-				//logger.print(tag, "\n\t");
-				command.sendSensorsStatus(settings);
-				settings.temperatureChanged = false; // qui bisognerebbe introdiurre il controllo del valore di ritorno della send
-														// cokmmand ed entualmente reinviare
-			}
-		}
-		return;
-	}
-
-	if (/*(settings.oldLocalAvTemperature != settings.localAvTemperature && statusChangeSent == true) || */
-		(statusChangeSent == false && (currMillis - lastStatusChange) > lastStatusChange_interval)) {
-		
-		logger.println(tag, "SEND ACTUATOR UPDATE - periodic status update");
-		/*Serial.print(" oldLocalAvTemperature=");
-		Serial.println(settings.oldLocalAvTemperature, DEC);
-		Serial.print(" localAvTemperature=");
-		Serial.println(settings.localAvTemperature, DEC);*/
-		logger.print(tag, "\n\tstatusChangeSent=");
-		logger.print(tag, statusChangeSent);
-
-		logger.print(tag, "\n\tcurrMillis=");
-		logger.print(tag, currMillis);
-		logger.print(tag, " lastStatusChange=");
-		logger.print(tag, lastStatusChange);
-		logger.print(tag, "\n\tlastStatusChange_interval=");
-		logger.print(tag, lastStatusChange_interval);
-		logger.print(tag, "\n\t");
-
-		Command command;
-		if (command.sendActuatorStatus(settings, settings.hearterActuator)) {
-			statusChangeSent = true;
-			//settings.oldLocalAvTemperature = settings.localAvTemperature;
-		}
-		else {
-			statusChangeSent = false;
-			lastStatusChange = currMillis;
-		}
-		return;
-	}
-
+	//////////////////
 	String page, param;
-
 	client = server.available();
-
 	HttpHelper http;
 	bool res = false;
 	if (client) {
@@ -855,8 +778,19 @@ void loop()
 				data = showMain(param);
 				showPage(data);
 			}
+			else if (page.equalsIgnoreCase("setting")) {
+				data = showSettings(param);
+				showPage(data);
+			}
+			else if (page.equalsIgnoreCase("iodevices")) {
+				data = showIODevices(param);
+				showPage(data);
+			}
 			else if (page.equalsIgnoreCase("chstt")) {
-				showChangeSettings(param/*buffer*/);
+				showChangeSettings(param);
+			}
+			else if (page.equalsIgnoreCase("chiodevices")) {
+				showChangeIODevices(param);
 			}
 			else if (page.equalsIgnoreCase("wol")) {
 				showwol(param);
@@ -895,33 +829,133 @@ void loop()
 				showPage(data);
 			}
 			else if (page.equalsIgnoreCase("prova3.html")) {
-				getFile(page);				
+				getFile(page);
 			}
 			else if (page.equalsIgnoreCase("ESP8266.css")) {
-				getFile(page);				
+				getFile(page);
 			}
 			else if (page.equalsIgnoreCase("download")) {
-				download();				
+				download();
 			}
 		}
 		// give the web browser time to receive the data
 		//delay(20);
 		client.stop();
+
+		return;
+	}
+	
+	
+	/////////////////
+	
+	//Command command;
+	
+	if (settings.id >= 0 && !WiFi.localIP().toString().equals(settings.localIP)) {
+
+		Command command;
+		logger.println(tag, "IP ADDRESS ERROR - re-register shield");
+		command.registerShield(settings);
+		settings.localIP = WiFi.localIP().toString();
+		return;
 	}
 
+	if (settings.checkActuatorsStatus())
+		return;
+	/*
+	// notifica il server se è cambiato lo stato del rele
+	if (settings.hearterActuator.releStatusChanged()) {
+
+		logger.println(tag, "SEND ACTUATOR UPDATE - rele status changed");
+		command.sendActuatorStatus(settings, settings.hearterActuator);
+		settings.hearterActuator.saveOldReleStatus();
+		return;
+	}
+	
+	// notifica il server se è cambiato lo status
+	if (settings.hearterActuator.statusChanged()) { 
+
+		logger.println(tag, "SEND ACTUATOR UPDATE - status changed");
+		if (settings.hearterActuator.getStatus() == Program::STATUS_DISABLED) {
+			command.sendActuatorStatus(settings, settings.hearterActuator);
+		}
+		settings.hearterActuator.saveOldStatus();
+		return;
+	}
+	
+	// questo forse si può spostare all'inizio del loop porima di inivare lo stato
+	if (settings.hearterActuator.programEnded())
+		return;
+
+	*/
+	Command command;
+	
+	unsigned long currMillis = millis();
+	
+	unsigned long timeDiff = currMillis - lastFlash;
+	if (timeDiff > flash_interval) {
+		String str = "\n\nFLASH\ncurrMillis = " + String(currMillis);
+		str += "\nlastFlash = " + String(lastFlash);
+		str += "\ntimeDiff = " + String(timeDiff);
+		str += "\nflash_interval = " + String(flash_interval);
+		logger.println(tag, str);
+
+		lastFlash = currMillis;
+		flash();
+		
+		if (settings.id <= 0) {
+			logger.println(tag, F("ID NON VALIDO"));
+			settings.id = command.registerShield(settings);
+		}
+		else {
+			if (settings.temperatureChanged) {
+
+				logger.println(tag, "SEND TEMPERATURE UPDATE - average temperature changed");
+				logger.print(tag, "\n\toldLocalAvTemperature=");
+				command.sendSensorsStatus(settings);
+				settings.temperatureChanged = false; // qui bisognerebbe introdiurre il controllo del valore di ritorno della send
+														// cokmmand ed entualmente reinviare
+			}
+		}
+		return;
+	}
+
+	// questa parte commentata servirebbe a mandare periodicamente 
+	// lo stato del actuator al server ma non ha senso, meglio che sia 
+	// il server ad interrogare il cliente trascorso un certoi timeout
+	/*if ((statusChangeSent == false && (currMillis - lastStatusChange) > lastStatusChange_interval)) {
+		
+		logger.println(tag, "SEND ACTUATOR UPDATE - periodic status update");
+		logger.print(tag, "\n\tstatusChangeSent=");
+		logger.print(tag, statusChangeSent);
+		logger.print(tag, "\n\tcurrMillis=");
+		logger.print(tag, currMillis);
+		logger.print(tag, " lastStatusChange=");
+		logger.print(tag, lastStatusChange);
+		logger.print(tag, "\n\tlastStatusChange_interval=");
+		logger.print(tag, lastStatusChange_interval);
+		logger.print(tag, "\n\t");
+
+		Command command;
+		if (command.sendActuatorStatus(settings, settings.hearterActuator)) {
+			statusChangeSent = true;
+		}
+		else {
+			statusChangeSent = false;
+			lastStatusChange = currMillis;
+		}
+		return;
+	}*/
 
 	if (currMillis - lastTimeSync > timeSync_interval) {
 		lastTimeSync = currMillis;
-		command.timeSync(String(settings.servername), settings.serverPort);
+		command.timeSync(/*Settings::getServerName(), Settings::getServerPort()*/);
 		return;
 	}
 
 	if (currMillis - lastSendLog > SendLog_interval) {
 		lastSendLog = currMillis;
-		//logger.send(settings.id,String(settings.servername),settings.serverPort);
 		return;
 	}
-
 }
 
 void showPage(String data) {
@@ -931,6 +965,119 @@ void showPage(String data) {
 	client.println(data);
 	delay(1000);
 	//client.stop();
+}
+
+String showIODevices(String param)
+{
+	logger.println(tag, F("showIODevices "));
+
+	String data;
+	data += "";
+	data += F("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<!DOCTYPE html><html><head><title>Webduino</title><body>\r\n");
+
+	data += F("<font color='#53669E' face='Verdana' size='2'><b>IO devices </b></font>\r\n<form action='/chiodevices' method='POST'><table width='80%' border='1'><colgroup bgcolor='#B6C4E9' width='20%' align='left'></colgroup><colgroup bgcolor='#FFFFFF' width='30%' align='left'></colgroup>");
+	
+	for (int i = 0; i < Settings::getMaxIoDevices(); i++) {
+		// local port
+		data += F("<tr><td>device ");
+		data += String(i);
+		data += F("</td><td>");
+
+		data += F("<select name='iodevice");
+		data += String(i);
+		data += F("' >");
+		
+		for (int k = 0; k < Settings::getMaxIoDeviceTypes(); k++) {
+
+			data += F("<option value='");
+			data += String(k);
+			if (Settings::getIODevice(i) == k)
+				data += F(" selected ");
+			data += F("' >");
+
+			data += Settings::getIoDevicesTypeName(k);
+			data += F("</option>");
+
+			
+
+		}
+
+		/*data += F("<option value='1' >");
+		data += Settings::getIoDevicesTypeName(1);
+		data += F("</option>");
+
+		data += F("<option value='2' >");
+		data += Settings::getIoDevicesTypeName(2);
+		data += F("</option>");*/
+
+
+		data += F("</select>");
+
+		data += F("</td></tr>");
+	}
+
+	data += F("</table><input type='submit' value='save'/></form>");
+
+
+	data += F("</body></html>");
+
+	return data;
+
+}
+
+String showSettings(String param)
+{
+	logger.println(tag, F("showSettings "));
+
+	String data;
+	data += "";
+	data += F("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<!DOCTYPE html><html><head><title>Webduino</title><body>\r\n");
+
+	data += F("<font color='#53669E' face='Verdana' size='2'><b>Impostazioni </b></font>\r\n<form action='/chstt' method='POST'><table width='80%' border='1'><colgroup bgcolor='#B6C4E9' width='20%' align='left'></colgroup><colgroup bgcolor='#FFFFFF' width='30%' align='left'></colgroup>");
+	// local port
+	data += F("<tr><td>Local port</td><td><input type='num' name='localport");
+	data += F("' value='");
+	data += settings.localPort;
+	data += F("' size='4' maxlength='4'> </td></tr>");
+	// board name
+	data += F("<tr><td>Board name</td><td><input type='num' name='boardname' value='");
+	data += String(settings.boardname);
+	data += F("' size='");
+	data += String(settings.boardnamelen - 1);
+	data += F("' maxlength='");
+	data += String(settings.boardnamelen - 1);
+	data += F("'> </td></tr>");
+	// ssid
+	data += F("<tr><td>SSID</td><td><input type='num' name='ssid");
+	data += F("' value='");
+	data += String(settings.networkSSID);
+	data += F("' size='32' maxlength='32'> </td></tr>");
+	// password
+	data += F("<tr><td>password</td><td><input type='num' name='password");
+	data += F("' value='");
+	data += String(settings.networkPassword);
+	data += F("' size='96' maxlength='96'> </td></tr>");
+	// server name
+	data += F("<tr><td>Server name</td><td><input type='num' name='servername' value='");
+	data += String(settings.servername);
+	data += F("' size='");
+	data += (settings.servernamelen - 1);
+	data += F("' maxlength='");
+	data += (settings.servernamelen - 1);
+	data += F("'> </td></tr>");
+	// server port
+	data += F("<tr><td>Server port</td><td><input type='num' name='serverport");
+	data += F("' value='");
+	data += String(settings.serverPort);
+	data += F("' size='4' maxlength='4'> </td></tr>");
+
+	data += F("</table><input type='submit' value='save'/></form>");
+		
+
+	data += F("</body></html>");
+
+	return data;
+
 }
 
 String showMain(String param)
@@ -967,12 +1114,49 @@ String showMain(String param)
 	data += " - Rele: ";
 	if (settings.hearterActuator.getReleStatus()) {
 		data += F("on - ");
+	}
+	else {
+		data += F("off - ");
+	}
+
+	if (settings.hearterActuator.getStatus() == Program::STATUS_PROGRAMACTIVE ||
+		settings.hearterActuator.getStatus() == Program::STATUS_MANUAL_AUTO ||
+		settings.hearterActuator.getStatus() == Program::STATUS_MANUAL_OFF) {
+	
 		time_t onStatusDuration = (millis() - settings.hearterActuator.programStartTime) / 1000;
-		time_t remainingTime = (settings.hearterActuator.programDuration / 1000 - onStatusDuration);
+		time_t duration = (settings.hearterActuator.programDuration) / 1000;
+		time_t remainingTime = (duration - onStatusDuration);
+		
+		
 		time_t hr = remainingTime / 3600L;
 		time_t mn = (remainingTime - hr * 3600L) / 60L;
 		time_t sec = (remainingTime - hr * 3600L) % 60L;
-		sprintf(buffer, " remaining:(%2d) ", remainingTime);
+			
+
+		data += F(" onStatusDuration:");
+		data += String(onStatusDuration);
+		data += F(" ");
+		data += String(onStatusDuration/60);
+		data += F(" duration:");
+		data += String(duration);
+		data += F(" ");
+		data += String(duration / 60L);
+		data += F(" remainingTime:");
+		data +=String(remainingTime);
+		data += F(" ");
+		data += String(remainingTime / 60L);
+
+		/*sprintf(buffer, " duration:(%2d) ", settings.hearterActuator.programDuration);
+		data += String(buffer);
+		sprintf(buffer, "%02d:", hr);
+		data += String(buffer);
+		sprintf(buffer, "%02d:", mn);
+		data += String(buffer);
+		sprintf(buffer, "%02d", sec);
+		data += String(buffer);*/
+
+		
+		/*sprintf(buffer, " tempo rimanente:(%2d) ", remainingTime);
 		data += String(buffer);
 		sprintf(buffer, "%02d:", hr);
 		data += String(buffer);
@@ -984,19 +1168,18 @@ String showMain(String param)
 		hr = onStatusDuration / 3600L;
 		mn = (onStatusDuration - hr * 3600L) / 60L;
 		sec = (onStatusDuration - hr * 3600L) % 60L;
-		sprintf(buffer, " acceso da:(%2d) ", onStatusDuration);
+		sprintf(buffer, " programma attivo da:(%2d) ", onStatusDuration);
 		data += String(buffer);
 		sprintf(buffer, "%02d:", hr);
 		data += String(buffer);
 		sprintf(buffer, "%02d:", mn);
 		data += String(buffer);
 		sprintf(buffer, "%02d", sec);
-		data += String(buffer);
+		data += String(buffer);*/
 
 	}
-	else {
-		data += F("off");
-	}
+
+
 	data += F("</td></tr>");
 
 	// program
@@ -1017,55 +1200,59 @@ String showMain(String param)
 			data += " Local (" + String(settings.hearterActuator.getLocalSensorId()) + ")";
 			data += String(settings.hearterActuator.getLocalTemperature()) + "°C";
 		}
-		data += F("</td></tr>");
 	}
-	else if (settings.hearterActuator.getStatus() == Program::STATUS_MANUAL) {
-		data += F("program manual  ");
-		if (settings.hearterActuator.getManualMode() == HeaterActuator::MANUALMODE_AUTO)
-			data += F(" auto");
-		else if (settings.hearterActuator.getManualMode() == HeaterActuator::MANUALMODE_OFF)
-			data += F(" off");
+	else if (settings.hearterActuator.getStatus() == Program::STATUS_MANUAL_AUTO) {
 
-		data += F("</td></tr>");
+		data += F("program manual auto");
+
+	} else if (settings.hearterActuator.getStatus() == Program::STATUS_MANUAL_OFF) {
+		
+		data += F("program manual  off");
 	}
+	data += F("</td></tr>");
 	// Manual
 	data += F("<tr><td>Manual-- ");
-	if (settings.hearterActuator.getStatus() == Program::STATUS_MANUAL) {
+	if (settings.hearterActuator.getStatus() == Program::STATUS_MANUAL_AUTO || settings.hearterActuator.getStatus() == Program::STATUS_MANUAL_OFF) {
 
-		sprintf(buffer, "ON</td><td>Target: %d.%02d<BR>", (int)settings.hearterActuator.getTargetTemperature(), (int)(settings.hearterActuator.getTargetTemperature() * 100.0) % 100);
-		data += String(buffer);
+		data += F("<tr><td>Manual ON</td><td>");
+		
+		if (settings.hearterActuator.getStatus() == Program::STATUS_MANUAL_AUTO) {
+			sprintf(buffer, "Target: %d.%02d<BR>", (int)settings.hearterActuator.getTargetTemperature(), (int)(settings.hearterActuator.getTargetTemperature() * 100.0) % 100);
+			data += String(buffer);
 
-		if (!settings.hearterActuator.sensorIsRemote()) {
-			data += F("Sensor: Local");
-		}
-		else {
-			data += "Sensor: Remote (" + String(settings.hearterActuator.getRemoteSensorId()) + ")";
+			if (!settings.hearterActuator.sensorIsRemote()) {
+				data += F("Sensor: Local");
+			}
+			else {
+				data += "Sensor: Remote (" + String(settings.hearterActuator.getRemoteSensorId()) + ")";
+			}
 		}
 		data += F("<form action='/rele' method='POST'>");
-		data += F("<input type='hidden' name='manual' value='1'>");
-		data += F("<input type='hidden' name='status' value='0'>");
-		data += F("<input type='submit' value='stop'></form>");
+		//data += F("<input type='hidden' name='manual' value='3'>"); 
+		data += F("<input type='hidden' name='status' value='6'>"); // 6 = manual end  
+		data += F("<input type='submit' value='stop manual'></form>");
 	}
 	else if (settings.hearterActuator.getStatus() == Program::STATUS_PROGRAMACTIVE || settings.hearterActuator.getStatus() == Program::STATUS_IDLE) {
-		data += F("OFF</td><td><form action='/rele' method='POST'><input type='hidden' name='status' value='1'>");
+		data += F("OFF</td><td><form action='/rele' method='POST'>");
 		data += F("Minutes:<input type='num' name='duration' value='");
-
 		data += 30;
 		data += F("' size='5' maxlength='5'><BR>");
-		data += F("<input type='hidden' name='manual' value='1'>");
+		data += F("<input type='hidden' name='status' value='5'>"); // 5 = manual auto
 		data += F("Target:<input type='number' name='target' value='22.0' step='0.10' ><BR>");
 		data += F("Sensor:<input type='radio' name='sensor' value='0' checked>Local<input type='radio' name='sensor' value='1'>Remote<BR>");
-		data += F("<input type='submit' value='start'></form>");
-	}
-	else {
-		data += F("</td><td>--");
-	}
-	// manual off
-	data += F("<BR><form action='/rele' method='POST'>");
-	data += F("<input type='hidden' name='manual' value='2'>");
-	data += F("<input type='hidden' name='status' value='1'>");
-	data += F("<input type='submit' value='manual off'></form>");
+		data += F("<input type='submit' value='start manual'></form>");
 
+		// manual off
+		data += F("<form action='/rele' method='POST'>");
+		data += F("Minutes:<input type='num' name='duration' value='");
+		data += 30;
+		data += F("' size='5' maxlength='5'><BR>");
+		data += F("<input type='hidden' name='status' value='4'>"); // 4 = manual off 
+		data += F("<input type='submit' value='start manual off'></form>");
+	}
+	/*else {
+		data += F("</td><td>--");
+	}*/
 	data += F("</td></tr>");
 	// temperature sensor
 	int count = 0;
@@ -1121,59 +1308,49 @@ String showMain(String param)
 
 	data += F("</table>");
 
+	data += String(Versione);
 
-	data += F("<font color='#53669E' face='Verdana' size='2'><b>Impostazioni </b></font>\r\n<form action='/chstt' method='POST'><table width='80%' border='1'><colgroup bgcolor='#B6C4E9' width='20%' align='left'></colgroup><colgroup bgcolor='#FFFFFF' width='30%' align='left'></colgroup>");
-	// local port
-	data += F("<tr><td>Local port</td><td><input type='num' name='localport");
-	data += F("' value='");
-	data += settings.localPort;
-	data += F("' size='4' maxlength='4'> </td></tr>");
-	// board name
-	data += F("<tr><td>Board name</td><td><input type='num' name='boardname' value='");
-	data += String(settings.boardname);
-	data += F("' size='");
-	data += String(settings.boardnamelen - 1);
-	data += F("' maxlength='");
-	data += String(settings.boardnamelen - 1);
-	data += F("'> </td></tr>");
-	// ssid
-	data += F("<tr><td>SSID</td><td><input type='num' name='ssid");
-	data += F("' value='");
-	data += String(settings.networkSSID);
-	data += F("' size='32' maxlength='32'> </td></tr>");
-	// password
-	data += F("<tr><td>password</td><td><input type='num' name='password");
-	data += F("' value='");
-	data += String(settings.networkPassword);
-	data += F("' size='96' maxlength='96'> </td></tr>");
-	// server name
-	data += F("<tr><td>Server name</td><td><input type='num' name='servername' value='");
-	data += String(settings.servername);
-	data += F("' size='");
-	data += (settings.servernamelen - 1);
-	data += F("' maxlength='");
-	data += (settings.servernamelen - 1);
-	data += F("'> </td></tr>");
-	// server port
-	data += F("<tr><td>Server port</td><td><input type='num' name='serverport");
-	data += F("' value='");
-	data += String(settings.serverPort);
-	data += F("' size='4' maxlength='4'> </td></tr>");
-
-	data += F("</table><input type='submit' value='save'/></form>");
-
-	sprintf(buffer, "%s", Versione);
-	data += String(buffer);
+	data += "\nEPROM_Table_Schema_Version=" + String(EPROM_Table_Schema_Version);
 
 	data += F("</body></html>");
-	//client.println(data);
-
+	
 	return data;
-	/*delay(100);
-	client.stop();*/
 }
 
-void showChangeSettings(String/*char**/ param) {
+void showChangeIODevices(String param) {
+
+	logger.println(tag, F("showChangeIODevices "));
+
+	getPostdata(databuff, maxposdataChangeSetting);
+	char posdata[maxposdata];
+		
+	int val;
+	
+	for (int i = 0; i < Settings::getMaxIoDevices(); i++) {
+		
+		char buffer[20];
+		String str = "iodevice" + String(i + 1);
+		str.toCharArray(buffer, sizeof(buffer));
+		//logger.print(tag, "\n\tiodevice=");
+		//logger.print(tag, buffer);
+		val = parsePostdata(databuff, buffer, posdata);
+		if (val != -1) {
+			logger.print(tag, "\n\t" + String(buffer) + "=");
+			logger.print(tag, String(val));
+			Settings::setIODevice(i, val);
+		}
+	}
+	String data;
+	data += "";
+	data += F("HTTP/1.1 200 OK\r\nContent-Type: text/html\n\n<html><head><meta HTTP-EQUIV='REFRESH' content='0; url=/main'><title>Timer</title></head><body></body></html>");
+	data += F("</body></html>");
+	client.println(data);
+	
+	writeEPROM();
+	client.stop();
+}
+
+void showChangeSettings(String param) {
 
 	logger.println(tag, F("showChangeSettings "));
 
@@ -1371,8 +1548,8 @@ String getJsonStatus()
 	data += "HTTP/1.0 200 OK\r\nContent-Type: application/json; ";
 	data += "\r\nPragma: no-cache\r\n\r\n";
 
-
-	data += F("{\"id\":");
+	data += settings.hearterActuator.getJSON();
+	/*data += F("{\"id\":");
 	data += String(settings.id);
 
 	data += F(",\"remotetemperature\":");
@@ -1391,7 +1568,9 @@ String getJsonStatus()
 	data += F(",\"name\":");
 	data += settings.hearterActuator.sensorname;
 
-	if (settings.hearterActuator.getStatus() == Program::STATUS_PROGRAMACTIVE || settings.hearterActuator.getStatus() == Program::STATUS_MANUAL) {
+	if (settings.hearterActuator.getStatus() == Program::STATUS_PROGRAMACTIVE 
+		|| settings.hearterActuator.getStatus() == Program::STATUS_MANUAL_AUTO 
+		|| settings.hearterActuator.getStatus() == Program::STATUS_MANUAL_OFF) {
 
 		data += F(",\"duration\":");
 		data += String(settings.hearterActuator.programDuration);
@@ -1406,17 +1585,21 @@ String getJsonStatus()
 		else
 			data += F("false");
 
-		data += F(",\"target\":");
-		data += String(settings.hearterActuator.getTargetTemperature());
+		if (settings.hearterActuator.getStatus() == Program::STATUS_MANUAL_OFF) {
+			data += F(",\"target\":");
+			data += String(settings.hearterActuator.getTargetTemperature());
+		}
 
-		data += F(",\"program\":");
-		data += String(settings.hearterActuator.getActiveProgram());
+		if (settings.hearterActuator.getStatus() == Program::STATUS_PROGRAMACTIVE) {
+			data += F(",\"program\":");
+			data += String(settings.hearterActuator.getActiveProgram());
 
-		data += F(",\"timerange\":");
-		data += String(settings.hearterActuator.getActiveTimeRange());
+			data += F(",\"timerange\":");
+			data += String(settings.hearterActuator.getActiveTimeRange());
+		}
 
 	}
-	data += F("}");
+	data += F("}");*/
 
 	//logger.print(tag, F("\n\t json="));
 	//logger.print(tag, data);

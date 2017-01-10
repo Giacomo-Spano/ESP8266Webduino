@@ -9,6 +9,16 @@ extern DallasTemperature sensors;
 
 extern Logger logger;
 
+int Settings::id = 0; //// inizializzato a zero perchè viene impostato dalla chiamata a registershield
+
+int Settings::serverPort = 8080;
+
+char  Settings::servername[servernamelen];
+
+
+int Settings::ioDevices[maxIoDevices] = { 0,0,0,0,0,0,0,0,0,0 };
+//char* Settings::ioDevicesTypeNames[] = { "disconnected","Heater","OneWire sensors" };
+
 Settings::Settings()
 {
 	tag = "Settings";
@@ -19,7 +29,7 @@ Settings::Settings()
 
 	//Actuator* pActuator = new Actuator();
 	//actuatorList.push_back(*pActuator);
-
+	
 }
 
 
@@ -57,6 +67,13 @@ String Settings::getActuatorsStatusJson() {
 	json += "]";
 	json += "}";
 	return json;
+}
+
+bool Settings::checkActuatorsStatus()
+{
+	return hearterActuator.checkStatus();
+
+	
 }
 
 void Settings::addOneWireSensors(String sensorNames) {
