@@ -26,37 +26,40 @@ void HeaterActuator::init(String MACAddress)
 
 }
 
-bool HeaterActuator::checkStatus()
+void HeaterActuator::checkStatus()
 {
 
-	Command command;
+	bool sendStatus = false;
 
+	// controlla se il programma attivo è finito.
+	if (programEnded())
+		sendStatus = true;
+	
 	// notifica il server se è cambiato lo stato del rele
 	if (releStatusChanged()) {
 
 		logger.println(tag, "SEND ACTUATOR UPDATE - rele status changed");
 		//HeaterActuator ha = this->;
-		command.sendActuatorStatus(*this);
+		//command.sendActuatorStatus(*this);
 		saveOldReleStatus();
-		return true;
+		sendStatus = true;
 	}
 
 	// notifica il server se è cambiato lo status
 	if (statusChanged()) {
 
 		logger.println(tag, "SEND ACTUATOR UPDATE - status changed");
-		if (getStatus() == Program::STATUS_DISABLED) {
+		/*if (getStatus() == Program::STATUS_DISABLED) {
 			command.sendActuatorStatus(*this);
-		}
+		}*/
 		saveOldStatus();
-		return true;
+		sendStatus = true;
 	}
-
-	// questo forse si può spostare all'inizio del loop porima di inivare lo stato
-	if (programEnded())
-		return true;
-
-	return false;
+		
+	if (sendStatus) {
+		Command command;
+		command.sendActuatorStatus(*this);
+	}
 }
 
 void HeaterActuator::setTargetTemperature(float target)
@@ -223,7 +226,7 @@ void HeaterActuator::updateReleStatus() {
 
 void HeaterActuator::changeProgram(int command, long duration, /*int manual, */bool sensorRemote, float remotetemperature, int sensorId, float target, int program, int timerange, int localsensor) {
 
-	logger.println(tag, F("changeProgram"));
+	logger.println(tag, F(">>changeProgram"));
 
 	logger.print(tag, F("\n\tcurrentStatus="));
 	logger.print(tag, currentStatus);
@@ -298,6 +301,7 @@ void HeaterActuator::changeProgram(int command, long duration, /*int manual, */b
 			setStatus(Program::STATUS_DISABLED);
 		}
 	}
+	logger.println(tag, F("<<changeProgram"));
 }
 
 String HeaterActuator::getSensorAddress()
@@ -311,7 +315,7 @@ String HeaterActuator::getJSON() {
 
 	//json += "\"event\":\"update\",";
 
-	json += "\"shieldid\":" + String(Settings::id) + ",";
+	json += "\"shieldid\":" + String(Shield::id) + ",";
 	json += "\"remotetemperature\":" + String(getRemoteTemperature()) + ",";
 	json += "\"addr\":\"" + subaddress + "\",";
 	json += "\"status\":\"" + String(statusStr[getStatus()]) + "\",";

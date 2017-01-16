@@ -24,7 +24,7 @@ private:
 	const bool RELE_OFF = LOW;//LOW
 	static int const sensor_local = 0;
 	unsigned long last_RemoteSensor = 0;
-	unsigned long remoteSensorTimeout = 36000; // tempo dopo il quale il programa si disattiva
+	unsigned long remoteSensorTimeout = 5* 60 * 1000; // tempo dopo il quale il programa si disattiva
 
 public:
 	static const int MANUALMODE_DISABLED = 0;  // modalità manuale disabilitata
@@ -36,7 +36,7 @@ public:
 	~HeaterActuator();
 	void updateReleStatus();
 	virtual String getJSON() override;
-	virtual bool checkStatus() override;
+	virtual void checkStatus() override;
 	void setStatus(int status);
 	//void setManualMode(int status, int mode);
 	int getStatus();

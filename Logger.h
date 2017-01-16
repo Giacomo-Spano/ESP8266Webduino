@@ -29,7 +29,7 @@ public:
 	void print(String tag, int val);
 	void println(String tag, int val);
 	
-	bool send(int shieldid, String servername, int port);
+	bool send(/*int shieldid, String servername, int port*/);
 	
 	String getStrDate();
 	

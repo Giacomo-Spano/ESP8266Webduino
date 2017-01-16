@@ -34,8 +34,8 @@ bool HttpHelper::post(String host, int port, String path, String param, String *
 	logger.print(tag, port);
 	logger.print(tag, F(",path="));
 	logger.println(tag, path);
-	/*logger.print(tag, F("\n\tpostparam="));
-	logger.print(tag, param);*/
+	logger.print(tag, F("\n\tpostparam="));
+	logger.print(tag, param);
 	/*logger.print(tag, F("\n\tlen="));
 	logger.print(tag, len);*/
 

@@ -3,7 +3,7 @@
 #include <Arduino.h>
 
 #include "Logger.h"
-#include "Settings.h"
+#include "Shield.h"
 #include "HttpHelper.h"
 #include "OneWireSensors.h"
 #include "JSON.h"
@@ -30,12 +30,12 @@ public:
 	void setServer(String servername, int serverport);
 	~Command();
 
-	int registerShield(Settings settings);
-	boolean sendSensorsStatus(Settings settings);
-	bool sendLog(String log, int shieldid, String servername, int port);
+	int registerShield(Shield shield);
+	boolean sendSensorsStatus(Shield shield);
+	bool sendLog(String log/*, int shieldid/*, String servername, int port*/);
 	int timeSync(/*String servername, int port*/);
 	boolean sendActuatorStatus(HeaterActuator actuator);
-	boolean download(String filename, Settings settings);
+	boolean download(String filename, Shield shield);
 
 	//time_t getNtpTime();
 	static Command *getTimeObject;

@@ -45,11 +45,11 @@ time_t xgetNtpTime() {
 	//logger.println(tag, F("getNtpTime"));
 #ifdef dopo
 	String str = "{";
-	//str += "\"id\":\"" + /*String(settings.id) + */"\"" + "}";
+	//str += "\"id\":\"" + /*String(shield.id) + */"\"" + "}";
 
 	HttpHelper hplr;
 	String result;
-	boolean res = hplr.post(/*settings.servername*/"http://192.168.1.3",8080/*settings.serverPort*/, "/webduino/time", str, &result);
+	boolean res = hplr.post(/*shield.servername*/"http://192.168.1.3",8080/*shield.serverPort*/, "/webduino/time", str, &result);
 	Serial.println("CCC");
 
 	//logger.print(tag, "\n\tanswer = ");
@@ -94,7 +94,7 @@ Command::~Command()
 {
 }
 
-bool Command::sendLog(String log, int shieldid, String servername, int port)
+bool Command::sendLog(String log/*, /*int shieldid, String servername, int port*/)
 {
 	//Serial.println(F("SENDLOG"));
 	if (log.length() > Command::maxLogSize)
@@ -103,7 +103,7 @@ bool Command::sendLog(String log, int shieldid, String servername, int port)
 	String packetend = "#END#";
 	String packetstart = "#START#";
 	String packetnumber = String(packetcount++);
-	String strid = String(shieldid);
+	String strid = String(Shield::getShieldId());
 	if (packetcount > 99999)
 		packetcount = 0;
 
@@ -111,7 +111,7 @@ bool Command::sendLog(String log, int shieldid, String servername, int port)
 
 	HttpHelper hplr;
 	String result;
-	boolean res = hplr.post(servername, port, "/webduino/log", json, &result);
+	boolean res = hplr.post(Shield::servername, Shield::serverPort, "/webduino/log", json, &result);
 
 	JSON jsonResult(result);
 	String resultvalue = jsonResult.jsonGetString("result");
@@ -125,40 +125,44 @@ bool Command::sendLog(String log, int shieldid, String servername, int port)
 	}
 }
 
-int Command::registerShield(Settings settings)
+int Command::registerShield(Shield shield)
 {
 	logger.println(tag, F("REGISTER SHIELD"));
 
+
 	String str = "{";
-	str += "\"MAC\":\"" + String(settings.MAC_char) + "\"";
-	str += ",\"boardname\":\"" + String(settings.boardname) + "\"";
-	str += ",\"localIP\":\"" + settings.localIP + "\"";
-	str += ",\"localPort\":\"" + String(settings.localPort) + "\"";
+	str += "\"event\":\"register\",";
+	str += "\"shield\": ";
 	
 
+	str += "{";
+	str += "\"MAC\":\"" + String(shield.MAC_char) + "\"";
+	str += ",\"boardname\":\"" + String(shield.boardname) + "\"";
+	str += ",\"localIP\":\"" + shield.localIP + "\"";
+	str += ",\"localPort\":\"" + String(shield.localPort) + "\"";
+	
+	// sensori
 	str += ",\"sensors\":[";
-
-	for (int i = 0; i < settings.sensorList.count; i++) {
-		DS18S20Sensor* sensor = (DS18S20Sensor*)settings.sensorList.get(i);
+	for (int i = 0; i < shield.sensorList.count; i++) {
+		DS18S20Sensor* sensor = (DS18S20Sensor*)shield.sensorList.get(i);
 		if (i != 0)
 			str += ",";
 		str += sensor->getJSON();
 	}
-		
 	str += "]";
 
+	// attuatori
 	str += ",\"actuators\":[";
-
-	str += settings.hearterActuator.getJSON();
-	
+	str += shield.hearterActuator.getJSON();
 	str += "]";
-
+	str += "}";
+	
 	str += "}";
 
 	HttpHelper hplr;
 
 	String result;
-	boolean res = hplr.post(settings.servername, settings.serverPort, "/webduino/shield", str, &result);
+	boolean res = hplr.post(shield.servername, shield.serverPort, "/webduino/shield", str, &result);
 	//logger.print(tag, "\n\tanswer = ");
 	//logger.println(tag, result);
 
@@ -196,9 +200,9 @@ int Command::timeSync(/*String servername, int port*/)
 
 	HttpHelper hplr;
 
-	Settings settings;
+	Shield shield;
 	String result;
-	boolean res = hplr.post(settings.getServerName(), settings.getServerPort(), "/webduino/time", str, &result);
+	boolean res = hplr.post(shield.getServerName(), shield.getServerPort(), "/webduino/time", str, &result);
 	logger.print(tag, "\n\tanswer = ");
 	logger.print(tag, result);
 
@@ -220,9 +224,9 @@ boolean Command::sendActuatorStatus(HeaterActuator actuator)
 {
 	logger.println(tag, F("SEND ACTUATOR STATUS"));
 
-	//Settings settings;
+	//Shield shield;
 
-	if (Settings::getShieldId() == 0) {
+	if (Shield::getShieldId() == 0) {
 		logger.println(tag, F("ID NON VALIDO"));
 		return false;
 	}
@@ -236,36 +240,36 @@ boolean Command::sendActuatorStatus(HeaterActuator actuator)
 	String result;
 	HttpHelper hplr;
 	
-	hplr.post(Settings::getServerName(), Settings::getServerPort(), "/webduino/actuator", str, &result);
+	hplr.post(Shield::getServerName(), Shield::getServerPort(), "/webduino/actuator", str, &result);
 	logger.println(tag, "\n\tanswer = ");
 	logger.println(tag, result);
 
 	return true;
 }
 
-boolean Command::sendSensorsStatus(Settings settings)
+boolean Command::sendSensorsStatus(Shield shield)
 {
 	logger.println(tag, F("SEND SENSOR STATUS"));
 
-	if (Settings::getShieldId() == 0) {
+	if (Shield::getShieldId() == 0) {
 		logger.print(tag, F("\n\tID NON VALIDO"));
 		return false;
 	}
 
-	String str = settings.getSensorsStatusJson();
+	String str = shield.getSensorsStatusJson();
 	
 	logger.print(tag, F("\n\tjson="));
 	logger.print(tag, str);
 
 	String result;
 	HttpHelper hplr;
-	bool res = hplr.post(Settings::getServerName(), Settings::getServerPort(), "/webduino/sensor", str, &result);
+	bool res = hplr.post(Shield::getServerName(), Shield::getServerPort(), "/webduino/sensor", str, &result);
 	logger.print(tag, "\n\tanswer = ");
 	logger.print(tag, result);
 	return res;
 }
 
-boolean Command::download(String filename, Settings settings)
+boolean Command::download(String filename, Shield shield)
 {
 	logger.println(tag, F("download"));
 
@@ -278,7 +282,7 @@ boolean Command::download(String filename, Settings settings)
 	
 	String result;
 	HttpHelper hplr;
-	hplr.downloadfile(filename, settings.servername, settings.serverPort, "/webduino/"+filename, str, &result);
+	hplr.downloadfile(filename, shield.servername, shield.serverPort, "/webduino/"+filename, str, &result);
 	//logger.print(tag, "\n\tanswer = ");
 	//logger.println(tag, result);
 	//Serial.print(result);

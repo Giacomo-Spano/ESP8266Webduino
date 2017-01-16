@@ -95,7 +95,7 @@
     <ClInclude Include="Logger.h" />
     <ClInclude Include="Program.h" />
     <ClInclude Include="Sensor.h" />
-    <ClInclude Include="Settings.h" />
+    <ClInclude Include="Shield.h" />
     <ClInclude Include="Util.h" />
     <ClInclude Include="wol.h" />
     <ClInclude Include="__vm\.ESP8266Webduino.vsarduino.h" />
@@ -111,7 +111,7 @@
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="Program.cpp" />
     <ClCompile Include="Sensor.cpp" />
-    <ClCompile Include="Settings.cpp" />
+    <ClCompile Include="Shield.cpp" />
     <ClCompile Include="Util.cpp" />
     <ClCompile Include="wol.cpp" />
   </ItemGroup>

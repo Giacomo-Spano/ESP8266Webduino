@@ -10,9 +10,8 @@ Actuator::~Actuator()
 {
 }
 
-bool Actuator::checkStatus()
+void Actuator::checkStatus()
 {
-	return false;
 }
 
 String Actuator::getJSON()

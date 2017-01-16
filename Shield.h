@@ -11,7 +11,7 @@
 
 
 
-class Settings
+class Shield
 {	
 private:
 	String tag;
@@ -81,11 +81,12 @@ public:
 	}
 
 	
-	Settings();
-	~Settings();
+	Shield();
+	~Shield();
 	String getSensorsStatusJson();
 	String getActuatorsStatusJson();
-	bool checkActuatorsStatus();
+	void checkActuatorsStatus();
+	bool checkSensorsStatus();
 
 	char networkSSID[32];// = "ssid";
 	char networkPassword[96];// = "password";

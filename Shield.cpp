@@ -1,7 +1,8 @@
-#include "Settings.h"
+#include "Shield.h"
 #include "DS18S20Sensor.h"
 #include "Logger.h"
 #include "HeaterActuator.h"
+#include "Command.h"
 
 extern uint8_t OneWirePin;
 extern OneWire oneWire;
@@ -9,19 +10,19 @@ extern DallasTemperature sensors;
 
 extern Logger logger;
 
-int Settings::id = 0; //// inizializzato a zero perchè viene impostato dalla chiamata a registershield
+int Shield::id = 0; //// inizializzato a zero perchè viene impostato dalla chiamata a registershield
 
-int Settings::serverPort = 8080;
+int Shield::serverPort = 8080;
 
-char  Settings::servername[servernamelen];
+char  Shield::servername[servernamelen];
 
 
-int Settings::ioDevices[maxIoDevices] = { 0,0,0,0,0,0,0,0,0,0 };
-//char* Settings::ioDevicesTypeNames[] = { "disconnected","Heater","OneWire sensors" };
+int Shield::ioDevices[maxIoDevices] = { 0,0,0,0,0,0,0,0,0,0 };
+//char* Shield::ioDevicesTypeNames[] = { "disconnected","Heater","OneWire sensors" };
 
-Settings::Settings()
+Shield::Shield()
 {
-	tag = "Settings";
+	tag = "Shield";
 
 	serverPort = 8080;
 
@@ -33,11 +34,11 @@ Settings::Settings()
 }
 
 
-Settings::~Settings()
+Shield::~Shield()
 {
 }
 
-String Settings::getSensorsStatusJson() {
+String Shield::getSensorsStatusJson() {
 	String json = "{";
 	json += "\"id\":" + String(id);// shieldid
 	json += ",\"sensors\":[";
@@ -52,7 +53,7 @@ String Settings::getSensorsStatusJson() {
 	return json;
 }
 
-String Settings::getActuatorsStatusJson() {
+String Shield::getActuatorsStatusJson() {
 	String json = "{";
 	json += "\"id\":" + String(id);// shieldid
 	json += ",\"actuators\":[";
@@ -69,14 +70,37 @@ String Settings::getActuatorsStatusJson() {
 	return json;
 }
 
-bool Settings::checkActuatorsStatus()
+void Shield::checkActuatorsStatus()
 {
-	return hearterActuator.checkStatus();
-
-	
+	hearterActuator.checkStatus();	
 }
 
-void Settings::addOneWireSensors(String sensorNames) {
+bool Shield::checkSensorsStatus()
+{
+	logger.println(tag, F("checkSensorsStatus - start -----"));
+	readTemperatures();
+
+	// se il sensore attivo è quello locale aggiorna lo stato
+	// del rele in base alla temperatur del sensore locale
+	if (!hearterActuator.sensorIsRemote())
+		hearterActuator.updateReleStatus();
+
+	Command command;
+	if (temperatureChanged) {
+
+		logger.println(tag, "SEND TEMPERATURE UPDATE - average temperature changed");
+		logger.print(tag, "\n\toldLocalAvTemperature=");
+		
+		command.sendSensorsStatus(*this);
+		temperatureChanged = false; // qui bisognerebbe introdiurre il controllo del valore di ritorno della send
+										   // cokmmand ed entualmente reinviare
+	}
+	logger.print(tag, F("\n\checkSensorsStatus - END \n\t"));
+
+	return true;
+}
+
+void Shield::addOneWireSensors(String sensorNames) {
 
 	logger.println(tag, "addOneWireSensors - discoverOneWireDevices...\n\r");
 	sensors.begin();
@@ -144,7 +168,7 @@ void Settings::addOneWireSensors(String sensorNames) {
 	sensorList.show();
 }
 
-void Settings::addActuators() {
+void Shield::addActuators() {
 
 	logger.println(tag, "addActuator...\n\r");
 	ActuatorList.init();
@@ -154,23 +178,23 @@ void Settings::addActuators() {
 }
 
 
-void Settings::readTemperatures() {
+void Shield::readTemperatures() {
 
 	logger.print(tag, "\n\treadTemperatures---");
 	//sensorList.show();
-	float oldTemperature;
+	float oldAvTemperature;
 	for (int i = 0; i < sensorList.count; i++) {
 		DS18S20Sensor* pSensor = (DS18S20Sensor*)sensorList.get(i);		
 		logger.print(tag, "\n\t readTemperatures for sensor ");
 		logger.print(tag, pSensor->sensorname);
 		logger.print(tag, " addr: ");
 		logger.print(tag, pSensor->getSensorAddress());
-		oldTemperature = pSensor->avTemperature;
+		oldAvTemperature = pSensor->avTemperature;
 		
 		//sensorList.show();
 		pSensor->readTemperature();
 		
-		if (oldTemperature != pSensor->avTemperature)
+		if (oldAvTemperature != pSensor->avTemperature)
 			temperatureChanged = true;
 
 		// imposta la temperatura locale a quella del primo sensore (DA CAMBIARE)

@@ -90,13 +90,13 @@ void Logger::println(String tag, int val) {
 
 int packetcounter = 0;
 
-bool Logger::send(int shieldid, String servername, int port) {
+bool Logger::send(/*int shieldid, String servername, int port*/) {
 
 	//String temp = "**FINE*";
 	if (toBeSent.length() > Command::maxLogSize) {
 		Command command;
 
-		//Serial.println("SEND LOG");
+		Serial.println("SEND LOG");
 		//Serial.print("toBeSent = ");
 		//Serial.println(toBeSent);
 
@@ -106,16 +106,16 @@ bool Logger::send(int shieldid, String servername, int port) {
 		//Serial.print(packetcounter++,DEC);
 		//Serial.print(":");
 		//Serial.println(substr);
-		bool res = command.sendLog(substr, shieldid, servername, port);
+		bool res = command.sendLog(substr/*, shieldid, servername, port*/);
 		if (res) {
 			truncated = false;
-			//Serial.println("PACKET SENT");
+			Serial.println("PACKET SENT");
 			toBeSent = toBeSent.substring(substr.length()/*-1*/);
 			//Serial.print("toBeSent=");
 			//Serial.println(toBeSent);
 		}
 		else {
-			//Serial.println("PACKET NOT SENT");
+			Serial.println("PACKET NOT SENT");
 
 		}
 	}	

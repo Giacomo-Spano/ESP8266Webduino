@@ -13,7 +13,7 @@
 #include "HttpHelper.h"
 #include "JSON.h"
 #include "OneWireSensors.h"
-#include "Settings.h"
+#include "Shield.h"
 #include "Command.h"
 #include "Program.h"
 #include "Actuator.h"
@@ -47,7 +47,7 @@ const char* ssid = "xxBUBBLES";
 byte mac[] = { 0x00, 0xA0, 0xB0, 0xC0, 0xD0, 0x90 };
 
 extern const char* statusStr[] = { "unused", "idle", "program", "manual", "disabled", "restarted", "manualoff" };
-Settings settings;
+Shield shield;
 
 
 void initEPROM();
@@ -133,40 +133,40 @@ void writeEPROM() {
 	EEPROM.write(addr++, loByte);
 
 	for (int i = 0; i < 10; i++) {
-		hiByte = highByte(Settings::getIODevice(i));
-		loByte = lowByte(Settings::getIODevice(i));
+		hiByte = highByte(Shield::getIODevice(i));
+		loByte = lowByte(Shield::getIODevice(i));
 		EEPROM.write(addr++, hiByte);
 		EEPROM.write(addr++, loByte);
 	}
 	
 	// local port
-	hiByte = highByte(settings.localPort);
-	loByte = lowByte(settings.localPort);
+	hiByte = highByte(shield.localPort);
+	loByte = lowByte(shield.localPort);
 	EEPROM.write(addr++, hiByte);
 	EEPROM.write(addr++, loByte);
 	// ssid
 	//Serial.print("networkSSID=");
-	//Serial.println(settings.networkSSID);
-	int res = EEPROM_writeAnything(addr, settings.networkSSID);
+	//Serial.println(shield.networkSSID);
+	int res = EEPROM_writeAnything(addr, shield.networkSSID);
 	addr += res;
 	// password
-	res = EEPROM_writeAnything(addr, settings.networkPassword);
+	res = EEPROM_writeAnything(addr, shield.networkPassword);
 	addr += res;
 	// server name
-	res = EEPROM_writeAnything(addr, settings.servername);
+	res = EEPROM_writeAnything(addr, shield.servername);
 	addr += res;
 	// server port
-	hiByte = highByte(settings.serverPort);
-	loByte = lowByte(settings.serverPort);
+	hiByte = highByte(shield.serverPort);
+	loByte = lowByte(shield.serverPort);
 	EEPROM.write(addr++, hiByte);
 	EEPROM.write(addr++, loByte);
 	// board name
-	res = EEPROM_writeAnything(addr, settings.boardname);
+	res = EEPROM_writeAnything(addr, shield.boardname);
 	addr += res;
 	// sensor names
 	String str = "";
-	for (int i = 0; i < settings.sensorList.count; i++) {
-		DS18S20Sensor* sensor = (DS18S20Sensor*)settings.sensorList.get(i);
+	for (int i = 0; i < shield.sensorList.count; i++) {
+		DS18S20Sensor* sensor = (DS18S20Sensor*)shield.sensorList.get(i);
 		str += String(sensor->sensorname);
 		str += ";";
 	}
@@ -203,41 +203,41 @@ void readEPROM() {
 	logger.print(tag, String(epromversion));
 	
 	if (epromversion >= EPROM_Table_Schema_Version) {
-		for (int i = 0; i < Settings::getMaxIoDevices(); i++) {
+		for (int i = 0; i < Shield::getMaxIoDevices(); i++) {
 			hiByte = EEPROM.read(addr++);
 			lowByte = EEPROM.read(addr++);
-			Settings::setIODevice(i,word(hiByte, lowByte));
+			Shield::setIODevice(i,word(hiByte, lowByte));
 			
 			logger.print(tag, "\ni=");
 			logger.print(tag, String(i));
 			logger.print(tag, ", dev=");
-			logger.print(tag, String(Settings::getIODevice(i)));
+			logger.print(tag, String(Shield::getIODevice(i)));
 		}
 	}
 
 	// local port
 	hiByte = EEPROM.read(addr++);
 	lowByte = EEPROM.read(addr++);
-	settings.localPort = word(hiByte, lowByte);
+	shield.localPort = word(hiByte, lowByte);
 	// ssid
-	int res = EEPROM_readAnything(addr, settings.networkSSID);
+	int res = EEPROM_readAnything(addr, shield.networkSSID);
 	//Serial.println("networkSSID=");
-	//Serial.println(settings.networkSSID);
+	//Serial.println(shield.networkSSID);
 	addr += res;
 	// password
-	res = EEPROM_readAnything(addr, settings.networkPassword);
+	res = EEPROM_readAnything(addr, shield.networkPassword);
 	//Serial.println("networkPassword=");
-	//Serial.println(settings.networkPassword);
+	//Serial.println(shield.networkPassword);
 	addr += res;
 	//server name
-	res = EEPROM_readAnything(addr, settings.servername);
+	res = EEPROM_readAnything(addr, shield.servername);
 	addr += res;
 	// server port
 	hiByte = EEPROM.read(addr++);
 	lowByte = EEPROM.read(addr++);
-	settings.serverPort = word(hiByte, lowByte);
+	shield.serverPort = word(hiByte, lowByte);
 	// board name
-	res = EEPROM_readAnything(addr, settings.boardname);
+	res = EEPROM_readAnything(addr, shield.boardname);
 	addr += res;
 	// sensor names
 	char buffer[100];
@@ -246,8 +246,8 @@ void readEPROM() {
 	sensorNames = String(buffer);
 	logger.print(tag, "\n\tsensorNames=" + sensorNames);
 	/*char buffer[100];
-	for (int i = 0; i < settings.sensorList.count; i++) {
-		DS18S20Sensor* sensor = (DS18S20Sensor*)settings.sensorList.get(i);
+	for (int i = 0; i < shield.sensorList.count; i++) {
+		DS18S20Sensor* sensor = (DS18S20Sensor*)shield.sensorList.get(i);
 		res = EEPROM_writeAnything(addr, buffer);
 		sensor->sensorname = String(buffer);
 		addr += res;
@@ -331,10 +331,10 @@ void setupAP(void) {
 	st += "</ul>";
 	delay(100);
 	String ssidName = String(ssidAP);
-	for (int i = 0; i < sizeof(settings.MAC_array); ++i) {
+	for (int i = 0; i < sizeof(shield.MAC_array); ++i) {
 		if (i > 0)
 			ssidName += ":";
-		ssidName += settings.MAC_array[i];
+		ssidName += shield.MAC_array[i];
 	}
 	char buffer[100];
 	ssidName.toCharArray(buffer, 100);
@@ -431,23 +431,23 @@ void setup()
 
 	// get MAC Address
 	logger.print(tag, "\n\tMAC Address=");
-	WiFi.macAddress(settings.MAC_array);
-	for (int i = 0; i < sizeof(settings.MAC_array); ++i) {
-		if (i > 0) sprintf(settings.MAC_char, "%s:", settings.MAC_char);
-		sprintf(settings.MAC_char, "%s%02x", settings.MAC_char, settings.MAC_array[i]);
+	WiFi.macAddress(shield.MAC_array);
+	for (int i = 0; i < sizeof(shield.MAC_array); ++i) {
+		if (i > 0) sprintf(shield.MAC_char, "%s:", shield.MAC_char);
+		sprintf(shield.MAC_char, "%s%02x", shield.MAC_char, shield.MAC_array[i]);
 
 	}
-	logger.print(tag, settings.MAC_char);
+	logger.print(tag, shield.MAC_char);
 
 
 	initEPROM();
 	logger.print(tag, "\n\tSensorNames=" + sensorNames);
 
 	// Connect to WiFi network
-	logger.print(tag, "\n\nConnecting to " + String(settings.networkSSID) + " " + String(settings.networkPassword));
+	logger.print(tag, "\n\nConnecting to " + String(shield.networkSSID) + " " + String(shield.networkPassword));
 
 	WiFi.mode(WIFI_STA);//??????
-	WiFi.begin(settings.networkSSID, settings.networkPassword);
+	WiFi.begin(shield.networkSSID, shield.networkPassword);
 	if (testWifi() == 20/*WL_CONNECTED*/) {
 
 		checkOTA();
@@ -455,9 +455,9 @@ void setup()
 		// Start the server
 		server.begin();
 		logger.print(tag, "Server started");
-		settings.localIP = WiFi.localIP().toString();
+		shield.localIP = WiFi.localIP().toString();
 		// Print the IP address
-		logger.println(tag, settings.localIP);
+		logger.println(tag, shield.localIP);
 
 		wdt_disable();
 		wdt_enable(WDTO_8S);
@@ -465,21 +465,21 @@ void setup()
 		// rele
 		//pinMode(relePin, OUTPUT);
 		//enableRele(false);
-		settings.hearterActuator.init(String(settings.MAC_char));
+		shield.hearterActuator.init(String(shield.MAC_char));
 		//Temperature sensor
-		settings.addOneWireSensors(sensorNames);
-		settings.addActuators();
+		shield.addOneWireSensors(sensorNames);
+		shield.addActuators();
 
 
 		Command command;
-		command.setServer(settings.servername, settings.serverPort);
-		settings.id = command.registerShield(settings);
+		command.setServer(shield.servername, shield.serverPort);
+		shield.id = command.registerShield(shield);
 		logger.print(tag, "\n\tsettings.id");
-		logger.print(tag, String(settings.id));
-		if (settings.id != -1) {
+		logger.print(tag, String(shield.id));
+		if (shield.id != -1) {
 			shieldRegistered = true;
 
-			logger.println(tag, "SHIELD REGISTERED" + String(settings.id));
+			logger.println(tag, "SHIELD REGISTERED" + String(shield.id));
 		}
 		else {
 			shieldRegistered = false;
@@ -497,7 +497,7 @@ void setup()
 		wdt_enable(WDTO_8S);
 
 		//programSettings.currentStatus = Program::STATUS_DISABLED;
-		settings.hearterActuator.setStatus(Program::STATUS_DISABLED);
+		shield.hearterActuator.setStatus(Program::STATUS_DISABLED);
 	}
 
 
@@ -534,7 +534,7 @@ String registerShield() {
 	//client.println(data);
 	//client.stop();
 	Command command;
-	command.registerShield(settings);
+	command.registerShield(shield);
 	
 	return data;
 }
@@ -603,9 +603,9 @@ String showIndex() {
 		String ip = WiFi.localIP().toString();
 		str.replace("%datetime", logger.getStrDate());
 		str.replace("%ipaddress", ip);
-		str.replace("%macaddress", String(settings.MAC_char));
-		str.replace("%shieldid", String(settings.id));
-		if (settings.hearterActuator.getStatus() == Program::STATUS_DISABLED) {
+		str.replace("%macaddress", String(shield.MAC_char));
+		str.replace("%shieldid", String(shield.id));
+		if (shield.hearterActuator.getStatus() == Program::STATUS_DISABLED) {
 			str.replace("%powerstatus", "OFF");
 			//str.replace("%powervalue", "1");
 			//str.replace("%powercommand", "ON");
@@ -635,10 +635,10 @@ String download() {
 	client.println(data);
 
 	Command command;
-	command.download("ESP8266.css", settings);
+	command.download("ESP8266.css", shield);
 
-	command.download("prova3.html", settings);
-	//command.download("ESP8266.css", settings);
+	command.download("prova3.html", shield);
+	//command.download("ESP8266.css", shield);
 
 
 	client.stop();
@@ -651,7 +651,7 @@ String download() {
 
 String showRele(String GETparam) {
 
-	logger.print(tag, F("\n\n\ncalled showRele "));
+	logger.println(tag, F("\n\ncalled showRele "));
 
 	getPostdata(databuff, maxposdataChangeSetting);
 	char posdata[maxposdata];
@@ -675,7 +675,9 @@ String showRele(String GETparam) {
 	String str = "";
 	str += posdata;
 	float target = str.toFloat();
-	settings.hearterActuator.setTargetTemperature(target);
+	logger.print(tag, F("\n\ttarget ="));
+	logger.print(tag, str);
+	shield.hearterActuator.setTargetTemperature(target);
 	// sensor
 	int sensorId = parsePostdata(databuff, "sensor", posdata);
 	// remote temperature
@@ -685,7 +687,9 @@ String showRele(String GETparam) {
 		str = "";
 		str += posdata;
 		remoteTemperature = str.toFloat();
-		settings.hearterActuator.setRemoteTemperature(remoteTemperature);
+		logger.print(tag, F("\n\tremoteTemperature ="));
+		logger.print(tag, str);
+		shield.hearterActuator.setRemoteTemperature(remoteTemperature);
 	}
 	else {
 		logger.print(tag, F("\n\tremoteTemperature MISSING"));
@@ -708,7 +712,7 @@ String showRele(String GETparam) {
 	logger.print(tag, F("\n\tjson="));
 	logger.print(tag, json);
 
-	settings.hearterActuator.changeProgram(status,duration,
+	shield.hearterActuator.changeProgram(status,duration,
 									/*manual,*/
 									(sensorId>0) ? true : false,
 									remoteTemperature,
@@ -731,31 +735,31 @@ String showRele(String GETparam) {
 		data += F("\n\n<html><head><meta HTTP-EQUIV='REFRESH' content='0; url=/main?msg=2'><title>rele</title></head><body>");
 
 		char   buffer[50];
-		sprintf(buffer, "relestatus=%d,status=%s", settings.hearterActuator.getReleStatus(), statusStr[settings.hearterActuator.getStatus()]);
+		sprintf(buffer, "relestatus=%d,status=%s", shield.hearterActuator.getReleStatus(), statusStr[shield.hearterActuator.getStatus()]);
 		data += String(buffer);
 
 		data += F("</body></html>");
 		client.println(data);
 	}
 
-	logger.print(tag, F("\nend show rele\n\n\n"));
+	logger.print(tag, F("\nend show rele\n"));
 }
 
-void flash() {
+/*void flash() {
 
 	logger.println(tag, F("FLASH - start -----"));
 
-	time_t currentTime = millis();
+	//time_t currentTime = millis();
 
-	settings.readTemperatures();
+	shield.readTemperatures();
 	
 	// se il sensore attivo è quello locale aggiorna lo stato
 	// del rele in base alla temperatur del sensore locale
-	if (!settings.hearterActuator.sensorIsRemote())
-		settings.hearterActuator.updateReleStatus();
+	if (!shield.hearterActuator.sensorIsRemote())
+		shield.hearterActuator.updateReleStatus();
 	
 	logger.print(tag, F("\n\tFLASH - END \n\t"));
-}
+}*/
 
 void loop()
 {
@@ -850,72 +854,56 @@ void loop()
 	
 	//Command command;
 	
-	if (settings.id >= 0 && !WiFi.localIP().toString().equals(settings.localIP)) {
+	if (shield.id >= 0 && !WiFi.localIP().toString().equals(shield.localIP)) {
 
 		Command command;
 		logger.println(tag, "IP ADDRESS ERROR - re-register shield");
-		command.registerShield(settings);
-		settings.localIP = WiFi.localIP().toString();
+		command.registerShield(shield);
+		shield.localIP = WiFi.localIP().toString();
 		return;
 	}
 
-	if (settings.checkActuatorsStatus())
-		return;
-	/*
-	// notifica il server se è cambiato lo stato del rele
-	if (settings.hearterActuator.releStatusChanged()) {
-
-		logger.println(tag, "SEND ACTUATOR UPDATE - rele status changed");
-		command.sendActuatorStatus(settings, settings.hearterActuator);
-		settings.hearterActuator.saveOldReleStatus();
-		return;
-	}
+	shield.checkActuatorsStatus();
+	/*if (shield.checkActuatorsStatus())
+		return;*/
 	
-	// notifica il server se è cambiato lo status
-	if (settings.hearterActuator.statusChanged()) { 
-
-		logger.println(tag, "SEND ACTUATOR UPDATE - status changed");
-		if (settings.hearterActuator.getStatus() == Program::STATUS_DISABLED) {
-			command.sendActuatorStatus(settings, settings.hearterActuator);
-		}
-		settings.hearterActuator.saveOldStatus();
-		return;
-	}
-	
-	// questo forse si può spostare all'inizio del loop porima di inivare lo stato
-	if (settings.hearterActuator.programEnded())
-		return;
-
-	*/
 	Command command;
 	
 	unsigned long currMillis = millis();
 	
 	unsigned long timeDiff = currMillis - lastFlash;
 	if (timeDiff > flash_interval) {
-		String str = "\n\nFLASH\ncurrMillis = " + String(currMillis);
+		/*String str = "\n\nFLASH\ncurrMillis = " + String(currMillis);
 		str += "\nlastFlash = " + String(lastFlash);
 		str += "\ntimeDiff = " + String(timeDiff);
 		str += "\nflash_interval = " + String(flash_interval);
-		logger.println(tag, str);
+		logger.println(tag, str);*/
 
 		lastFlash = currMillis;
-		flash();
-		
-		if (settings.id <= 0) {
+
+		if (shield.id <= 0) {
 			logger.println(tag, F("ID NON VALIDO"));
-			settings.id = command.registerShield(settings);
+			shield.id = command.registerShield(shield);
 		}
-		else {
-			if (settings.temperatureChanged) {
+
+		
+		//flash();
+		shield.checkSensorsStatus();
+		
+		/*if (shield.id <= 0) {
+			logger.println(tag, F("ID NON VALIDO"));
+			shield.id = command.registerShield(shield);
+		}
+		else {*/
+			/*if (shield.temperatureChanged) {
 
 				logger.println(tag, "SEND TEMPERATURE UPDATE - average temperature changed");
 				logger.print(tag, "\n\toldLocalAvTemperature=");
-				command.sendSensorsStatus(settings);
-				settings.temperatureChanged = false; // qui bisognerebbe introdiurre il controllo del valore di ritorno della send
+				command.sendSensorsStatus(shield);
+				shield.temperatureChanged = false; // qui bisognerebbe introdiurre il controllo del valore di ritorno della send
 														// cokmmand ed entualmente reinviare
-			}
-		}
+			}*/
+		/*}*/
 		return;
 	}
 
@@ -936,7 +924,7 @@ void loop()
 		logger.print(tag, "\n\t");
 
 		Command command;
-		if (command.sendActuatorStatus(settings, settings.hearterActuator)) {
+		if (command.sendActuatorStatus(shield, shield.hearterActuator)) {
 			statusChangeSent = true;
 		}
 		else {
@@ -948,12 +936,13 @@ void loop()
 
 	if (currMillis - lastTimeSync > timeSync_interval) {
 		lastTimeSync = currMillis;
-		command.timeSync(/*Settings::getServerName(), Settings::getServerPort()*/);
+		command.timeSync(/*Shield::getServerName(), Shield::getServerPort()*/);
 		return;
 	}
 
 	if (currMillis - lastSendLog > SendLog_interval) {
 		lastSendLog = currMillis;
+		//logger.send();
 		return;
 	}
 }
@@ -977,7 +966,7 @@ String showIODevices(String param)
 
 	data += F("<font color='#53669E' face='Verdana' size='2'><b>IO devices </b></font>\r\n<form action='/chiodevices' method='POST'><table width='80%' border='1'><colgroup bgcolor='#B6C4E9' width='20%' align='left'></colgroup><colgroup bgcolor='#FFFFFF' width='30%' align='left'></colgroup>");
 	
-	for (int i = 0; i < Settings::getMaxIoDevices(); i++) {
+	for (int i = 0; i < Shield::getMaxIoDevices(); i++) {
 		// local port
 		data += F("<tr><td>device ");
 		data += String(i);
@@ -987,15 +976,15 @@ String showIODevices(String param)
 		data += String(i);
 		data += F("' >");
 		
-		for (int k = 0; k < Settings::getMaxIoDeviceTypes(); k++) {
+		for (int k = 0; k < Shield::getMaxIoDeviceTypes(); k++) {
 
 			data += F("<option value='");
 			data += String(k);
-			if (Settings::getIODevice(i) == k)
+			if (Shield::getIODevice(i) == k)
 				data += F(" selected ");
 			data += F("' >");
 
-			data += Settings::getIoDevicesTypeName(k);
+			data += Shield::getIoDevicesTypeName(k);
 			data += F("</option>");
 
 			
@@ -1003,11 +992,11 @@ String showIODevices(String param)
 		}
 
 		/*data += F("<option value='1' >");
-		data += Settings::getIoDevicesTypeName(1);
+		data += Shield::getIoDevicesTypeName(1);
 		data += F("</option>");
 
 		data += F("<option value='2' >");
-		data += Settings::getIoDevicesTypeName(2);
+		data += Shield::getIoDevicesTypeName(2);
 		data += F("</option>");*/
 
 
@@ -1037,38 +1026,38 @@ String showSettings(String param)
 	// local port
 	data += F("<tr><td>Local port</td><td><input type='num' name='localport");
 	data += F("' value='");
-	data += settings.localPort;
+	data += shield.localPort;
 	data += F("' size='4' maxlength='4'> </td></tr>");
 	// board name
 	data += F("<tr><td>Board name</td><td><input type='num' name='boardname' value='");
-	data += String(settings.boardname);
+	data += String(shield.boardname);
 	data += F("' size='");
-	data += String(settings.boardnamelen - 1);
+	data += String(shield.boardnamelen - 1);
 	data += F("' maxlength='");
-	data += String(settings.boardnamelen - 1);
+	data += String(shield.boardnamelen - 1);
 	data += F("'> </td></tr>");
 	// ssid
 	data += F("<tr><td>SSID</td><td><input type='num' name='ssid");
 	data += F("' value='");
-	data += String(settings.networkSSID);
+	data += String(shield.networkSSID);
 	data += F("' size='32' maxlength='32'> </td></tr>");
 	// password
 	data += F("<tr><td>password</td><td><input type='num' name='password");
 	data += F("' value='");
-	data += String(settings.networkPassword);
+	data += String(shield.networkPassword);
 	data += F("' size='96' maxlength='96'> </td></tr>");
 	// server name
 	data += F("<tr><td>Server name</td><td><input type='num' name='servername' value='");
-	data += String(settings.servername);
+	data += String(shield.servername);
 	data += F("' size='");
-	data += (settings.servernamelen - 1);
+	data += (shield.servernamelen - 1);
 	data += F("' maxlength='");
-	data += (settings.servernamelen - 1);
+	data += (shield.servernamelen - 1);
 	data += F("'> </td></tr>");
 	// server port
 	data += F("<tr><td>Server port</td><td><input type='num' name='serverport");
 	data += F("' value='");
-	data += String(settings.serverPort);
+	data += String(shield.serverPort);
 	data += F("' size='4' maxlength='4'> </td></tr>");
 
 	data += F("</table><input type='submit' value='save'/></form>");
@@ -1096,7 +1085,7 @@ String showMain(String param)
 	data += F("\r\n<table width='80%' border='1'><colgroup bgcolor='#B6C4E9' width='20%' align='left'></colgroup><colgroup bgcolor='#FFFFFF' width='30%' align='left'></colgroup>");
 	// power
 	data += F("<tr><td>Power ");
-	if (settings.hearterActuator.getStatus() == Program::STATUS_DISABLED) {
+	if (shield.hearterActuator.getStatus() == Program::STATUS_DISABLED) {
 		data += F("OFF</td><td><form action='/power' method='POST'>");
 		data += F("<input type='hidden' name='status' value='1' >");
 		data += F("<input type='submit' value='on'></form>");
@@ -1110,21 +1099,21 @@ String showMain(String param)
 	data += F("</td></tr>");
 	// status & rele	
 	data += "<tr><td>Actuator:</td><td>";
-	data += statusStr[settings.hearterActuator.getStatus()];
+	data += statusStr[shield.hearterActuator.getStatus()];
 	data += " - Rele: ";
-	if (settings.hearterActuator.getReleStatus()) {
+	if (shield.hearterActuator.getReleStatus()) {
 		data += F("on - ");
 	}
 	else {
 		data += F("off - ");
 	}
 
-	if (settings.hearterActuator.getStatus() == Program::STATUS_PROGRAMACTIVE ||
-		settings.hearterActuator.getStatus() == Program::STATUS_MANUAL_AUTO ||
-		settings.hearterActuator.getStatus() == Program::STATUS_MANUAL_OFF) {
+	if (shield.hearterActuator.getStatus() == Program::STATUS_PROGRAMACTIVE ||
+		shield.hearterActuator.getStatus() == Program::STATUS_MANUAL_AUTO ||
+		shield.hearterActuator.getStatus() == Program::STATUS_MANUAL_OFF) {
 	
-		time_t onStatusDuration = (millis() - settings.hearterActuator.programStartTime) / 1000;
-		time_t duration = (settings.hearterActuator.programDuration) / 1000;
+		time_t onStatusDuration = (millis() - shield.hearterActuator.programStartTime) / 1000;
+		time_t duration = (shield.hearterActuator.programDuration) / 1000;
 		time_t remainingTime = (duration - onStatusDuration);
 		
 		
@@ -1146,7 +1135,7 @@ String showMain(String param)
 		data += F(" ");
 		data += String(remainingTime / 60L);
 
-		/*sprintf(buffer, " duration:(%2d) ", settings.hearterActuator.programDuration);
+		/*sprintf(buffer, " duration:(%2d) ", shield.hearterActuator.programDuration);
 		data += String(buffer);
 		sprintf(buffer, "%02d:", hr);
 		data += String(buffer);
@@ -1184,47 +1173,47 @@ String showMain(String param)
 
 	// program
 	data += F("<tr><td>program </td><td>");
-	if (settings.hearterActuator.getStatus() == Program::STATUS_PROGRAMACTIVE) {
+	if (shield.hearterActuator.getStatus() == Program::STATUS_PROGRAMACTIVE) {
 		data += F("program ");
-		data += settings.hearterActuator.getActiveProgram();
+		data += shield.hearterActuator.getActiveProgram();
 		data += F("timerange ");
-		data += settings.hearterActuator.getActiveTimeRange();
+		data += shield.hearterActuator.getActiveTimeRange();
 
-		data += " Target: " + String(settings.hearterActuator.getTargetTemperature()) + "°C";
+		data += " Target: " + String(shield.hearterActuator.getTargetTemperature()) + "°C";
 		data += F(" Sensor: ");
-		if (settings.hearterActuator.sensorIsRemote()) {
-			data += " Remote (" + String(settings.hearterActuator.getRemoteSensorId()) + ")";
-			data += String(settings.hearterActuator.getRemoteTemperature()) + "°C";
+		if (shield.hearterActuator.sensorIsRemote()) {
+			data += " Remote (" + String(shield.hearterActuator.getRemoteSensorId()) + ")";
+			data += String(shield.hearterActuator.getRemoteTemperature()) + "°C";
 		}
 		else {
-			data += " Local (" + String(settings.hearterActuator.getLocalSensorId()) + ")";
-			data += String(settings.hearterActuator.getLocalTemperature()) + "°C";
+			data += " Local (" + String(shield.hearterActuator.getLocalSensorId()) + ")";
+			data += String(shield.hearterActuator.getLocalTemperature()) + "°C";
 		}
 	}
-	else if (settings.hearterActuator.getStatus() == Program::STATUS_MANUAL_AUTO) {
+	else if (shield.hearterActuator.getStatus() == Program::STATUS_MANUAL_AUTO) {
 
 		data += F("program manual auto");
 
-	} else if (settings.hearterActuator.getStatus() == Program::STATUS_MANUAL_OFF) {
+	} else if (shield.hearterActuator.getStatus() == Program::STATUS_MANUAL_OFF) {
 		
 		data += F("program manual  off");
 	}
 	data += F("</td></tr>");
 	// Manual
 	data += F("<tr><td>Manual-- ");
-	if (settings.hearterActuator.getStatus() == Program::STATUS_MANUAL_AUTO || settings.hearterActuator.getStatus() == Program::STATUS_MANUAL_OFF) {
+	if (shield.hearterActuator.getStatus() == Program::STATUS_MANUAL_AUTO || shield.hearterActuator.getStatus() == Program::STATUS_MANUAL_OFF) {
 
 		data += F("<tr><td>Manual ON</td><td>");
 		
-		if (settings.hearterActuator.getStatus() == Program::STATUS_MANUAL_AUTO) {
-			sprintf(buffer, "Target: %d.%02d<BR>", (int)settings.hearterActuator.getTargetTemperature(), (int)(settings.hearterActuator.getTargetTemperature() * 100.0) % 100);
+		if (shield.hearterActuator.getStatus() == Program::STATUS_MANUAL_AUTO) {
+			sprintf(buffer, "Target: %d.%02d<BR>", (int)shield.hearterActuator.getTargetTemperature(), (int)(shield.hearterActuator.getTargetTemperature() * 100.0) % 100);
 			data += String(buffer);
 
-			if (!settings.hearterActuator.sensorIsRemote()) {
+			if (!shield.hearterActuator.sensorIsRemote()) {
 				data += F("Sensor: Local");
 			}
 			else {
-				data += "Sensor: Remote (" + String(settings.hearterActuator.getRemoteSensorId()) + ")";
+				data += "Sensor: Remote (" + String(shield.hearterActuator.getRemoteSensorId()) + ")";
 			}
 		}
 		data += F("<form action='/rele' method='POST'>");
@@ -1232,7 +1221,7 @@ String showMain(String param)
 		data += F("<input type='hidden' name='status' value='6'>"); // 6 = manual end  
 		data += F("<input type='submit' value='stop manual'></form>");
 	}
-	else if (settings.hearterActuator.getStatus() == Program::STATUS_PROGRAMACTIVE || settings.hearterActuator.getStatus() == Program::STATUS_IDLE) {
+	else if (shield.hearterActuator.getStatus() == Program::STATUS_PROGRAMACTIVE || shield.hearterActuator.getStatus() == Program::STATUS_IDLE) {
 		data += F("OFF</td><td><form action='/rele' method='POST'>");
 		data += F("Minutes:<input type='num' name='duration' value='");
 		data += 30;
@@ -1256,7 +1245,7 @@ String showMain(String param)
 	data += F("</td></tr>");
 	// temperature sensor
 	int count = 0;
-	DS18S20Sensor* pSensor = (DS18S20Sensor*)settings.sensorList.getFirst();
+	DS18S20Sensor* pSensor = (DS18S20Sensor*)shield.sensorList.getFirst();
 	while (pSensor != NULL) {
 
 		logger.print(tag, "\n\tpSensor->sensorname=" + pSensor->sensorname);
@@ -1270,7 +1259,7 @@ String showMain(String param)
 			+ "size='32' maxlength='32'>"
 			+ "<input type='submit' value='save'/>"
 			+ "</form></td></tr>";
-		pSensor = (DS18S20Sensor*)settings.sensorList.getNext();
+		pSensor = (DS18S20Sensor*)shield.sensorList.getNext();
 	}
 	// targetTemperature
 	/*data += "<tr><td>Target Temperature: </td><td>" + String(targetTemperature)  + "°C</td></tr>";
@@ -1292,19 +1281,19 @@ String showMain(String param)
 
 	// MACAddress
 	data += "<tr><td>MACAddress: </td><td>";
-	data += String(settings.MAC_char);
+	data += String(shield.MAC_char);
 	data += "</td></tr>";
 
 	// localip
 	String ip = WiFi.localIP().toString();
 	char ip1[20], ip2[20];
 	ip.toCharArray(ip1, sizeof(ip1));
-	settings.localIP.toCharArray(ip2, sizeof(ip2));
+	shield.localIP.toCharArray(ip2, sizeof(ip2));
 	data += "<tr><td>Local IP: </td><td>" + WiFi.localIP().toString() +
-		"(" + settings.localIP + ")</td></tr>";
+		"(" + shield.localIP + ")</td></tr>";
 	// shield id
-	//data += "<tr><td>ID</td><td>" + String(settings.id) + "</td></tr>";
-	data += "<tr><td>Shield Id</td><td>" + String(settings.id) + "<form action='/register' method='POST'><input type='submit' value='register'></form></td></tr>";
+	//data += "<tr><td>ID</td><td>" + String(shield.id) + "</td></tr>";
+	data += "<tr><td>Shield Id</td><td>" + String(shield.id) + "<form action='/register' method='POST'><input type='submit' value='register'></form></td></tr>";
 
 	data += F("</table>");
 
@@ -1326,7 +1315,7 @@ void showChangeIODevices(String param) {
 		
 	int val;
 	
-	for (int i = 0; i < Settings::getMaxIoDevices(); i++) {
+	for (int i = 0; i < Shield::getMaxIoDevices(); i++) {
 		
 		char buffer[20];
 		String str = "iodevice" + String(i + 1);
@@ -1337,7 +1326,7 @@ void showChangeIODevices(String param) {
 		if (val != -1) {
 			logger.print(tag, "\n\t" + String(buffer) + "=");
 			logger.print(tag, String(val));
-			Settings::setIODevice(i, val);
+			Shield::setIODevice(i, val);
 		}
 	}
 	String data;
@@ -1361,48 +1350,48 @@ void showChangeSettings(String param) {
 	// localport
 	val = parsePostdata(databuff, "localport", posdata);
 	if (val != -1) {
-		settings.localPort = val;
+		shield.localPort = val;
 		logger.print(tag, "\n\tlocalPort=");
-		logger.print(tag, settings.localPort);
+		logger.print(tag, shield.localPort);
 	}
 	// ssid
 	if (val != -1) {
 		val = parsePostdata(databuff, "ssid", posdata);
-		memccpy_P(settings.networkSSID, posdata, '\0', sizeof(settings.networkSSID));
+		memccpy_P(shield.networkSSID, posdata, '\0', sizeof(shield.networkSSID));
 		logger.print(tag, "\n\tnetworkSSID=");
-		logger.print(tag, settings.networkSSID);
+		logger.print(tag, shield.networkSSID);
 	}
 	// password
 	if (val != -1) {
 		val = parsePostdata(databuff, "password", posdata);
-		memccpy_P(settings.networkPassword, posdata, '\0', sizeof(settings.networkPassword));
+		memccpy_P(shield.networkPassword, posdata, '\0', sizeof(shield.networkPassword));
 		logger.print(tag, "\n\tnetworkPassword=");
 	}
 	// server name
 	val = parsePostdata(databuff, "servername", posdata);
 	if (val != -1) {
-		memccpy_P(settings.servername, posdata, '\0', settings.servernamelen);
+		memccpy_P(shield.servername, posdata, '\0', shield.servernamelen);
 		logger.print(tag, "\n\tservername ");
-		logger.print(tag, settings.servername);
+		logger.print(tag, shield.servername);
 	}
 	// server port
 	val = parsePostdata(databuff, "serverport", posdata);
 	if (val != -1) {
 		logger.print(tag, "\n\tserver port ");
 		logger.print(tag, val);
-		settings.serverPort = val;
+		shield.serverPort = val;
 	}
 	// board name
 	val = parsePostdata(databuff, "boardname", posdata);
 	if (val != -1) {
-		memccpy_P(settings.boardname, posdata, '\0', settings.boardnamelen);
+		memccpy_P(shield.boardname, posdata, '\0', shield.boardnamelen);
 		logger.print(tag, "\n\tboardname=");
-		logger.print(tag, settings.boardname);
+		logger.print(tag, shield.boardname);
 	}
 	// sensor names
 
-	for (int i = 0; i < settings.sensorList.count; i++) {
-		DS18S20Sensor*  sensor = (DS18S20Sensor*)settings.sensorList.get(i);
+	for (int i = 0; i < shield.sensorList.count; i++) {
+		DS18S20Sensor*  sensor = (DS18S20Sensor*)shield.sensorList.get(i);
 		char buffer[20];
 		String str = "sensor" + String(i + 1);
 		str.toCharArray(buffer, sizeof(buffer));
@@ -1427,7 +1416,7 @@ void showChangeSettings(String param) {
 
 	// reimposta servername e port (sono due var static in Command quindi bast chiamare costruttore)
 	Command command;
-	command.setServer(settings.servername, settings.serverPort);
+	command.setServer(shield.servername, shield.serverPort);
 
 	writeEPROM();
 	client.stop();
@@ -1548,54 +1537,54 @@ String getJsonStatus()
 	data += "HTTP/1.0 200 OK\r\nContent-Type: application/json; ";
 	data += "\r\nPragma: no-cache\r\n\r\n";
 
-	data += settings.hearterActuator.getJSON();
+	data += shield.hearterActuator.getJSON();
 	/*data += F("{\"id\":");
-	data += String(settings.id);
+	data += String(shield.id);
 
 	data += F(",\"remotetemperature\":");
-	data += String(settings.hearterActuator.getRemoteTemperature());
+	data += String(shield.hearterActuator.getRemoteTemperature());
 
 	char buf[50];
-	sprintf(buf, ",\"status\":\"%s\"", statusStr[settings.hearterActuator.getStatus()]);
+	sprintf(buf, ",\"status\":\"%s\"", statusStr[shield.hearterActuator.getStatus()]);
 	data += String(buf);
 
 	data += String(F(",\"relestatus\":"));
-	if (settings.hearterActuator.getReleStatus())
+	if (shield.hearterActuator.getReleStatus())
 		data += F("true");
 	else
 		data += F("false");
 
 	data += F(",\"name\":");
-	data += settings.hearterActuator.sensorname;
+	data += shield.hearterActuator.sensorname;
 
-	if (settings.hearterActuator.getStatus() == Program::STATUS_PROGRAMACTIVE 
-		|| settings.hearterActuator.getStatus() == Program::STATUS_MANUAL_AUTO 
-		|| settings.hearterActuator.getStatus() == Program::STATUS_MANUAL_OFF) {
+	if (shield.hearterActuator.getStatus() == Program::STATUS_PROGRAMACTIVE 
+		|| shield.hearterActuator.getStatus() == Program::STATUS_MANUAL_AUTO 
+		|| shield.hearterActuator.getStatus() == Program::STATUS_MANUAL_OFF) {
 
 		data += F(",\"duration\":");
-		data += String(settings.hearterActuator.programDuration);
+		data += String(shield.hearterActuator.programDuration);
 
-		int remainingTime = settings.hearterActuator.programDuration - (millis() - settings.hearterActuator.programStartTime);
+		int remainingTime = shield.hearterActuator.programDuration - (millis() - shield.hearterActuator.programStartTime);
 		data += String(F(",\"remaining\":"));
 		data += String(remainingTime);
 
 		data += F(",\"localsensor\":");
-		if (!settings.hearterActuator.sensorIsRemote())
+		if (!shield.hearterActuator.sensorIsRemote())
 			data += F("true");
 		else
 			data += F("false");
 
-		if (settings.hearterActuator.getStatus() == Program::STATUS_MANUAL_OFF) {
+		if (shield.hearterActuator.getStatus() == Program::STATUS_MANUAL_OFF) {
 			data += F(",\"target\":");
-			data += String(settings.hearterActuator.getTargetTemperature());
+			data += String(shield.hearterActuator.getTargetTemperature());
 		}
 
-		if (settings.hearterActuator.getStatus() == Program::STATUS_PROGRAMACTIVE) {
+		if (shield.hearterActuator.getStatus() == Program::STATUS_PROGRAMACTIVE) {
 			data += F(",\"program\":");
-			data += String(settings.hearterActuator.getActiveProgram());
+			data += String(shield.hearterActuator.getActiveProgram());
 
 			data += F(",\"timerange\":");
-			data += String(settings.hearterActuator.getActiveTimeRange());
+			data += String(shield.hearterActuator.getActiveTimeRange());
 		}
 
 	}
@@ -1615,7 +1604,7 @@ String getJsonSensorsStatus()
 	data += "HTTP/1.0 200 OK\r\nContent-Type: application/json; ";
 	data += "\r\nPragma: no-cache\r\n\r\n";
 
-	data += settings.getSensorsStatusJson();
+	data += shield.getSensorsStatusJson();
 
 	logger.println(tag, data);
 	return data;
@@ -1630,7 +1619,7 @@ String getJsonActuatorsStatus()
 	data += "HTTP/1.0 200 OK\r\nContent-Type: application/json; ";
 	data += "\r\nPragma: no-cache\r\n\r\n";
 
-	data += settings.getActuatorsStatusJson();
+	data += shield.getActuatorsStatusJson();
 
 	logger.println(tag, data);
 	return data;
@@ -1649,7 +1638,7 @@ void setRemoteTemperature(String param) {
 	String str = "";
 	str += posdata;
 
-	settings.hearterActuator.setRemoteTemperature(str.toFloat());
+	shield.hearterActuator.setRemoteTemperature(str.toFloat());
 		
 	String data;
 	data += getJsonStatus();
@@ -1671,16 +1660,16 @@ void showPower(String GETparam) {
 	logger.print(tag, val);
 
 	logger.print(tag, F("\n\tprogramSettings.currentStatus="));
-	logger.print(tag, settings.hearterActuator.getStatus());
+	logger.print(tag, shield.hearterActuator.getStatus());
 
-	if (val == 1 && settings.hearterActuator.getStatus() == Program::STATUS_DISABLED) {
-		settings.hearterActuator.setStatus(Program::STATUS_IDLE);
-		settings.hearterActuator.enableRele(true);
+	if (val == 1 && shield.hearterActuator.getStatus() == Program::STATUS_DISABLED) {
+		shield.hearterActuator.setStatus(Program::STATUS_IDLE);
+		shield.hearterActuator.enableRele(true);
 
 	}
 	else if (val == 0) {
-		settings.hearterActuator.setStatus(Program::STATUS_DISABLED);
-		settings.hearterActuator.enableRele(false);
+		shield.hearterActuator.setStatus(Program::STATUS_DISABLED);
+		shield.hearterActuator.enableRele(false);
 	}
 
 	/*String data;
@@ -1692,8 +1681,8 @@ void showPower(String GETparam) {
 	data += String(buffer);
 	data += F("</body></html>");*/
 
-	String data = "HTTP/1.1 200 OK\r\nContent-Type: text/xml\n\n<result><rele>" + String(settings.hearterActuator.getReleStatus()) + "</rele>" +
-		"<status>" + String(settings.hearterActuator.getStatus()) + "</status></result>";
+	String data = "HTTP/1.1 200 OK\r\nContent-Type: text/xml\n\n<result><rele>" + String(shield.hearterActuator.getReleStatus()) + "</rele>" +
+		"<status>" + String(shield.hearterActuator.getStatus()) + "</status></result>";
 
 	client.println(data);
 
