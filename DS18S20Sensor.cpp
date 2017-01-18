@@ -18,30 +18,35 @@ DS18S20Sensor::~DS18S20Sensor()
 {
 }
 
+float DS18S20Sensor::getTemperature() {
+	return temperature;
+}
+
+float DS18S20Sensor::getAvTemperature() {
+	return avTemperature;
+}
+
 void DS18S20Sensor::readTemperature(){
 
 	// call sensors.requestTemperatures() to issue a global temperature 
 	// request to all devices on the bus
-	logger.print(tag, "\n\tRequesting emperature for the device ");
+	logger.print(tag, "\n\tsensor: ");
 	logger.print(tag, sensorname);
-	logger.print(tag, " addr ");
+	logger.print(tag, "\n\taddr ");
 	logger.print(tag, getSensorAddress());
 	sensors.requestTemperatures(); // Send the command to get temperatures
-	logger.print(tag, "\n\tDONE\n");
-	// After we got the temperatures, we can print them here.
-	// We use the function ByIndex, and as an example get the temperature from the first sensor only.
 	
-	float dallasTemperature = sensors.getTempC(sensorAddr);
-
-	//dallasTemperature = getTemp();
-
-	/*float rounded = ((int)(dallasTemperature * 100 + .5) / 100.0);
-	temperature = rounded;*/
-	temperature = dallasTemperature;
-	logger.print(tag, "\n\tTemperature  is: ");
-	//logger.print(tag, String(rounded));
+	logger.print(tag, "\n\told Temperature   is: ");
 	logger.print(tag, String(temperature));
-		
+
+	float dallasTemperature = sensors.getTempC(sensorAddr);
+	logger.print(tag, "\n\tdallas Temperature   is: ");
+	logger.print(tag, String(dallasTemperature));
+	
+	temperature = (((int)(dallasTemperature * 10 + .5)) / 10.0);
+	logger.print(tag, "\n\trounded Temperature  is: ");
+	logger.print(tag, String(temperature));
+			
 	if (avTempCounter < avTempsize) {
 		avTemp[avTempCounter] = temperature;
 		avTempCounter++;
@@ -61,15 +66,18 @@ void DS18S20Sensor::readTemperature(){
 	
 	logger.print(tag, "\n\tAverage temperature  is: ");
 	logger.print(tag, String(avTemperature));
+	logger.print(tag, "\n");
 }
 
 String DS18S20Sensor::getJSON() {
 	String json = "";
 	json += "{";
 	json += "\"temperature\":";
-	json += Util::floatToString(temperature);
+	//json += Util::floatToString(temperature);
+	json += String(getTemperature());
 	json += ",\"avtemperature\":";
-	json += Util::floatToString(avTemperature);
+	//json += Util::floatToString(avTemperature);
+	json += String(getAvTemperature());
 	json += ",\"name\":\"";
 	json += String(sensorname) + "\"";
 	json += ",\"type\":\"temperature\"";

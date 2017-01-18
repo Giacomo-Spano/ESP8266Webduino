@@ -95,8 +95,8 @@ String JSON::jsonGetValue(String key) {
 	String value = json.substring(0, end);
 	value.trim();
 
-	Serial.print("value = ");
-	Serial.println(value);
+	//Serial.print("value = ");
+	//Serial.println(value);
 	return value;
 }
 

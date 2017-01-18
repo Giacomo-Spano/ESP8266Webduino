@@ -22,18 +22,18 @@ bool HttpHelper::post(char* host, int port, char* path, char* param, int len, St
 
 bool HttpHelper::post(String host, int port, String path, String param, String *result)
 {
-	logger.println(tag, F("post"));
+	logger.println(tag, F(">>post\n"));
 	// Use WiFiClient class to create TCP connections
 	WiFiClient client;
 		
 	String data;
-	logger.print(tag, F("\n\tSEND POST"));
-	logger.print(tag, F(" host="));
+	//logger.print(tag, F("\n\tSEND POST"));
+	logger.print(tag, F("\n\n\thost="));
 	logger.print(tag, host);
-	logger.print(tag, F(",port="));
+	logger.print(tag, F("\n\tport="));
 	logger.print(tag, port);
-	logger.print(tag, F(",path="));
-	logger.println(tag, path);
+	logger.print(tag, F("\n\tpath="));
+	logger.print(tag, path);
 	logger.print(tag, F("\n\tpostparam="));
 	logger.print(tag, param);
 	/*logger.print(tag, F("\n\tlen="));
@@ -76,12 +76,12 @@ bool HttpHelper::post(String host, int port, String path, String param, String *
 		
 	}
 	else {
-		logger.print(tag, "-NON CONNESSO-\n");
+		logger.print(tag, "\n\t SERVERNON CONNESSO-\n");
 		*result = "-NON CONNESSO-";
 		return false;
 	}
 	client.stop();
-	logger.print(tag, "\n\tEND POST\n");
+	logger.println(tag, F("<<post\n"));
 	return true;
 }
 

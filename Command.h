@@ -5,7 +5,7 @@
 #include "Logger.h"
 #include "Shield.h"
 #include "HttpHelper.h"
-#include "OneWireSensors.h"
+//#include "OneWireSensors.h"
 #include "JSON.h"
 #include "Program.h"
 

@@ -16,6 +16,9 @@ class Shield
 private:
 	String tag;
 
+	const int checkTemperature_interval = 60000;
+	unsigned long lastCheckTemperature = 0;//-flash_interval;
+
 public:
 	static const int boardnamelen = 30;
 	static const int servernamelen = 30;
@@ -86,7 +89,7 @@ public:
 	String getSensorsStatusJson();
 	String getActuatorsStatusJson();
 	void checkActuatorsStatus();
-	bool checkSensorsStatus();
+	void checkSensorsStatus();
 
 	char networkSSID[32];// = "ssid";
 	char networkPassword[96];// = "password";
@@ -106,7 +109,7 @@ public:
 	
 	void addOneWireSensors(String sensorNames);
 	void addActuators();
-	void readTemperatures();
+	void checkTemperatures();
 
 	bool temperatureChanged = false; // indica se la temperatura è cambiata dall'ultima chiamata a flash()
 

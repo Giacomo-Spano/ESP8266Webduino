@@ -38,7 +38,7 @@ void HeaterActuator::checkStatus()
 	// notifica il server se è cambiato lo stato del rele
 	if (releStatusChanged()) {
 
-		logger.println(tag, "SEND ACTUATOR UPDATE - rele status changed");
+		logger.println(tag, "\t!->rele status changed");
 		//HeaterActuator ha = this->;
 		//command.sendActuatorStatus(*this);
 		saveOldReleStatus();
@@ -48,7 +48,7 @@ void HeaterActuator::checkStatus()
 	// notifica il server se è cambiato lo status
 	if (statusChanged()) {
 
-		logger.println(tag, "SEND ACTUATOR UPDATE - status changed");
+		logger.println(tag, "\t!->status changed");
 		/*if (getStatus() == Program::STATUS_DISABLED) {
 			command.sendActuatorStatus(*this);
 		}*/
@@ -139,16 +139,15 @@ bool HeaterActuator::programEnded()
 
 	if (currentStatus == Program::STATUS_PROGRAMACTIVE || currentStatus == Program::STATUS_MANUAL_AUTO || currentStatus == Program::STATUS_MANUAL_OFF) {
 
-		if (sensorRemote && (currMillis - last_RemoteSensor) > remoteSensorTimeout) {
+		/*if (sensorRemote && (currMillis - last_RemoteSensor) > remoteSensorTimeout) {
 			// ferma il programma se è passato troppo tempo dall'ultimo aggiornamento ricevuto dal server
 			logger.println(tag, "REMOTE SENSOR TIMEOUT");
 			// è inutile mandare un sendstatus perchè tanto cambia lo stato dopo e verrebbe inviato due volte
 			remoteTemperature = 0;
-			setStatus(Program::STATUS_IDLE);
-			//enableRele(false);			
+			setStatus(Program::STATUS_IDLE);			
 			return true;
 		}
-		else if (currMillis - programStartTime > programDuration) {
+		else */if (currMillis - programStartTime > programDuration) {
 			logger.println(tag, "END PROGRAM");
 			// � iniutile mandare un sendstatus perch� tanto cambia lo stato dopo e verrebbe inviato due volte
 			setStatus(Program::STATUS_IDLE);
@@ -160,6 +159,8 @@ bool HeaterActuator::programEnded()
 }
 
 void HeaterActuator::updateReleStatus() {
+
+	logger.print(tag, "\n\n\t>>updateReleStatus");
 
 	logger.print(tag, "\n\tConsumptionStartTime=");
 	logger.print(tag, String(ConsumptionStartTime));
@@ -175,7 +176,7 @@ void HeaterActuator::updateReleStatus() {
 	logger.print(tag, String(remoteSensorId));
 	logger.print(tag, "\n\tremoteTemperature=");
 	logger.print(tag, String(remoteTemperature));
-	logger.print(tag, "\n\t");
+	logger.print(tag, "\n\n");
 
 	if (currentStatus == Program::STATUS_MANUAL_OFF) {
 
@@ -219,14 +220,16 @@ void HeaterActuator::updateReleStatus() {
 		}
 	}
 	else {
-		logger.print(tag, "INACTIVE-rele OFF");
+		logger.print(tag, "\n\tINACTIVE-rele OFF");
 		enableRele(false);
 	}
+
+	logger.print(tag, "\n\t<<updateReleStatus\n");
 }
 
-void HeaterActuator::changeProgram(int command, long duration, /*int manual, */bool sensorRemote, float remotetemperature, int sensorId, float target, int program, int timerange, int localsensor) {
+void HeaterActuator::changeProgram(int command, long duration, bool sensorRemote, float remotetemperature, int sensorId, float target, int program, int timerange) {
 
-	logger.println(tag, F(">>changeProgram"));
+	logger.print(tag, F("\t>>changeProgram"));
 
 	logger.print(tag, F("\n\tcurrentStatus="));
 	logger.print(tag, currentStatus);
@@ -301,7 +304,7 @@ void HeaterActuator::changeProgram(int command, long duration, /*int manual, */b
 			setStatus(Program::STATUS_DISABLED);
 		}
 	}
-	logger.println(tag, F("<<changeProgram"));
+	logger.println(tag, F("\t<<changeProgram"));
 }
 
 String HeaterActuator::getSensorAddress()
@@ -417,9 +420,9 @@ int HeaterActuator::getActiveTimeRange()
 
 void HeaterActuator::enableRele(boolean on) {
 
-	logger.print(tag, F("enableRele "));
-	logger.print(tag, F(" on="));
-	logger.print(tag, String(on));
+	logger.print(tag, F("\n\t>>enableRele "));
+	//logger.print(tag, F(" on="));
+	//logger.print(tag, String(on));
 
 	if (releStatus) {
 		totalConsumptionTime += (millis() - lastConsumptionEnableTime);
@@ -438,7 +441,7 @@ void HeaterActuator::enableRele(boolean on) {
 		digitalWrite(relePin, RELE_OFF);
 		releStatus = false;
 	}
-
+	logger.print(tag, F("\n\t<<enableRele "));
 }
 
 bool HeaterActuator::statusChanged() {

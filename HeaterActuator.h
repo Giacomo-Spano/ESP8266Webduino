@@ -64,7 +64,7 @@ public:
 	int getActiveProgram();
 	int getActiveTimeRange();
 	void setLocalTemperature(float temperature);
-	void changeProgram(int status, long duration/*, int manual*/, bool sensorRemote, float remotetemperature, int sensorId, float target, int program, int timerange, int localsensor);
+	void changeProgram(int status, long duration, bool sensorRemote, float remotetemperature, int sensorId, float target, int program, int timerange);
 	virtual String getSensorAddress();
 
 	time_t programStartTime = 0;
@@ -78,9 +78,9 @@ private:
 	bool oldReleStatus = false;
 	float targetTemperature = 0.0;
 	float remoteTemperature = 0;
-	int remoteSensorId = 0; //indica se il sensore è locale o remoto
+	int remoteSensorId = 0; 
 	int localSensorId = 0;
-	bool sensorRemote = false;
+	bool sensorRemote = false;//indica se il sensore è locale o remoto
 	int activeProgram = -1;
 	int activeTimerange = -1;
 

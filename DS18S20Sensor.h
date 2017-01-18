@@ -21,14 +21,15 @@ public:
 
 	int avTempCounter = 0;
 	float avTemp[avTempsize];
-	float temperature;
-	float avTemperature;
+	
 
 	void readTemperature();
+	float getTemperature();
+	float getAvTemperature();
 	
 private:
-	//void readAverageTemperature();
-	//float getTemp();
+	float temperature;
+	float avTemperature;
 	
 };
 

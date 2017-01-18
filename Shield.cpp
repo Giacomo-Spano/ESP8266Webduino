@@ -75,12 +75,23 @@ void Shield::checkActuatorsStatus()
 	hearterActuator.checkStatus();	
 }
 
-bool Shield::checkSensorsStatus()
+void Shield::checkSensorsStatus()
 {
-	logger.println(tag, F("checkSensorsStatus - start -----"));
-	readTemperatures();
+	//logger.println(tag, F(">>checkSensorsStatus"));
 
-	// se il sensore attivo è quello locale aggiorna lo stato
+	unsigned long currMillis = millis();
+	unsigned long timeDiff = currMillis - lastCheckTemperature;
+	if (timeDiff > checkTemperature_interval) {
+
+		lastCheckTemperature = currMillis;
+		checkTemperatures();
+		return;
+	}
+
+
+	//checkTemperatures();
+
+	/*// se il sensore attivo è quello locale aggiorna lo stato
 	// del rele in base alla temperatur del sensore locale
 	if (!hearterActuator.sensorIsRemote())
 		hearterActuator.updateReleStatus();
@@ -94,10 +105,10 @@ bool Shield::checkSensorsStatus()
 		command.sendSensorsStatus(*this);
 		temperatureChanged = false; // qui bisognerebbe introdiurre il controllo del valore di ritorno della send
 										   // cokmmand ed entualmente reinviare
-	}
-	logger.print(tag, F("\n\checkSensorsStatus - END \n\t"));
+	}*/
 
-	return true;
+	//logger.println(tag, F("<<checkSensorsStatus"));
+	//return true;
 }
 
 void Shield::addOneWireSensors(String sensorNames) {
@@ -178,30 +189,49 @@ void Shield::addActuators() {
 }
 
 
-void Shield::readTemperatures() {
+void Shield::checkTemperatures() {
+	
+	logger.println(tag, ">>checkTemperatures---");
 
-	logger.print(tag, "\n\treadTemperatures---");
 	//sensorList.show();
-	float oldAvTemperature;
+	float oldTemperature;
 	for (int i = 0; i < sensorList.count; i++) {
 		DS18S20Sensor* pSensor = (DS18S20Sensor*)sensorList.get(i);		
-		logger.print(tag, "\n\t readTemperatures for sensor ");
-		logger.print(tag, pSensor->sensorname);
-		logger.print(tag, " addr: ");
-		logger.print(tag, pSensor->getSensorAddress());
-		oldAvTemperature = pSensor->avTemperature;
+		oldTemperature = pSensor->getTemperature();
 		
 		//sensorList.show();
 		pSensor->readTemperature();
 		
-		if (oldAvTemperature != pSensor->avTemperature)
+		if (oldTemperature != pSensor->getTemperature()) {
 			temperatureChanged = true;
+			logger.print(tag, "\ttemperatura cambiata");
+			logger.print(tag, String(oldTemperature));
+			logger.print(tag, "->");
+			logger.print(tag, String(pSensor->getTemperature()));
+		}
 
 		// imposta la temperatura locale a quella del primo sensore (DA CAMBIARE)
 		if (i == 0)
-			hearterActuator.setLocalTemperature(pSensor->avTemperature);
+			hearterActuator.setLocalTemperature(pSensor->getTemperature());
 		//sensorList.show();
 	}
-	//logger.print(tag, "\n\t---END readTemperatures---");
+
+	// se il sensore attivo è quello locale aggiorna lo stato
+	// del rele in base alla temperatur del sensore locale
+	if (!hearterActuator.sensorIsRemote())
+		hearterActuator.updateReleStatus();
+
+	Command command;
+	if (temperatureChanged) {
+
+		logger.print(tag, "\n\n\tSEND TEMPERATURE UPDATE - temperature changed\n");
+		//logger.print(tag, "\n\toldLocalTemperature=");
+
+		command.sendSensorsStatus(*this);
+		temperatureChanged = false; // qui bisognerebbe introdiurre il controllo del valore di ritorno della send
+									// cokmmand ed entualmente reinviare
+	}
+
+	logger.println(tag, "<<checkTemperatures\n");
 }
 

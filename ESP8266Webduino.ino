@@ -1,3 +1,5 @@
+#include <OneWire.h>
+
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
 #include <WiFiUdp.h>
@@ -12,7 +14,7 @@
 #include "Logger.h"
 #include "HttpHelper.h"
 #include "JSON.h"
-#include "OneWireSensors.h"
+//#include "OneWireSensors.h"
 #include "Shield.h"
 #include "Command.h"
 #include "Program.h"
@@ -474,24 +476,23 @@ void setup()
 		Command command;
 		command.setServer(shield.servername, shield.serverPort);
 		shield.id = command.registerShield(shield);
-		logger.print(tag, "\n\tsettings.id");
-		logger.print(tag, String(shield.id));
+
 		if (shield.id != -1) {
 			shieldRegistered = true;
 
-			logger.println(tag, "SHIELD REGISTERED" + String(shield.id));
+			logger.print(tag, "\n\n\tSHIELD REGISTERED " + String(shield.id) + "\n");
 		}
 		else {
 			shieldRegistered = false;
-			logger.println(tag, "SHIELD NOT REGISTERED");
+			logger.print(tag, "\n\n\tSHIELD NOT REGISTERED\n");
 		}
 	}
 	else {
-		logger.println(tag, "\nIMPOSSIBILE COLLEGARSI ALLA RETE\n");
+		logger.println(tag, "\n\n\tIMPOSSIBILE COLLEGARSI ALLA RETE\n");
 		setupAP();
 
 		server.begin();
-		logger.println(tag, "Local server started...192.168.4.1");
+		logger.print(tag, "\nLocal server started...192.168.4.1");
 		// Print the IP address
 		wdt_disable();
 		wdt_enable(WDTO_8S);
@@ -651,7 +652,7 @@ String download() {
 
 String showRele(String GETparam) {
 
-	logger.println(tag, F("\n\ncalled showRele "));
+	logger.println(tag, F("\n\t>>called showRele "));
 
 	getPostdata(databuff, maxposdataChangeSetting);
 	char posdata[maxposdata];
@@ -669,17 +670,21 @@ String showRele(String GETparam) {
 	logger.print(tag, F("\n\tduration ="));
 	logger.print(tag, duration);
 	logger.print(tag, F(" millisecondi"));
+	// sensor
+	String str = "";
+	int sensorId = parsePostdata(databuff, "sensorid", posdata);
+	str = String(sensorId);
+	logger.print(tag, F("\n\tsensorId="));
+	logger.print(tag, str);
 	// target
 	int res = parsePostdata(databuff, "target", posdata);
 	//if (res != -1) {
-	String str = "";
-	str += posdata;
+	str = posdata;
 	float target = str.toFloat();
 	logger.print(tag, F("\n\ttarget ="));
 	logger.print(tag, str);
 	shield.hearterActuator.setTargetTemperature(target);
-	// sensor
-	int sensorId = parsePostdata(databuff, "sensor", posdata);
+	
 	// remote temperature
 	float remoteTemperature = -1;
 	res = parsePostdata(databuff, "temperature", posdata);
@@ -705,6 +710,7 @@ String showRele(String GETparam) {
 	// local sensor
 	int localSensor = parsePostdata(databuff, "localsensor", posdata);
 	logger.print(tag, F("\n\tlocalsensor="));
+	logger.print(tag, localSensor);
 	
 	// jsonRequest
 	// DA CAMBIARE. Controllarer in base all'header
@@ -713,11 +719,10 @@ String showRele(String GETparam) {
 	logger.print(tag, json);
 
 	shield.hearterActuator.changeProgram(status,duration,
-									/*manual,*/
-									(sensorId>0) ? true : false,
+									!localSensor,
 									remoteTemperature,
 									sensorId,
-									target, program, timerange,localSensor);
+									target, program, timerange);
 
 	
 	
@@ -742,7 +747,7 @@ String showRele(String GETparam) {
 		client.println(data);
 	}
 
-	logger.print(tag, F("\nend show rele\n"));
+	logger.print(tag, F("\n\t<<end show rele\n"));
 }
 
 /*void flash() {
@@ -751,7 +756,7 @@ String showRele(String GETparam) {
 
 	//time_t currentTime = millis();
 
-	shield.readTemperatures();
+	shield.checkTemperatures();
 	
 	// se il sensore attivo è quello locale aggiorna lo stato
 	// del rele in base alla temperatur del sensore locale
@@ -864,79 +869,28 @@ void loop()
 	}
 
 	shield.checkActuatorsStatus();
-	/*if (shield.checkActuatorsStatus())
-		return;*/
+	shield.checkSensorsStatus();
 	
-	Command command;
 	
-	unsigned long currMillis = millis();
-	
+	unsigned long currMillis = millis();	
 	unsigned long timeDiff = currMillis - lastFlash;
 	if (timeDiff > flash_interval) {
-		/*String str = "\n\nFLASH\ncurrMillis = " + String(currMillis);
-		str += "\nlastFlash = " + String(lastFlash);
-		str += "\ntimeDiff = " + String(timeDiff);
-		str += "\nflash_interval = " + String(flash_interval);
-		logger.println(tag, str);*/
 
 		lastFlash = currMillis;
-
 		if (shield.id <= 0) {
+			Command command;
 			logger.println(tag, F("ID NON VALIDO"));
 			shield.id = command.registerShield(shield);
 		}
 
-		
-		//flash();
-		shield.checkSensorsStatus();
-		
-		/*if (shield.id <= 0) {
-			logger.println(tag, F("ID NON VALIDO"));
-			shield.id = command.registerShield(shield);
-		}
-		else {*/
-			/*if (shield.temperatureChanged) {
-
-				logger.println(tag, "SEND TEMPERATURE UPDATE - average temperature changed");
-				logger.print(tag, "\n\toldLocalAvTemperature=");
-				command.sendSensorsStatus(shield);
-				shield.temperatureChanged = false; // qui bisognerebbe introdiurre il controllo del valore di ritorno della send
-														// cokmmand ed entualmente reinviare
-			}*/
-		/*}*/
+		//shield.checkSensorsStatus();
 		return;
 	}
 
-	// questa parte commentata servirebbe a mandare periodicamente 
-	// lo stato del actuator al server ma non ha senso, meglio che sia 
-	// il server ad interrogare il cliente trascorso un certoi timeout
-	/*if ((statusChangeSent == false && (currMillis - lastStatusChange) > lastStatusChange_interval)) {
-		
-		logger.println(tag, "SEND ACTUATOR UPDATE - periodic status update");
-		logger.print(tag, "\n\tstatusChangeSent=");
-		logger.print(tag, statusChangeSent);
-		logger.print(tag, "\n\tcurrMillis=");
-		logger.print(tag, currMillis);
-		logger.print(tag, " lastStatusChange=");
-		logger.print(tag, lastStatusChange);
-		logger.print(tag, "\n\tlastStatusChange_interval=");
-		logger.print(tag, lastStatusChange_interval);
-		logger.print(tag, "\n\t");
-
-		Command command;
-		if (command.sendActuatorStatus(shield, shield.hearterActuator)) {
-			statusChangeSent = true;
-		}
-		else {
-			statusChangeSent = false;
-			lastStatusChange = currMillis;
-		}
-		return;
-	}*/
-
 	if (currMillis - lastTimeSync > timeSync_interval) {
+		Command command;
 		lastTimeSync = currMillis;
-		command.timeSync(/*Shield::getServerName(), Shield::getServerPort()*/);
+		command.timeSync();
 		return;
 	}
 
@@ -1252,8 +1206,8 @@ String showMain(String param)
 
 		count++;
 		data += "<tr><td>Sensor " + String(count) + " [" + pSensor->getSensorAddress() + "]</td>"
-			+ "<td>" + String(pSensor->temperature) + "°C (Av."
-			+ String(pSensor->avTemperature) + "°C)"
+			+ "<td>" + String(pSensor->getTemperature()) + "°C (Av."
+			+ String(pSensor->getAvTemperature()) + "°C)"
 			+ "<br><form action='/chstt' method='POST'>"
 			+ "<input type = 'num' name = 'sensor" + String(count) + "' value='" + pSensor->sensorname + "' "
 			+ "size='32' maxlength='32'>"
