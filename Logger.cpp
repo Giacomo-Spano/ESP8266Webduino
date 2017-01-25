@@ -49,6 +49,12 @@ void Logger::print(String tag, String txt) {
 	if (!truncated) {
 
 		if (toBeSent.length() > maxLogbuffer) {
+			
+			/*if (txt.length() < maxLogbuffer)
+				toBeSent = toBeSent.substring(txt.length()) + txt.length();
+			else
+				toBeSent = "";*/
+
 			toBeSent += txt + "\n\n--- TRUNCATED ---\n\n";
 			truncated = true;
 		}
@@ -124,7 +130,7 @@ bool Logger::send(/*int shieldid, String servername, int port*/) {
 String Logger::getHeader(String tag) {
 
 	String date = getStrDate();
-	String header = date + " " + tag + ": ";
+	String header = String(ESP.getFreeHeap()) + " " + date + " " + tag + ": ";
 	
 	return header;
 }

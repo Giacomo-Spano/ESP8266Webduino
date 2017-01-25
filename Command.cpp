@@ -77,7 +77,6 @@ bool Command::sendLog(String log/*, /*int shieldid, String servername, int port*
 	String resultvalue = jsonResult.jsonGetString("result");
 
 	if (resultvalue.equalsIgnoreCase("success")) {
-
 		return true;
 	}
 	else {
@@ -85,16 +84,36 @@ bool Command::sendLog(String log/*, /*int shieldid, String servername, int port*
 	}
 }
 
+void Command::sendRestartNotification()
+{
+	logger.println(tag, F(">> sendRestartNotification\n"));
+
+	String str = "{";
+	str += "\"event\":\"restart\",";
+	str += "\"reason\": \"empty\"";
+	str += "}";
+
+	HttpHelper hplr;
+
+	String result;
+	boolean res = hplr.post(Shield::servername, Shield::serverPort, "/webduino/shield", str, &result);
+
+	JSON json(result);
+	String resultvalue = json.jsonGetString("result");
+	logger.print(tag, "\tresult = ");
+	logger.print(tag, resultvalue);
+
+	logger.println(tag, F("<< sendRestartNotification\n"));	
+}
+
 int Command::registerShield(Shield shield)
 {
 	logger.println(tag, F(">> registerShield\n"));
-
-
+	
 	String str = "{";
 	str += "\"event\":\"register\",";
-	str += "\"shield\": ";
-	
 
+	str += "\"shield\": ";	
 	str += "{";
 	str += "\"MAC\":\"" + String(shield.MAC_char) + "\"";
 	str += ",\"boardname\":\"" + String(shield.boardname) + "\"";
@@ -122,7 +141,7 @@ int Command::registerShield(Shield shield)
 	HttpHelper hplr;
 
 	String result;
-	boolean res = hplr.post(shield.servername, shield.serverPort, "/webduino/shield", str, &result);
+	boolean res = hplr.post(Shield::servername, Shield::serverPort, "/webduino/shield", str, &result);
 	//logger.print(tag, "\n\tanswer = ");
 	//logger.println(tag, result);
 
@@ -135,7 +154,6 @@ int Command::registerShield(Shield shield)
 	if (resultvalue.equalsIgnoreCase("success")) {
 
 		id = json.jsonGetInt("id");
-
 		
 		serverTime = json.jsonGetLong("timesec");
 		getTimeObject = this;

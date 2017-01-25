@@ -1,11 +1,11 @@
-#include <OneWire.h>
-
+#include "js.h"
+#include "html.h"
+#include "HtmlFileClass.h"
+#include "ESP8266Webduino.h"
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
-#include <OneWire.h>
-#include <DallasTemperature.h>
 #include <string.h>
 #include <EEPROM.h>
 #include "EEPROMAnything.h"
@@ -14,7 +14,6 @@
 #include "Logger.h"
 #include "HttpHelper.h"
 #include "JSON.h"
-//#include "OneWireSensors.h"
 #include "Shield.h"
 #include "Command.h"
 #include "Program.h"
@@ -25,14 +24,9 @@
 #include "css.h"
 #include "FS.h"
 
-extern uint8_t OneWirePin = D4;
-extern OneWire oneWire(OneWirePin);
-extern DallasTemperature sensors(&oneWire);
-
 #define Versione 0.92
-//int buildVersion = 1;
 
-int EPROM_Table_Schema_Version = 5;
+int EPROM_Table_Schema_Version = 6;
 const char SWVERSION[] = "1.01";
 
 Logger logger;
@@ -51,20 +45,23 @@ byte mac[] = { 0x00, 0xA0, 0xB0, 0xC0, 0xD0, 0x90 };
 extern const char* statusStr[] = { "unused", "idle", "program", "manual", "disabled", "restarted", "manualoff" };
 Shield shield;
 
-
 void initEPROM();
 void readEPROM();
-void writeEPROM();
+extern void writeEPROM();
 void showPage(String data);
 void getPostdata(char *data, int maxposdata);
+String getPostdata();
+void receiveCommand(String param);
 int parsePostdata(const char* data, const char* param, char* value);
 String getJsonStatus();
 String getJsonSensorsStatus();
 String getJsonActuatorsStatus();
+String getJsonHeaterStatus();
 int findIndex(const char* data, const char* target);
 String showMain(String param);
 String showSettings(String param);
 String showIODevices(String param);
+String showHeater(String param);
 void showChangeIODevices(String param);
 void showChangeSettings(String param);
 void showPower(String param);
@@ -72,12 +69,12 @@ String softwareReset();
 String showIndex();
 void setRemoteTemperature(String param);
 String getFile(String filename);
+void sendFile(String header, const char * file);
 
 // Create an instance of the server
 // specify the port to listen on as an argument
 WiFiServer server(80);
 WiFiClient client;
-
 
 const int maxposdataChangeSetting = 150;
 char databuff[maxposdataChangeSetting];
@@ -86,7 +83,6 @@ char databuff[maxposdataChangeSetting];
 const byte EEPROM_ID = 0x99; // used to identify if valid data in EEPROM
 const int ID_ADDR = 0; // the EEPROM address used to store the ID
 const int TIMERTIME_ADDR = 1; // the EEPROM address used to store the pin
-
 const int maxposdata = 101; // massimo numero di caratteri della variabile posdata
 const int maxvaluesize = maxposdata - 1/*10*/; // massimo numero di digit del valore di una variabile nel POS data
 
@@ -98,15 +94,11 @@ const int lastStatusChange_interval = 60000; // timeout retry invio status chang
 unsigned long lastStatusChange = 0;//-lastStatusChange_interval;// 0;
 unsigned long lastNotification = 0;
 const int Notification_interval = 20000;
-
 unsigned long lastSendLog = 0;
 const int SendLog_interval = 10000;// 10 secondi
-
 unsigned long lastTimeSync = 0;
 const int timeSync_interval = 60000;// 60 secondi
-
 int offlineCounter = 0;
-
 // variables created by the build process when compiling the sketch
 extern int __bss_end;
 extern void *__brkval;
@@ -134,13 +126,26 @@ void writeEPROM() {
 	EEPROM.write(addr++, hiByte);
 	EEPROM.write(addr++, loByte);
 
+	// heater pin
+	uint8_t pin = Shield::getHeaterPin();
+	EEPROM.write(addr++, pin);
+
+	// heater enabled
+	bool heaterEnabled = Shield::getHeaterEnabled();
+	EEPROM.write(addr++, heaterEnabled);
+	if (heaterEnabled)
+		logger.println(tag, "\n\t>>>heaterenabled = true");
+	else
+		logger.println(tag, "\n\t>>>heaterenabled = false");
+
+	// io devices
 	for (int i = 0; i < 10; i++) {
 		hiByte = highByte(Shield::getIODevice(i));
 		loByte = lowByte(Shield::getIODevice(i));
 		EEPROM.write(addr++, hiByte);
 		EEPROM.write(addr++, loByte);
 	}
-	
+
 	// local port
 	hiByte = highByte(shield.localPort);
 	loByte = lowByte(shield.localPort);
@@ -197,19 +202,33 @@ void readEPROM() {
 	logger.print(tag, String(EPROM_Table_Schema_Version));
 
 	int epromversion = 0;
-	// build version
+	// epromversion
 	hiByte = EEPROM.read(addr++);
 	lowByte = EEPROM.read(addr++);
 	epromversion = word(hiByte, lowByte);
 	logger.print(tag, "\nepromversion=");
 	logger.print(tag, String(epromversion));
-	
-	if (epromversion >= EPROM_Table_Schema_Version) {
+
+	if (epromversion >= 6/*EPROM_Table_Schema_Version*/) {
+		uint8_t pin = EEPROM.read(addr++);
+		Shield::setHeaterPin(pin);
+
+		bool heaterEnabled = EEPROM.read(addr++);
+		Shield::setHeaterEnabled(heaterEnabled);
+
+		if (heaterEnabled)
+			logger.println(tag, "\n\t>>>heaterenabled = true");
+		else
+			logger.println(tag, "\n\t>>>heaterenabled = false");
+
+	}
+
+	if (epromversion >= 5/*EPROM_Table_Schema_Version*/) {
 		for (int i = 0; i < Shield::getMaxIoDevices(); i++) {
 			hiByte = EEPROM.read(addr++);
 			lowByte = EEPROM.read(addr++);
-			Shield::setIODevice(i,word(hiByte, lowByte));
-			
+			Shield::setIODevice(i, word(hiByte, lowByte));
+
 			logger.print(tag, "\ni=");
 			logger.print(tag, String(i));
 			logger.print(tag, ", dev=");
@@ -223,13 +242,9 @@ void readEPROM() {
 	shield.localPort = word(hiByte, lowByte);
 	// ssid
 	int res = EEPROM_readAnything(addr, shield.networkSSID);
-	//Serial.println("networkSSID=");
-	//Serial.println(shield.networkSSID);
 	addr += res;
 	// password
 	res = EEPROM_readAnything(addr, shield.networkPassword);
-	//Serial.println("networkPassword=");
-	//Serial.println(shield.networkPassword);
 	addr += res;
 	//server name
 	res = EEPROM_readAnything(addr, shield.servername);
@@ -276,7 +291,7 @@ void initEPROM()
 int testWifi(void) {
 	int c = 0;
 	logger.println(tag, "Waiting for Wifi to connect");
-	while (c < 20) {
+	while (c < 40) {
 		if (WiFi.status() == WL_CONNECTED) {
 			logger.println(tag, "WiFi connected");
 			return(20);
@@ -343,7 +358,6 @@ void setupAP(void) {
 	logger.print(tag, "\nssidAP buffer= ");
 	logger.println(tag, buffer);
 	WiFi.softAP(buffer, passwordAP);
-
 }
 
 void checkOTA()
@@ -386,13 +400,12 @@ void setup()
 {
 	Serial.begin(115200);
 	delay(10);
+	/*Serial.println("");
 	Serial.println("");
-	Serial.println("");
-	Serial.println("RESTARTING.... \n");
+	Serial.println("RESTARTING.... \n");*/
 
 	logger.print(tag, "\n\n\"*******************RESTARTING************************--");
-
-
+	
 	// always use this to "mount" the filesystem
 	bool result = SPIFFS.begin();
 	Serial.println("SPIFFS opened: " + result);
@@ -424,9 +437,6 @@ void setup()
 	f.close();
 
 
-
-
-
 	String str = "\n\nstarting.... Versione ";
 	str += String(Versione);
 	logger.print(tag, str);
@@ -442,6 +452,9 @@ void setup()
 	logger.print(tag, shield.MAC_char);
 
 
+	//oneWirePtr = new OneWire(OneWirePin);
+	//pDallasSensors = new DallasTemperature(oneWirePtr);
+
 	initEPROM();
 	logger.print(tag, "\n\tSensorNames=" + sensorNames);
 
@@ -449,6 +462,8 @@ void setup()
 	logger.print(tag, "\n\nConnecting to " + String(shield.networkSSID) + " " + String(shield.networkPassword));
 
 	WiFi.mode(WIFI_STA);//??????
+	//delay(5000);
+
 	WiFi.begin(shield.networkSSID, shield.networkPassword);
 	if (testWifi() == 20/*WL_CONNECTED*/) {
 
@@ -469,6 +484,8 @@ void setup()
 		//enableRele(false);
 		shield.hearterActuator.init(String(shield.MAC_char));
 		//Temperature sensor
+		
+
 		shield.addOneWireSensors(sensorNames);
 		shield.addActuators();
 
@@ -501,7 +518,8 @@ void setup()
 		shield.hearterActuator.setStatus(Program::STATUS_DISABLED);
 	}
 
-
+	Command commannd;
+	commannd.sendRestartNotification();
 }
 
 void showwol(String param) {
@@ -524,7 +542,7 @@ void showwol(String param) {
 
 String registerShield() {
 	logger.println(tag, F("register shield "));
-	
+
 	String data;
 	data += "";
 	data += F("HTTP/1.1 200 OK\r\nContent-Type: text/html");
@@ -536,16 +554,14 @@ String registerShield() {
 	//client.stop();
 	Command command;
 	command.registerShield(shield);
-	
+
 	return data;
 }
 
 String softwareReset() {
 
-	logger.println(tag, F("software reset "));
-
-
-
+	logger.println(tag, F(">>software reset "));
+	
 	String data;
 	data += "";
 	data += F("HTTP/1.1 200 OK\r\nContent-Type: text/html");
@@ -556,8 +572,6 @@ String softwareReset() {
 	client.println(data);
 	client.stop();
 
-	//delay(3000);
-	//ESP.reset();
 	ESP.restart();
 	return "";
 }
@@ -622,6 +636,20 @@ String showIndex() {
 	return "";
 }
 
+/*String showHeater2() {
+
+	logger.println(tag, F("showHeater2"));
+
+	String header = F("HTTP/1.1 200 OK\r\nContent-Type: text/html\n\n");
+	client.println(header);
+
+	String str = getStrPage(html_heater);
+
+	client.print(str);
+
+	return "";
+}*/
+
 String download() {
 
 	logger.println(tag, F("download "));
@@ -637,6 +665,7 @@ String download() {
 
 	Command command;
 	command.download("ESP8266.css", shield);
+	//command.download("prova3.html", shield);
 
 	command.download("prova3.html", shield);
 	//command.download("ESP8266.css", shield);
@@ -650,7 +679,22 @@ String download() {
 	return "";
 }
 
-String showRele(String GETparam) {
+void receiveCommand(String param) {
+
+	logger.println(tag, F(">>receiveCommand "));
+
+	String str = getPostdata();
+
+	String jsonResult = shield.sendCommand(str);
+	//logger.print(tag, F("\n\tresult= "));
+	//logger.print(tag, jsonResult);
+
+	client.println(jsonResult);
+
+	logger.println(tag, F("<<receiveCommand "));
+}
+
+void showRele(String GETparam) {
 
 	logger.println(tag, F("\n\t>>called showRele "));
 
@@ -661,6 +705,33 @@ String showRele(String GETparam) {
 	status = parsePostdata(databuff, "status", posdata);
 	logger.print(tag, F("\n\tstatus="));
 	logger.print(tag, status);
+	String command = "";
+	switch (status) {
+	case 0:
+		command = "programoff";
+		break;
+	case 1:
+		command = "programon";
+		break;
+	case 2:
+		command = "disabled";
+		break;
+	case 3:
+		command = "enabled";
+		break;
+	case 4:
+		command = "manualoff";
+		break;
+	case 5:
+		command = "manual";
+		break;
+	case 6:
+		command = "manualend";
+		break;
+	}
+
+
+
 	// duration
 	long duration = parsePostdata(databuff, "duration", posdata);
 	logger.print(tag, F("\n\tduration="));
@@ -684,7 +755,7 @@ String showRele(String GETparam) {
 	logger.print(tag, F("\n\ttarget ="));
 	logger.print(tag, str);
 	shield.hearterActuator.setTargetTemperature(target);
-	
+
 	// remote temperature
 	float remoteTemperature = -1;
 	res = parsePostdata(databuff, "temperature", posdata);
@@ -711,21 +782,21 @@ String showRele(String GETparam) {
 	int localSensor = parsePostdata(databuff, "localsensor", posdata);
 	logger.print(tag, F("\n\tlocalsensor="));
 	logger.print(tag, localSensor);
-	
+
 	// jsonRequest
 	// DA CAMBIARE. Controllarer in base all'header
 	int json = parsePostdata(databuff, "json", posdata);
 	logger.print(tag, F("\n\tjson="));
 	logger.print(tag, json);
 
-	shield.hearterActuator.changeProgram(status,duration,
-									!localSensor,
-									remoteTemperature,
-									sensorId,
-									target, program, timerange);
+	shield.hearterActuator.changeProgram(command, duration,
+		!localSensor,
+		remoteTemperature,
+		sensorId,
+		target, program, timerange);
 
-	
-	
+
+
 	//lastFlash = millis() - flash_interval;
 
 	//////////////////
@@ -757,21 +828,21 @@ String showRele(String GETparam) {
 	//time_t currentTime = millis();
 
 	shield.checkTemperatures();
-	
+
 	// se il sensore attivo è quello locale aggiorna lo stato
 	// del rele in base alla temperatur del sensore locale
 	if (!shield.hearterActuator.sensorIsRemote())
 		shield.hearterActuator.updateReleStatus();
-	
+
 	logger.print(tag, F("\n\tFLASH - END \n\t"));
 }*/
 
 void loop()
 {
 	ArduinoOTA.handle();  // questa chiamata deve essere messa in loop()
-	
+
 	wdt_enable(WDTO_8S);
-	
+
 	//////////////////
 	String page, param;
 	client = server.available();
@@ -782,10 +853,22 @@ void loop()
 
 		if (res) {
 
+			logger.println(tag, ">>loop.shownextpage");
+
 			String data = "";
 			if (page.equalsIgnoreCase("main")) {
 				data = showMain(param);
 				showPage(data);
+			}
+			else if (page.equalsIgnoreCase("command")) {
+				receiveCommand(param);
+			}
+			else if (page.equalsIgnoreCase("heater")) {
+				data = showHeater(param);
+				showPage(data);
+				/*logger.println(tag, ">>loop.showHeater2");
+				showHeater2();
+				logger.println(tag, "<<loop.showHeater2");*/
 			}
 			else if (page.equalsIgnoreCase("setting")) {
 				data = showSettings(param);
@@ -817,6 +900,10 @@ void loop()
 				data = getJsonStatus();
 				showPage(data);
 			}
+			else if (page.equalsIgnoreCase("heaterstatus")) {
+				data = getJsonHeaterStatus();
+				showPage(data);
+			}
 			else if (page.equalsIgnoreCase("sensorstatus")) {
 				data = getJsonSensorsStatus();
 				showPage(data);
@@ -837,10 +924,21 @@ void loop()
 				data = showIndex();
 				showPage(data);
 			}
+			else if (	page.equalsIgnoreCase("heater.html") ||
+						page.equalsIgnoreCase("ESP8266.css") ||
+						page.equalsIgnoreCase("switch.css") ||
+						page.equalsIgnoreCase("webduino.js") ||
+						page.equalsIgnoreCase("heater.js")) {
+				HtmlFileClass html;
+				html.sendFile(&client, page);
+				/*logger.println(tag, ">>loop.getFile heater.html");
+				getFile(page);
+				logger.println(tag, "<<loop.getFile heater.html");*/
+			}
 			else if (page.equalsIgnoreCase("prova3.html")) {
 				getFile(page);
-			}
-			else if (page.equalsIgnoreCase("ESP8266.css")) {
+			} 
+			else if (page.endsWith(".css")) {
 				getFile(page);
 			}
 			else if (page.equalsIgnoreCase("download")) {
@@ -851,13 +949,10 @@ void loop()
 		//delay(20);
 		client.stop();
 
+		logger.println(tag, "<<loop.shownextpage\n");
+
 		return;
 	}
-	
-	
-	/////////////////
-	
-	//Command command;
 	
 	if (shield.id >= 0 && !WiFi.localIP().toString().equals(shield.localIP)) {
 
@@ -870,9 +965,8 @@ void loop()
 
 	shield.checkActuatorsStatus();
 	shield.checkSensorsStatus();
-	
-	
-	unsigned long currMillis = millis();	
+
+	unsigned long currMillis = millis();
 	unsigned long timeDiff = currMillis - lastFlash;
 	if (timeDiff > flash_interval) {
 
@@ -883,7 +977,6 @@ void loop()
 			shield.id = command.registerShield(shield);
 		}
 
-		//shield.checkSensorsStatus();
 		return;
 	}
 
@@ -919,7 +1012,7 @@ String showIODevices(String param)
 	data += F("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<!DOCTYPE html><html><head><title>Webduino</title><body>\r\n");
 
 	data += F("<font color='#53669E' face='Verdana' size='2'><b>IO devices </b></font>\r\n<form action='/chiodevices' method='POST'><table width='80%' border='1'><colgroup bgcolor='#B6C4E9' width='20%' align='left'></colgroup><colgroup bgcolor='#FFFFFF' width='30%' align='left'></colgroup>");
-	
+
 	for (int i = 0; i < Shield::getMaxIoDevices(); i++) {
 		// local port
 		data += F("<tr><td>device ");
@@ -929,7 +1022,7 @@ String showIODevices(String param)
 		data += F("<select name='iodevice");
 		data += String(i);
 		data += F("' >");
-		
+
 		for (int k = 0; k < Shield::getMaxIoDeviceTypes(); k++) {
 
 			data += F("<option value='");
@@ -941,7 +1034,7 @@ String showIODevices(String param)
 			data += Shield::getIoDevicesTypeName(k);
 			data += F("</option>");
 
-			
+
 
 		}
 
@@ -1015,7 +1108,7 @@ String showSettings(String param)
 	data += F("' size='4' maxlength='4'> </td></tr>");
 
 	data += F("</table><input type='submit' value='save'/></form>");
-		
+
 
 	data += F("</body></html>");
 
@@ -1065,27 +1158,27 @@ String showMain(String param)
 	if (shield.hearterActuator.getStatus() == Program::STATUS_PROGRAMACTIVE ||
 		shield.hearterActuator.getStatus() == Program::STATUS_MANUAL_AUTO ||
 		shield.hearterActuator.getStatus() == Program::STATUS_MANUAL_OFF) {
-	
+
 		time_t onStatusDuration = (millis() - shield.hearterActuator.programStartTime) / 1000;
 		time_t duration = (shield.hearterActuator.programDuration) / 1000;
 		time_t remainingTime = (duration - onStatusDuration);
-		
-		
+
+
 		time_t hr = remainingTime / 3600L;
 		time_t mn = (remainingTime - hr * 3600L) / 60L;
 		time_t sec = (remainingTime - hr * 3600L) % 60L;
-			
+
 
 		data += F(" onStatusDuration:");
 		data += String(onStatusDuration);
 		data += F(" ");
-		data += String(onStatusDuration/60);
+		data += String(onStatusDuration / 60);
 		data += F(" duration:");
 		data += String(duration);
 		data += F(" ");
 		data += String(duration / 60L);
 		data += F(" remainingTime:");
-		data +=String(remainingTime);
+		data += String(remainingTime);
 		data += F(" ");
 		data += String(remainingTime / 60L);
 
@@ -1098,7 +1191,7 @@ String showMain(String param)
 		sprintf(buffer, "%02d", sec);
 		data += String(buffer);*/
 
-		
+
 		/*sprintf(buffer, " tempo rimanente:(%2d) ", remainingTime);
 		data += String(buffer);
 		sprintf(buffer, "%02d:", hr);
@@ -1148,8 +1241,9 @@ String showMain(String param)
 
 		data += F("program manual auto");
 
-	} else if (shield.hearterActuator.getStatus() == Program::STATUS_MANUAL_OFF) {
-		
+	}
+	else if (shield.hearterActuator.getStatus() == Program::STATUS_MANUAL_OFF) {
+
 		data += F("program manual  off");
 	}
 	data += F("</td></tr>");
@@ -1158,7 +1252,7 @@ String showMain(String param)
 	if (shield.hearterActuator.getStatus() == Program::STATUS_MANUAL_AUTO || shield.hearterActuator.getStatus() == Program::STATUS_MANUAL_OFF) {
 
 		data += F("<tr><td>Manual ON</td><td>");
-		
+
 		if (shield.hearterActuator.getStatus() == Program::STATUS_MANUAL_AUTO) {
 			sprintf(buffer, "Target: %d.%02d<BR>", (int)shield.hearterActuator.getTargetTemperature(), (int)(shield.hearterActuator.getTargetTemperature() * 100.0) % 100);
 			data += String(buffer);
@@ -1228,7 +1322,7 @@ String showMain(String param)
 	data += String(buffer);*/
 	// wol
 	//data += F("<tr><td>WOL</td><td><form action='/wol' method='POST'><input type='submit' value='send'></form></td></tr>");
-	
+
 	// sofware reset
 	data += F("<tr><td>Software reset</td><td><form action='/reset' method='POST'><input type='submit' value='reset'></form></td></tr>");
 
@@ -1256,9 +1350,168 @@ String showMain(String param)
 	data += "\nEPROM_Table_Schema_Version=" + String(EPROM_Table_Schema_Version);
 
 	data += F("</body></html>");
-	
+
 	return data;
 }
+
+String showHeater(String param)
+{
+	logger.println(tag, F("showHeater "));
+
+	char buffer[200];
+
+	String data;
+	data += "";
+	data += F("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<!DOCTYPE html><html><head><title>Webduino</title><body>\r\n");
+	data += F("\n<font color='#53669E' face='Verdana' size='2'><b>Webduino - ");
+	data += logger.getStrDate();
+	data += F("</b></font>");
+	data += F("\r\n<table width='80%' border='1'><colgroup bgcolor='#B6C4E9' width='20%' align='left'></colgroup><colgroup bgcolor='#FFFFFF' width='30%' align='left'></colgroup>");
+	// status & rele	
+	data += "<tr><td>Actuator:</td><td>";
+	data += statusStr[shield.hearterActuator.getStatus()];
+	data += " - Rele: ";
+	if (shield.hearterActuator.getReleStatus()) {
+		data += F("on - ");
+	}
+	else {
+		data += F("off - ");
+	}
+
+	if (shield.hearterActuator.getStatus() == Program::STATUS_PROGRAMACTIVE ||
+		shield.hearterActuator.getStatus() == Program::STATUS_MANUAL_AUTO ||
+		shield.hearterActuator.getStatus() == Program::STATUS_MANUAL_OFF) {
+
+		time_t onStatusDuration = (millis() - shield.hearterActuator.programStartTime) / 1000;
+		time_t duration = (shield.hearterActuator.programDuration) / 1000;
+		time_t remainingTime = (duration - onStatusDuration);
+
+		time_t hr = remainingTime / 3600L;
+		time_t mn = (remainingTime - hr * 3600L) / 60L;
+		time_t sec = (remainingTime - hr * 3600L) % 60L;
+
+		data += F(" onStatusDuration:");
+		data += String(onStatusDuration);
+		data += F(" ");
+		data += String(onStatusDuration / 60);
+		data += F(" duration:");
+		data += String(duration);
+		data += F(" ");
+		data += String(duration / 60L);
+		data += F(" remainingTime:");
+		data += String(remainingTime);
+		data += F(" ");
+		data += String(remainingTime / 60L);
+	}
+	data += F("</td></tr>");
+
+	// program
+	data += F("<tr><td>program </td><td>");
+	if (shield.hearterActuator.getStatus() == Program::STATUS_PROGRAMACTIVE) {
+		data += F("program ");
+		data += shield.hearterActuator.getActiveProgram();
+		data += F("timerange ");
+		data += shield.hearterActuator.getActiveTimeRange();
+
+		data += " Target: " + String(shield.hearterActuator.getTargetTemperature()) + "°C";
+		data += F(" Sensor: ");
+		if (shield.hearterActuator.sensorIsRemote()) {
+			data += " Remote (" + String(shield.hearterActuator.getRemoteSensorId()) + ")";
+			data += String(shield.hearterActuator.getRemoteTemperature()) + "°C";
+		}
+		else {
+			data += " Local (" + String(shield.hearterActuator.getLocalSensorId()) + ")";
+			data += String(shield.hearterActuator.getLocalTemperature()) + "°C";
+		}
+	}
+	else if (shield.hearterActuator.getStatus() == Program::STATUS_MANUAL_AUTO) {
+
+		data += F("program manual auto");
+	}
+	else if (shield.hearterActuator.getStatus() == Program::STATUS_MANUAL_OFF) {
+
+		data += F("program manual  off");
+	}
+	data += F("</td></tr>");
+	// Manual
+	data += F("<tr><td>Manual-- ");
+	if (shield.hearterActuator.getStatus() == Program::STATUS_MANUAL_AUTO || shield.hearterActuator.getStatus() == Program::STATUS_MANUAL_OFF) {
+
+		data += F("<tr><td>Manual ON</td><td>");
+
+		if (shield.hearterActuator.getStatus() == Program::STATUS_MANUAL_AUTO) {
+			sprintf(buffer, "Target: %d.%02d<BR>", (int)shield.hearterActuator.getTargetTemperature(), (int)(shield.hearterActuator.getTargetTemperature() * 100.0) % 100);
+			data += String(buffer);
+
+			if (!shield.hearterActuator.sensorIsRemote()) {
+				data += F("Sensor: Local");
+			}
+			else {
+				data += "Sensor: Remote (" + String(shield.hearterActuator.getRemoteSensorId()) + ")";
+			}
+		}
+		data += F("<form action='/rele' method='POST' id='manualForm'>");
+		//data += F("<input type='hidden' name='manual' value='3'>"); 
+		data += F("<input type='hidden' name='status' value='6'>"); // 6 = manual end  
+		data += F("<input type='submit' value='stop manual'></form>");
+	}
+	else if (shield.hearterActuator.getStatus() == Program::STATUS_PROGRAMACTIVE || shield.hearterActuator.getStatus() == Program::STATUS_IDLE) {
+		data += F("OFF</td><td><form action='/rele' method='POST'  id='manualForm'>");
+		data += F("Minutes:<input type='num' name='duration' value='");
+		data += 30;
+		data += F("' size='5' maxlength='5'><BR>");
+		data += F("<input type='hidden' name='status' value='5'>"); // 5 = manual auto
+		data += F("Target:<input type='number' name='target' value='22.0' step='0.10' ><BR>");
+		data += F("Sensor:<input type='radio' name='sensor' value='0' checked>Local<input type='radio' name='sensor' value='1'>Remote<BR>");
+		data += F("<input type='submit' value='start manual'></form>");
+
+		// manual off
+		data += F("<form action='/rele' method='POST' id='manualForm'>");
+		data += F("Minutes:<input type='num' name='duration' value='");
+		data += 30;
+		data += F("' size='5' maxlength='5'><BR>");
+		data += F("<input type='hidden' name='status' value='4'>"); // 4 = manual off 
+		data += F("<input type='submit' value='start manual off'></form>");
+	}
+	data += F("</td></tr>");
+
+	data += F("</table>");
+	data += String(Versione);
+	data += "\nEPROM_Table_Schema_Version=" + String(EPROM_Table_Schema_Version);
+
+	data += "<script>"
+		"var form = document.getElementById('manualForm');"
+		"form.onsubmit = function(e) {"		
+			"e.preventDefault();"
+			"var data = {};"
+			"for (var i = 0, ii = form.length; i < ii; ++i) {"
+				"var input = form[i];"
+				"if (input.name) {"
+					"data[input.name] = input.value;"
+				"}"
+		"}"
+
+		"alert('The form was submitted'+JSON.stringify(data));"
+
+		"var xhr = new XMLHttpRequest();"
+		"xhr.open(form.method, form.action, true);"
+		"xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');"
+		"xhr.send(JSON.stringify(data));"
+		"xhr.onloadend = function() {"
+		"};"
+		"};"
+		""
+			
+		"function sendCommand() {"
+		"alert('The form was submitted');"
+		"}"
+		"</script>";
+
+	data += F("</body></html>");
+
+	return data;
+}
+
 
 void showChangeIODevices(String param) {
 
@@ -1266,11 +1519,11 @@ void showChangeIODevices(String param) {
 
 	getPostdata(databuff, maxposdataChangeSetting);
 	char posdata[maxposdata];
-		
+
 	int val;
-	
+
 	for (int i = 0; i < Shield::getMaxIoDevices(); i++) {
-		
+
 		char buffer[20];
 		String str = "iodevice" + String(i + 1);
 		str.toCharArray(buffer, sizeof(buffer));
@@ -1288,7 +1541,7 @@ void showChangeIODevices(String param) {
 	data += F("HTTP/1.1 200 OK\r\nContent-Type: text/html\n\n<html><head><meta HTTP-EQUIV='REFRESH' content='0; url=/main'><title>Timer</title></head><body></body></html>");
 	data += F("</body></html>");
 	client.println(data);
-	
+
 	writeEPROM();
 	client.stop();
 }
@@ -1412,6 +1665,44 @@ int parsePostdata(const char* data, const char* param, char* value) {
 	return -1;
 }
 
+String getPostdata() {
+
+	//Serial.print(F("getPostdata "));
+
+	String str = "";
+
+	int datalen = 0;
+
+	if (client.findUntil("Content-Length:", "\n\r"))
+	{
+		datalen = client.parseInt();
+	}
+
+	delay(400);
+	if (client.findUntil("\n\r", "\n\r"))
+	{
+		;
+	}
+	delay(400);
+	client.read();
+
+	int i = 0;
+	while (i < datalen) {
+		str += char(client.read());
+		//Serial.print(data[i]); // ailitare questa riga per vedere il contenuto della post
+		delay(2);
+		i++;
+	}
+
+	Serial.println(str);
+	//Serial.print("datalen ");
+	//Serial.print(datalen);
+	/*if (i < maxposdata)
+		data[i] = '\0';*/
+
+	return str;
+}
+
 void getPostdata(char *data, int maxposdata) {
 
 	//Serial.print(F("getPostdata "));
@@ -1511,8 +1802,8 @@ String getJsonStatus()
 	data += F(",\"name\":");
 	data += shield.hearterActuator.sensorname;
 
-	if (shield.hearterActuator.getStatus() == Program::STATUS_PROGRAMACTIVE 
-		|| shield.hearterActuator.getStatus() == Program::STATUS_MANUAL_AUTO 
+	if (shield.hearterActuator.getStatus() == Program::STATUS_PROGRAMACTIVE
+		|| shield.hearterActuator.getStatus() == Program::STATUS_MANUAL_AUTO
 		|| shield.hearterActuator.getStatus() == Program::STATUS_MANUAL_OFF) {
 
 		data += F(",\"duration\":");
@@ -1573,7 +1864,23 @@ String getJsonActuatorsStatus()
 	data += "HTTP/1.0 200 OK\r\nContent-Type: application/json; ";
 	data += "\r\nPragma: no-cache\r\n\r\n";
 
-	data += shield.getActuatorsStatusJson();
+	String json = shield.getActuatorsStatusJson();
+	logger.println(tag, json);
+
+	data += json;	
+	return data;
+}
+
+String getJsonHeaterStatus()
+{
+	logger.println(tag, F("CALLED getJsonActuatorsStatus"));
+
+	String data;
+	data += "";
+	data += "HTTP/1.0 200 OK\r\nContent-Type: application/json; ";
+	data += "\r\nPragma: no-cache\r\n\r\n";
+
+	data += shield.getHeaterStatusJson();
 
 	logger.println(tag, data);
 	return data;
@@ -1587,13 +1894,13 @@ void setRemoteTemperature(String param) {
 	char posdata[maxposdata];
 
 	int val;
-	
+
 	parsePostdata(databuff, "temperature", posdata);
 	String str = "";
 	str += posdata;
 
 	shield.hearterActuator.setRemoteTemperature(str.toFloat());
-		
+
 	String data;
 	data += getJsonStatus();
 
@@ -1684,7 +1991,8 @@ void showPower(String GETparam) {
 //String cssfile = "";
 String getFile(String filename) {
 
-	logger.println(tag, F("showprova"));
+	logger.print(tag, String("\n\t << getfile: free heap:)" + String(ESP.getFreeHeap())));
+
 	char* s = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n";
 
 	String header = "";
@@ -1693,120 +2001,84 @@ String getFile(String filename) {
 		header += F("HTTP/1.1 200 OK\r\nContent-Type: text/css\n\n");
 	else
 		header += F("HTTP/1.1 200 OK\r\nContent-Type: text/html\n\n");
-
-	File f = SPIFFS.open("/" + filename, "r");
-	if (!f) {
-		Serial.println("File /" + filename + " doesn't exist");
-		return "";
-	}
-	else if (filename.equals("ESP8266.css") /*&& !cssfile.equals("")*/) {
-		client.println(header);
-
-		int len = strlen_P(cssfile);
-		int i = 0, k = 0;
-		//char buffer[100];
-		while (i < len) {
-
-			//i += strlcpy_P(buffer, (char*)pgm_read_word(cssfile+i));
-			String str = "";
-
-			for (k = 0; k < 1000; k++)
-			{
-
-				if (i + k >= len) {
-					break;
-				}
-
-				//strlcpy_P(buffer, (char*)pgm_read_word(&(string_table[i])));
-				//*(buffer+k) = pgm_read_byte_near(cssfile + i + k);
-				char s = pgm_read_byte_near(cssfile + i + k);
-				str += s;
-
-			}
-			i += k;
-			client.print(str);
+		
+	/*if (filename.equals("ESP8266.css")) {
+			logger.print(tag, "\n\t file=" + filename);
+			sendFile(header, cssfile);
 		}
-
-
-		//client.println(cssfile);
-		//delay(2000);
+	else if (filename.equals("switch.css")) {
+		logger.print(tag,"\n\t file" + filename);
+		sendFile(header, cssswitch);
 	}
-	else {
+	else if (filename.equals("heater.html")) {
+		logger.print(tag, "\n\t file" + filename);
+		sendFile(header, html_heater);
+	}
+	else {*/
+
+		File f = SPIFFS.open("/" + filename, "r");
+		if (!f) {
+			Serial.println("File /" + filename + " doesn't exist");
+			return "";
+		}
+		
 		client.println(header);
 		// we could open the file
 		String line = "";
 		while (f.available()) {
 			//Lets read line by line from the file
 			line += f.readStringUntil('\n');
-			//if (line.length() > 10000) {
-			//client.println(line);
-			//Serial.println(line);
-			//	line = "";
-			//}
 		}
 		client.println(line);
-		//delay(10);
-		//if (filename.equals("ESP8266.css"))
-		//	cssfile = line;
-	}
-	f.close();
+		f.close();
 
+		logger.print(tag, String("\n\t << getfile: free heap:)" + String(ESP.getFreeHeap())));
+	//}
 
-
-#ifdef dopo
-	char* s = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<!DOCTYPE html><html>\
-		<head><link href=\"http://192.168.1.3:8080/webduino/ESP8266.css\" rel=\"stylesheet\"/>\
-		<title></title></head><body><!--Header--->\
-		<h1 id = \"head\">Steal My Admin Template</h1>\
-		<ul id = \"navigation\">\
-		<li><span class = \"active\">Overview</span></li>\
-		<li><a href =\"#\" class=\"button hvr-underline-from-center\">News</a></li>\
-		<li><a href =\"#\" class=\"button hvr-underline-from-center\">Checkout</a></li>\
-		<li><a href =\"#\" class=\"button hvr-underline-from-center\">Checkout</a></li>\
-		<li><a href =\"#\" class=\"button hvr-underline-from-center\">Users</a></li>\
-		</ul>\
-		<!--Content--->\
-		<div id = \"content\" class=\"container_16 clearfix\">\
-		<div class=\"grid_5\">\
-		<div class=\"box\">\
-		<h2>Mathew</h2>\
-		<p><strong>Last Signed In : </strong> Wed 11 Nov, 7 : 31<br/><strong>IP Address : </strong> 192.168.1.101</p>\
-		</div>\
-		<div class=\"box\">\
-		<h2>Files</h2>\
-		<table>\
-		<tbody>\
-		<tr>\
-		<td>Newton 2</td>\
-		<td>8 / 10</td>\
-		</tr>\
-		<tr>\
-		<td>Wicked Twister</td>\
-		<td>9 / 10</td>\
-		</tr>\
-		<tr>\
-		<td>Forester</td>\
-		<td>9.12 / 10</td>\
-		</tr>\
-		<tr>\
-		<td>Sabertooth</td>\
-		<td><div>8.9 / 10 <input type = \"submit\" value = \"post\"></div></td>\
-		</tr>\
-		</tbody>\
-		</table>\
-		</div>\
-		</div>\
-		</div>\
-		<!--Footer--->\
-		<div id = \"foot\">\
-		<div class = \"container_16 clearfix\">\
-		<div class = \"grid_16\">\
-		<a href = \"#\">Contact Me</a>\
-		</div>\
-		</div>\
-		</div>\
-		</body>\
-		</html>";
-#endif
 	return String(s);
 }
+
+/*
+void sendFile(String header, const char * file) {
+
+
+	logger.print(tag, String("\n\t >> sendFilefile: free heap:)" + String(ESP.getFreeHeap())));
+	
+	client.println(header);
+
+		int len = strlen_P(file);
+		int i = 0, k = 0;
+		logger.print(tag, "\n\t len=" + len);
+		while (i < len) {
+			logger.print(tag,String("\n\t -- sendFilefile: free heap:)" + String(ESP.getFreeHeap())));
+			String str = "";
+			for (k = 0; k < 500; k++)
+			{
+				if (i + k >= len) {
+					break;
+				}
+				char s = pgm_read_byte_near(file + i + k);
+				str += s;
+
+			}
+			i += k;
+			
+			client.print(str);
+			logger.print(tag, "\n\t k=" + k);
+		}
+
+		logger.print(tag, String("\n\t << sendFilefile: free heap:)" + String(ESP.getFreeHeap())));
+}
+
+String getStrPage(const char * file) {
+
+	String str = "";
+	int len = strlen_P(file);
+	int i = 0;
+	while (i < len) {
+		char s = pgm_read_byte_near(file + i);
+		str += s;
+		i ++;
+	}
+	return str;
+}*/

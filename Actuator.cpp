@@ -18,3 +18,8 @@ String Actuator::getJSON()
 {
 	return "actuator";
 }
+
+String Actuator::sendCommand(String json)
+{
+	return String();
+}

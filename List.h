@@ -8,7 +8,7 @@ public:
 	List();
 	~List();
 	bool add(Sensor* elem);
-	bool prova(Sensor* elem);
+	//bool prova(Sensor* elem);
 	void init();
 	int length();
 	Sensor* getNext();

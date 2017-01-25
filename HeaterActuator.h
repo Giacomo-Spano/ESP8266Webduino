@@ -5,21 +5,12 @@
 class HeaterActuator :
 	public Actuator
 {
+	
 private:
 	String tag;
-	const int command_ProgramOff = 0;
-	const int command_ProgramOn = 1;
-	const int command_disabled = 2;
-	const int command_enabled = 3;
-	const int command_ManualOff = 4;
-	const int command_Manual = 5;
-	const int command_ManualEnd = 6;
-	
 	int manualMode;
-
 	String subaddress = "HeaterActuator-";
-
-	const int relePin = D5; // rel? pin
+	int relePin = D5; // rel? pin
 	const bool RELE_ON = HIGH;//LOW
 	const bool RELE_OFF = LOW;//LOW
 	static int const sensor_local = 0;
@@ -27,6 +18,14 @@ private:
 	unsigned long remoteSensorTimeout = 5* 60 * 1000; // tempo dopo il quale il programa si disattiva
 
 public:
+	const char* command_ProgramOff = "programoff";
+	const char* command_ProgramOn = "programon";
+	const char* command_disabled = "disabled";
+	const char* command_enabled = "enabled";
+	const char* command_ManualOff = "manualoff";
+	const char* command_Manual = "manual";
+	const char* command_ManualEnd = "manualend";
+
 	static const int MANUALMODE_DISABLED = 0;  // modalità manuale disabilitata
 	static const int MANUALMODE_AUTO = 1;  // temperatura automatica >= alk sensorid
 	static const int MANUALMODE_OFF = 2; // sempre spento
@@ -37,13 +36,14 @@ public:
 	void updateReleStatus();
 	virtual String getJSON() override;
 	virtual void checkStatus() override;
+	virtual String sendCommand(String json) override;
 	void setStatus(int status);
-	//void setManualMode(int status, int mode);
 	int getStatus();
-	//int getManualMode();
 	void setReleStatus(int status);
 	int getReleStatus();
 	void enableRele(boolean on);
+	int getRelePin();
+	void setRelePin(int pin);
 	bool statusChanged();
 	bool releStatusChanged();
 	void saveOldReleStatus();
@@ -64,7 +64,7 @@ public:
 	int getActiveProgram();
 	int getActiveTimeRange();
 	void setLocalTemperature(float temperature);
-	void changeProgram(int status, long duration, bool sensorRemote, float remotetemperature, int sensorId, float target, int program, int timerange);
+	void changeProgram(String command, long duration, bool sensorRemote, float remotetemperature, int sensorId, float target, int program, int timerange);
 	virtual String getSensorAddress();
 
 	time_t programStartTime = 0;

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link href="/ESP8266.css" rel="stylesheet" />
+    <link href="/switch2.css" rel="stylesheet" />
+
+    <link href="http://192.168.1.9/ESP8266.css" rel="stylesheet" />
+    <link href="http://192.168.1.9/switch2.css" rel="stylesheet" />
+
+    <title></title>
+    <script>
+        
+    </script>
+</head>
+<body>
+
+    
+        <label class="switch">
+            <input type="checkbox" checked>
+            <div class="slider round"></div>
+        </label>
+
+    <label class="input-toggle">
+        <input type="checkbox" checked>
+        <span></span>
+    </label>
+
+    
+        <!--Header--->
+        <h1 id="head">Webduino</h1>
+        <ul id="navigation">
+            <li><span class="active">Home</span></li>
+            <li><a href="#" class="button hvr-underline-from-center">Impostazioni</a></li>
+            <li><a href="#" class="button hvr-underline-from-center">Rete</a></li>
+        </ul>
+        <!--Content--->
+        <div id="content" class="container_16 clearfix">
+            <div class="grid_5">
+                <div class="box">
+
+                    <label class="switch">
+                        <input type="checkbox" checked>
+                        <div class="slider round"></div>
+                    </label>
+
+                    <h2>Riscaldamento</h2>
+
+                    
+                    <br /><strong>IP Address : </strong> %ipaddress
+                    <br /><strong>MAC Address : </strong> %macaddress
+                    <br /><strong>ID scheda: </strong> %shieldid
+    
+<p>
+                    prova: 
+
+    <label class="input-toggle">
+        <input type="checkbox" checked>
+        <span></span>
+    </label>
+
+                    <strong>Date e ora : </strong> %datetime   
+                    <br /><strong>IP Address : </strong> %ipaddress
+                    <br /><strong>MAC Address : </strong> %macaddress
+                    <br /><strong>ID scheda: </strong> %shieldid
+                    <br /><strong>Power : </strong> %powerstatus <button type="button" onclick="loadDoc('/power', setPower,'status=%powervalue')">%powercommand</button>
+                </p>
+            </div>
+            <div class="box">
+                <h2>Files</h2>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>Newton 2</td>
+                            <td>8 / 10</td>
+                        </tr>
+                        <tr>
+                            <td>Wicked Twister</td>
+                            <td>9 / 10</td>
+                        </tr>
+                        <tr>
+                            <td>Forester</td>
+                            <td>9.12 / 10</td>
+                        </tr>
+                        <tr>
+                            <td>Sabertooth</td>
+                            <td>
+                                <div>8.9 / 10 <input type="submit" value="post"></div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <!--Footer--->
+    <div id="foot">
+        <div class="container_16 clearfix">
+            <div class="grid_16"><a href="#">Contact Me</a></div>
+        </div>
+    </div>
+
+    <div id="demo">
+
+        <h1>The XMLHttpRequest Objectx</h1>
+
+        <button type="button"
+                onclick="loadDoc('power', myFunction)">
+            Change Content
+        </button>
+    </div>
+
+</body>
+</html>

@@ -66,4 +66,7 @@ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_node
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/Server.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\libraries\ESP8266WiFi\src/WiFiClientSecure.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\libraries\ESP8266WiFi\src/include/ssl.h \
- C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\JSON.h
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\JSON.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\ESP8266Webduino.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/arduino.h \
+ C:\Program\ Files\ (x86)\Microsoft\ Visual\ Studio\ 14.0\Common7\IDE\Extensions\ds5z1zvx.2sq\Micro\ Platforms\default\debuggers\VM_DBG/VM_DBG.h

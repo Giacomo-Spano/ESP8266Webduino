@@ -33,7 +33,9 @@ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_node
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/debug.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\variants\nodemcu/pins_arduino.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\variants\nodemcu/../generic/common.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\ESP8266Webduino.h \
  C:\Users\Giacomo\ Spanò\Documents\Arduino\libraries\OneWire/OneWire.h \
+ C:\Users\Giacomo\ Spanò\Documents\Arduino\libraries\DallasTemperature/DallasTemperature.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\libraries\ESP8266WiFi\src/ESP8266WiFi.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\libraries\ESP8266WiFi\src/include/wl_definitions.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/IPAddress.h \
@@ -58,7 +60,6 @@ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_node
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/Udp.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\libraries\ESP8266WiFi\src/include/slist.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\libraries\ArduinoOTA/ArduinoOTA.h \
- C:\Users\Giacomo\ Spanò\Documents\Arduino\libraries\DallasTemperature/DallasTemperature.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\libraries\EEPROM/EEPROM.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\EEPROMAnything.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0/tools/sdk/include/user_interface.h \
@@ -100,4 +101,5 @@ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_node
  C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Command.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\DS18S20Sensor.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\css.h \
- C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/FS.h
+ C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/FS.h \
+ C:\Program\ Files\ (x86)\Microsoft\ Visual\ Studio\ 14.0\Common7\IDE\Extensions\ds5z1zvx.2sq\Micro\ Platforms\default\debuggers\VM_DBG/VM_DBG.h

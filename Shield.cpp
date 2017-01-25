@@ -3,26 +3,31 @@
 #include "Logger.h"
 #include "HeaterActuator.h"
 #include "Command.h"
+#include "ESP8266Webduino.h"
 
-extern uint8_t OneWirePin;
-extern OneWire oneWire;
-extern DallasTemperature sensors;
+extern void writeEPROM();
+uint8_t oneWirePin = D4;
 
-extern Logger logger;
+OneWire* oneWirePtr;
+DallasTemperature* pDallasSensors;
 
+//extern Logger logger;
+Logger Shield::logger;
+String Shield::tag = "Shield";
 int Shield::id = 0; //// inizializzato a zero perchè viene impostato dalla chiamata a registershield
-
 int Shield::serverPort = 8080;
-
 char  Shield::servername[servernamelen];
+uint8_t Shield::heaterPin = D5;
+uint8_t Shield::oneWirePin = D4;
+bool Shield::heaterEnabled = true;
 
 
 int Shield::ioDevices[maxIoDevices] = { 0,0,0,0,0,0,0,0,0,0 };
-//char* Shield::ioDevicesTypeNames[] = { "disconnected","Heater","OneWire sensors" };
+//char* Shield::ioDevicesTypeNames[] = { "disconnected","Heater","OneWire dallasSensors" };
 
 Shield::Shield()
 {
-	tag = "Shield";
+
 
 	serverPort = 8080;
 
@@ -30,12 +35,87 @@ Shield::Shield()
 
 	//Actuator* pActuator = new Actuator();
 	//actuatorList.push_back(*pActuator);
-	
+
 }
 
 
 Shield::~Shield()
 {
+}
+
+String Shield::heaterSettingsCommand(JSON json) {
+	logger.print(tag, "\n\t>>heaterSettingsCommand");
+	if (json.has("pin")) {
+		String str = json.jsonGetString("pin");
+		logger.print(tag, "\n\tpin=" + str);
+		if (str.equals("D1"))
+			setHeaterPin(D1);
+		else if (str.equals("D2"))
+			setHeaterPin(D2);
+		else if (str.equals("D3"))
+			setHeaterPin(D3);
+		else if (str.equals("D4"))
+			setHeaterPin(D4);
+		else if (str.equals("D5"))
+			setHeaterPin(D5);
+		else if (str.equals("D6"))
+			setHeaterPin(D6);
+		else if (str.equals("D7"))
+			setHeaterPin(D7);
+	}
+	if (json.has("enabled")) {
+		bool res = json.jsonGetBool("enabled");
+		logger.print(tag, "\n\tenabled= ");
+		if (res)
+			logger.print(tag, "true");
+		else
+			logger.print(tag, "false");
+		setHeaterEnabled(res);
+	}
+	writeEPROM();
+
+	String result = "";
+	result += "{";
+	result += "\"result\": \"succes\"";
+	result += "}";
+	logger.print(tag, "\n\t<<heaterSettingsCommand");
+	return result;
+}
+
+String Shield::sendCommand(String jsonStr) {
+
+	logger.print(tag, "\n\t>>sendCommand json=");
+	logger.print(tag, jsonStr);
+
+
+
+	JSON json(jsonStr);
+	if (json.has("command")) {
+
+		String command = json.jsonGetString("command");
+		if (command.equals("heatersettings")) {
+			String result = heaterSettingsCommand(json);
+			logger.print(tag, "\n\t<<sendCommand result=" + String(result));
+			return result;
+		}
+		else if (heaterEnabled /*&& json.has("actuatorid")*/) { // se arriva direttamente dalla scheda non c'è actuatorid
+			/*int actuatorId = json.jsonGetInt("actuatorid");
+			logger.print(tag, F("\n\tactuatorid="));
+			logger.print(tag, actuatorId);*/
+
+			String result = hearterActuator.sendCommand(jsonStr);
+			logger.print(tag, "\n\t<<sendCommand result=" + String(result));
+			return result;
+		}
+	}
+
+	logger.println(tag, "\n\t command not valid");
+	String result = "";
+	result += "{";
+	result += "\"result\": \"failed\"";
+	result += "}";
+	logger.println(tag, "\n\t<<sendCommand result=" + String(result));
+	return result;
 }
 
 String Shield::getSensorsStatusJson() {
@@ -57,8 +137,10 @@ String Shield::getActuatorsStatusJson() {
 	String json = "{";
 	json += "\"id\":" + String(id);// shieldid
 	json += ",\"actuators\":[";
-	
-	hearterActuator.getJSON();
+
+	if (heaterEnabled) {
+		json += hearterActuator.getJSON();
+	}
 	/*for (int i = 0; i < sensorList.count; i++) {
 		DS18S20Sensor* sensor = (DS18S20Sensor*)sensorList.get(i);
 		if (i != 0)
@@ -70,9 +152,25 @@ String Shield::getActuatorsStatusJson() {
 	return json;
 }
 
+String Shield::getHeaterStatusJson() {
+
+	String json = hearterActuator.getJSON();
+	/*for (int i = 0; i < sensorList.count; i++) {
+	DS18S20Sensor* sensor = (DS18S20Sensor*)sensorList.get(i);
+	if (i != 0)
+	json += ",";
+	json += sensor->getJSON();
+	}*/
+	return json;
+}
+
+
+
 void Shield::checkActuatorsStatus()
 {
-	hearterActuator.checkStatus();	
+	if (heaterEnabled) {
+		hearterActuator.checkStatus();
+	}
 }
 
 void Shield::checkSensorsStatus()
@@ -87,42 +185,24 @@ void Shield::checkSensorsStatus()
 		checkTemperatures();
 		return;
 	}
-
-
-	//checkTemperatures();
-
-	/*// se il sensore attivo è quello locale aggiorna lo stato
-	// del rele in base alla temperatur del sensore locale
-	if (!hearterActuator.sensorIsRemote())
-		hearterActuator.updateReleStatus();
-
-	Command command;
-	if (temperatureChanged) {
-
-		logger.println(tag, "SEND TEMPERATURE UPDATE - average temperature changed");
-		logger.print(tag, "\n\toldLocalAvTemperature=");
-		
-		command.sendSensorsStatus(*this);
-		temperatureChanged = false; // qui bisognerebbe introdiurre il controllo del valore di ritorno della send
-										   // cokmmand ed entualmente reinviare
-	}*/
-
-	//logger.println(tag, F("<<checkSensorsStatus"));
-	//return true;
 }
 
 void Shield::addOneWireSensors(String sensorNames) {
 
-	logger.println(tag, "addOneWireSensors - discoverOneWireDevices...\n\r");
-	sensors.begin();
-	logger.println(tag, "Looking for 1-Wire devices...\n\r");
+	logger.println(tag, ">>addOneWireSensors");
+
+	oneWirePtr = new OneWire(oneWirePin);
+	pDallasSensors = new DallasTemperature(oneWirePtr);
+
+	pDallasSensors->begin();
+	//logger.println(tag, "Looking for 1-Wire devices...\n\r");
 
 	sensorList.init();
-	
+
 	uint8_t address[8];
 	int count = 0;
-	while (oneWire.search(address)) {
-		logger.println(tag, "\n\tFound \'1-Wire\' device with address:\n");
+	while (oneWirePtr->search(address)) {
+		logger.print(tag, "\n\tFound \'1-Wire\' device with address:");
 		for (int i = 0; i < 8; i++) {
 			logger.print(tag, "0x");
 			if (address[i] < 16) {
@@ -134,7 +214,7 @@ void Shield::addOneWireSensors(String sensorNames) {
 			}
 		}
 		if (OneWire::crc8(address, 7) != address[7]) {
-			logger.println(tag, "CRC is not valid!\n");
+			logger.print(tag, "\n\tCRC is not valid!");
 			return;
 		}
 
@@ -153,7 +233,7 @@ void Shield::addOneWireSensors(String sensorNames) {
 			name = "sensor" + String(count);
 		}
 
-		DS18S20Sensor* pSensorNew = new DS18S20Sensor;
+		DS18S20Sensor* pSensorNew = new DS18S20Sensor();
 		pSensorNew->sensorname = name/* + String(count)*/;
 
 		for (int i = 0; i < 8; i++) {
@@ -167,16 +247,17 @@ void Shield::addOneWireSensors(String sensorNames) {
 		sensorList.add((Sensor*)pSensorNew);
 		sensorList.show();
 
-		
-		String txt = "ADDDED sensor " + String(pSensorNew->sensorname) + "addr ";
+
+		String txt = "\n\tADDDED sensor " + String(pSensorNew->sensorname) + "addr ";
 		logger.print(tag, txt);
 		logger.print(tag, pSensorNew->getSensorAddress());
 		logger.print(tag, " end");
 	}
-	
-	logger.println(tag, "\n\r\n\rThat's it.\r\n");
-	oneWire.reset_search();
+
+
+	oneWirePtr->reset_search();
 	sensorList.show();
+	logger.println(tag, "<<addOneWireSensors");
 }
 
 void Shield::addActuators() {
@@ -184,24 +265,28 @@ void Shield::addActuators() {
 	logger.println(tag, "addActuator...\n\r");
 	ActuatorList.init();
 
+	if (heaterEnabled) {
+		hearterActuator.setRelePin(heaterPin);
+	}
+
 	//HeaterActuator* pActuatorNew = new HeaterActuator();
 	//pActuatorNew->sensorname = "riscaldamento";
 }
 
 
 void Shield::checkTemperatures() {
-	
+
 	logger.println(tag, ">>checkTemperatures---");
 
 	//sensorList.show();
 	float oldTemperature;
 	for (int i = 0; i < sensorList.count; i++) {
-		DS18S20Sensor* pSensor = (DS18S20Sensor*)sensorList.get(i);		
+		DS18S20Sensor* pSensor = (DS18S20Sensor*)sensorList.get(i);
 		oldTemperature = pSensor->getTemperature();
-		
+
 		//sensorList.show();
-		pSensor->readTemperature();
-		
+		pSensor->readTemperature(pDallasSensors);
+
 		if (oldTemperature != pSensor->getTemperature()) {
 			temperatureChanged = true;
 			logger.print(tag, "\ttemperatura cambiata");
@@ -227,7 +312,9 @@ void Shield::checkTemperatures() {
 		logger.print(tag, "\n\n\tSEND TEMPERATURE UPDATE - temperature changed\n");
 		//logger.print(tag, "\n\toldLocalTemperature=");
 
+		logger.println(tag, ">>command.sendSensorsStatus");
 		command.sendSensorsStatus(*this);
+		logger.println(tag, "<<command.sendSensorsStatus");
 		temperatureChanged = false; // qui bisognerebbe introdiurre il controllo del valore di ritorno della send
 									// cokmmand ed entualmente reinviare
 	}

@@ -10,6 +10,7 @@ public:
 	virtual void checkStatus();
 
 	virtual String getJSON();
+	virtual String sendCommand(String json);
 
 };
 

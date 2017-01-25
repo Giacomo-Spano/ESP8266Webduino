@@ -11,7 +11,7 @@ List::List()
 	count = 0;
 	first = nullptr;
 	current = nullptr;
-	Serial.println("\nALIST CONSTRUCTOR ");
+	//Serial.println("\nALIST CONSTRUCTOR ");
 }
 
 
@@ -23,39 +23,38 @@ void List::init() {
 	count = 0;
 	first = nullptr;
 	current = nullptr;
-	Serial.println("\nINIT ");
+	/*Serial.println("\nINIT ");
 	if (first == nullptr) {
-		Serial.println("\nfirst IS NULLLLL");
-	
-	}
+		Serial.println("\nfirst IS NULLLLL");	
+	}*/
 
 }
 
-bool List::prova(Sensor* elem){
-	Serial.println("\nADD NEW ELEMENT ");
-	Serial.print("\ncount = ");
-	Serial.println(count);
+/*bool List::prova(Sensor* elem){
+	//Serial.println("\nADD NEW ELEMENT ");
+	//Serial.print("\ncount = ");
+	//Serial.println(count);
 
 	if (first == nullptr) {
-		Serial.println("\nfirst ");
+		//Serial.println("\nfirst ");
 		first = elem;
 		current = first;
 
 	}
-	Serial.print("\ncount = ");
-	Serial.println(count);
+	//Serial.print("\ncount = ");
+	//Serial.println(count);
 
 	return true;
-}
+}*/
 
 bool List::add(Sensor* elem) {
 	
-	Serial.println("\nADD NEW ELEMENT ");
-	Serial.print("\ncount = ");
-	Serial.println(count);
+	//Serial.println("\nADD NEW ELEMENT ");
+	//Serial.print("\ncount = ");
+	//Serial.println(count);
 
 	if (first == nullptr) {
-		Serial.println("\nfirst ");
+		//Serial.println("\nfirst ");
 		first = elem;
 		current = first;
 		
@@ -68,23 +67,23 @@ bool List::add(Sensor* elem) {
 	}
 	current->next = nullptr;
 	count++;
-	Serial.print("\ncount = ");
-	Serial.println(count);
+	//Serial.print("\ncount = ");
+	//Serial.println(count);
 		
 	return true;
 }
 
 void List::show() {
 
-	logger.print(tag, "\n\tSHOW LIST ");
+	logger.print(tag, "\n\t>>show");
 	logger.print(tag, "\n\tcount = ");
 	logger.print(tag, count);
 
-	if (first == nullptr) {
+	/*if (first == nullptr) {
 		logger.print(tag, "\n\tfirst NULL");
 	} 
 	else
-		logger.print(tag, "\n\tfirst NOT NULL");
+		logger.print(tag, "\n\tfirst NOT NULL");*/
 
 	
 	Sensor* p = first;
@@ -99,8 +98,7 @@ void List::show() {
 		logger.print(tag, p->getSensorAddress());
 		p = p->next;
 	}
-	logger.print(tag, "\nEND SHOW LIST ");
-
+	logger.print(tag, "\n\t<<show");
 }
 
 Sensor* List::gestLast() {

@@ -31,6 +31,7 @@ public:
 	~Command();
 
 	int registerShield(Shield shield);
+	void sendRestartNotification();
 	boolean sendSensorsStatus(Shield shield);
 	bool sendLog(String log/*, int shieldid/*, String servername, int port*/);
 	int timeSync(/*String servername, int port*/);
