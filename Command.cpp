@@ -3,58 +3,28 @@
 #include "Util.h"
 #include "DS18S20Sensor.h"
 
-extern Logger logger;
-extern const char* statusStr[];
+//extern const char* statusStr[];
 time_t serverTime = 11111111;
-
 int packetcount = 1;
 
-Command* Command::getTimeObject;
-
-
-void digitalClockDisplay(){
-}
-
+Logger Command::logger;
+String Command::tag = "Command";
 
 time_t Command::getNtpTime() {
-	return serverTime;
-}
-
-
-time_t xgetNtpTime() {
-
-
-	Serial.println("BBB");
-
-	String tag = "getNtpTime";
 
 	return serverTime;
 }
 
-void printDigits(int digits){
-	// utility function for digital clock display: prints preceding colon and leading 0
-	Serial.print(":");
-	if (digits < 10)
-		Serial.print('0');
-	Serial.print(digits);
-}
 Command::Command()
 {
 	tag = "Command";
 }
 
-void Command::setServer(String servername, int serverport)
-{
-	//Command::servername = servername;
-	//Command::serverport = serverport;
-}
-
-
 Command::~Command()
 {
 }
 
-bool Command::sendLog(String log/*, /*int shieldid, String servername, int port*/)
+bool Command::sendLog(String log)
 {
 	//Serial.println(F("SENDLOG"));
 	if (log.length() > Command::maxLogSize)
@@ -71,7 +41,7 @@ bool Command::sendLog(String log/*, /*int shieldid, String servername, int port*
 
 	HttpHelper hplr;
 	String result;
-	boolean res = hplr.post(Shield::servername, Shield::serverPort, "/webduino/log", json, &result);
+	boolean res = hplr.post(Shield::getServerName(), Shield::getServerPort(), "/webduino/log", json, &result);
 
 	JSON jsonResult(result);
 	String resultvalue = jsonResult.jsonGetString("result");
@@ -96,7 +66,7 @@ void Command::sendRestartNotification()
 	HttpHelper hplr;
 
 	String result;
-	boolean res = hplr.post(Shield::servername, Shield::serverPort, "/webduino/shield", str, &result);
+	boolean res = hplr.post(Shield::getServerName(), Shield::getServerPort(), "/webduino/shield", str, &result);
 
 	JSON json(result);
 	String resultvalue = json.jsonGetString("result");
@@ -116,9 +86,9 @@ int Command::registerShield(Shield shield)
 	str += "\"shield\": ";	
 	str += "{";
 	str += "\"MAC\":\"" + String(shield.MAC_char) + "\"";
-	str += ",\"boardname\":\"" + String(shield.boardname) + "\"";
+	str += ",\"shieldName\":\"" + Shield::getShieldName() + "\"";
 	str += ",\"localIP\":\"" + shield.localIP + "\"";
-	str += ",\"localPort\":\"" + String(shield.localPort) + "\"";
+	str += ",\"localPort\":\"" + String(Shield::getLocalPort()) + "\"";
 	
 	// sensori
 	str += ",\"sensors\":[";
@@ -141,7 +111,7 @@ int Command::registerShield(Shield shield)
 	HttpHelper hplr;
 
 	String result;
-	boolean res = hplr.post(Shield::servername, Shield::serverPort, "/webduino/shield", str, &result);
+	boolean res = hplr.post(Shield::getServerName(), Shield::getServerPort(), "/webduino/shield", str, &result);
 	//logger.print(tag, "\n\tanswer = ");
 	//logger.println(tag, result);
 
@@ -156,7 +126,7 @@ int Command::registerShield(Shield shield)
 		id = json.jsonGetInt("id");
 		
 		serverTime = json.jsonGetLong("timesec");
-		getTimeObject = this;
+		//getTimeObject = this;
 		//setSyncInterval(60);
 		setSyncProvider(getNtpTime);
 	}
@@ -169,9 +139,9 @@ int Command::registerShield(Shield shield)
 	
 }
 
-int Command::timeSync(/*String servername, int port*/)
+int Command::timeSync()
 {
-	logger.println(tag, F(">>timeSync\n"));
+	logger.println(tag, F("\n\t >>timeSync\n"));
 
 	String str = "{";
 	str += "}";
@@ -180,9 +150,8 @@ int Command::timeSync(/*String servername, int port*/)
 
 	Shield shield;
 	String result;
-	boolean res = hplr.post(shield.getServerName(), shield.getServerPort(), "/webduino/time", str, &result);
-	logger.print(tag, "\n\tanswer = ");
-	logger.print(tag, result);
+	boolean res = hplr.post(Shield::getServerName(), Shield::getServerPort(), "/webduino/time", str, &result);
+	logger.print(tag, "\n\tanswer = " + result);
 
 	JSON json(result);
 	String resultvalue = json.jsonGetString("result");
@@ -192,15 +161,11 @@ int Command::timeSync(/*String servername, int port*/)
 	time_t srvTime = 0;
 	if (resultvalue.equalsIgnoreCase("success")) {
 		serverTime = json.jsonGetLong("timesec");
-		//srvTime = serverTime;
+		logger.println(tag, "\n\t <<timeSync\n" + String(serverTime));
 		return serverTime;
 	}
 
-	/*logger.print(tag, "\tsrvTime = ");
-	logger.print(tag, srvTime);
-
-	logger.println(tag, F("<<timeSync\n"));
-	return srvTime;*/
+	logger.println(tag, F("\n\t <<timeSync failed\n"));
 	return 0;
 }
 
@@ -267,7 +232,7 @@ boolean Command::download(String filename, Shield shield)
 	
 	String result;
 	HttpHelper hplr;
-	hplr.downloadfile(filename, shield.servername, shield.serverPort, "/webduino/"+filename, str, &result);
+	hplr.downloadfile(filename, Shield::getServerName(), Shield::getServerPort(), "/webduino/"+filename, str, &result);
 	//logger.print(tag, "\n\tanswer = ");
 	//logger.println(tag, result);
 	//Serial.print(result);

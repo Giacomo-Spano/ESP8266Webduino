@@ -9,37 +9,84 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
-
-
 class Shield
 {	
-private:
-	static String tag;
-	static Logger logger;
-
-	const int checkTemperature_interval = 60000;
-	unsigned long lastCheckTemperature = 0;//-flash_interval;
 
 public:
-	static const int boardnamelen = 30;
-	static const int servernamelen = 30;
-	
+	HeaterActuator hearterActuator;
+
+	static const int shieldNameLen = 30;
+	static const int serverNameLen = 30;
+	static const char networkSSIDLen = 32;// = "ssid";
+	static const char networkPasswordLen = 96;// = "password";
+
 	static const int maxIoDevices = 10; // queste sono le porte
 	static const int maxIoDeviceTypes = 3;  // mweusti sono i tipi di device
 	static const int ioDevices_Disconnected = 0;
 	static const int ioDevices_Heater = 1;
 	static const int ioDevices_OneWireSensors = 2;
-	//static const char* ioDevicesTypeNames[];// = { "disconnected","Heater","OneWire dallasSensors" };
 
 	static int id;// = 0; // inizializzato a zero perchè viene impostato dalla chiamata a registershield
-	static char servername[servernamelen];
-	static int serverPort;
 	static int ioDevices[maxIoDevices];
+	static bool heaterEnabled;
 	static uint8_t oneWirePin;
 	static uint8_t heaterPin; // pin rele heater
-	static bool heaterEnabled;
+	static String powerStatus; // power
+	static String lastRestartDate;
+	
+
+private:
+	static String tag;
+	static Logger logger;
+	const int checkTemperature_interval = 60000;
+	unsigned long lastCheckTemperature = 0;//-flash_interval;
+	
+
+protected:
+	String sendHeaterSettingsCommand(JSON json);
+	String sendShieldSettingsCommand(JSON jsonStr);
+	String sendPowerCommand(JSON jsonStr);
+	String sendRegisterCommand(JSON jsonStr);
+	String sendResetCommand(JSON jsonStr);
+	bool temperatureChanged = false; // indica se la temperatura è cambiata dall'ultima chiamata a flash()
+	//SimpleList<Actuator> actuatorList;
+	
+	static int localPort;
+	static String networkSSID;// [32];// = "ssid";
+	static String networkPassword;//[96];// = "password";
+	static String serverName;//[serverNameLen];
+	static int serverPort;
+	static String shieldName;
+
+public:
+
+	List sensorList;
+	List ActuatorList;
+
+	Shield();
+	~Shield();
+	String getSensorsStatusJson();
+	String getActuatorsStatusJson();
+	String getHeaterStatusJson();
+	String getSettingsJson();
+	void checkActuatorsStatus();
+	void checkSensorsStatus();
+	String sendCommand(String jsonStr);	
+	
+	
+	unsigned char MAC_array[6];
+	char MAC_char[18];
+	String localIP;
+	
+	void addOneWireSensors(String sensorNames);
+	void addActuators();
+	void checkTemperatures();
 
 	static int getShieldId() { return id; } // static member function
+
+	static String getLastRestartDate() { return lastRestartDate; }
+
+	static void setLastRestartDate(String date) { lastRestartDate = date; }
 
 	static String getIoDevicesTypeName(int type)
 	{
@@ -64,15 +111,17 @@ public:
 	{
 		return maxIoDeviceTypes;
 	}
-
-	static String getServerName()
-	{
-		return String(servername);
-	}
-
+	
 	static int getServerPort()
 	{
 		return serverPort;
+	}
+
+	static void setServerPort(int port)
+	{		
+		logger.print(tag, "\n\t>>setServerPort");
+		serverPort = port;
+		logger.print(tag, "\n\t serverPort=" + String(serverPort));
 	}
 
 	static int getIODevice(int port)
@@ -92,7 +141,7 @@ public:
 		return heaterPin;
 	}
 
-	static String getStrPinFromPin(uint8_t)
+	static String getStrHeaterPin()
 	{
 		if (heaterPin == D1)
 			return "D1";
@@ -141,45 +190,83 @@ public:
 			logger.print(tag, " false");
 		
 	}
-
 	
-	Shield();
-	~Shield();
-	String getSensorsStatusJson();
-	String getActuatorsStatusJson();
+	static int getLocalPort()
+	{
+		return localPort;
+	}
 
-	String getHeaterStatusJson();
+	static void setLocalPort(int port)
+	{
+		logger.print(tag, "\n\t >>setLocalPort");
+		localPort = port;
+		logger.print(tag, "\n\t localPort="+ String(localPort));
+	}
 
-	void checkActuatorsStatus();
-	void checkSensorsStatus();
-	String sendCommand(String jsonStr);
+	static String getNetworkSSID()
+	{
+		return String(networkSSID);
+	}
 
-	char networkSSID[32];// = "ssid";
-	char networkPassword[96];// = "password";
-	int localPort = 80;
+	static void setNetworkSSID(String ssid)
+	{
+		logger.print(tag, "\n\t>>setNetworkSSID");
+		networkSSID = ssid;
+		logger.print(tag, "\n\tnetworkSSID=");
+		logger.print(tag, networkSSID);
+	}
+
+	static String getNetworkPassword()
+	{
+
+		return String(networkPassword);
+	}
+
+	static void setNetworkPassword(String password)
+	{
+		logger.print(tag, "\n\t>>setNetworkPassword");
+		networkPassword = password;
+		logger.print(tag, "\n\tnetworkPassword=");
+		logger.print(tag, networkPassword);
+	}
+
+	static String getServerName()
+	{
+		return String(serverName);
+	}
+
+	static void setServerName(String name)
+	{
+		logger.print(tag, "\n\t>>setServerName");
+		serverName = name;
+		logger.print(tag, "\n\tserverName=");
+		logger.print(tag, serverName);
+	}
 	
-	char boardname[boardnamelen];
-	unsigned char MAC_array[6];
-	char MAC_char[18];
-	
-	String localIP;
+	static String getShieldName()
+	{
+		return String(shieldName);
+	}
 
-	//SimpleList<Actuator> actuatorList;
-	List sensorList;
-	List ActuatorList;
-	
-	void addOneWireSensors(String sensorNames);
-	void addActuators();
-	void checkTemperatures();
+	static void setShieldName(String name)
+	{
+		logger.print(tag, "\n\t>>setShieldName");
+		shieldName = name;
+		logger.print(tag, "\n\tshieldName=");
+		logger.print(tag, shieldName);
+	}
 
-	bool temperatureChanged = false; // indica se la temperatura è cambiata dall'ultima chiamata a flash()
+	static String getPowerStatus()
+	{
+		return powerStatus;
+	}
 
-	//boolean heaterConnected = false;
-	HeaterActuator hearterActuator;
-
-protected:
-	String heaterSettingsCommand(JSON json);
-	
+	static void setPowerStatus(String status)
+	{
+		logger.print(tag, "\n\t>>setpowerStatus");
+		powerStatus = status;
+		logger.print(tag, "\n\t powerSatus=" + powerStatus);
+	}
 
 };
 

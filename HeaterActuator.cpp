@@ -2,8 +2,11 @@
 #include "Logger.h"
 #include "Command.h"
 
-extern Logger logger;
-extern const char* statusStr[];
+//Logger Actuator::logger;
+//String Actuator::tag = "HeaterActuator";
+
+//extern const char* statusStr[];
+char* HeaterActuator::statusStr[] = { "unused", "idle", "program", "manual", "disabled", "restarted", "manualoff" };
 
 HeaterActuator::HeaterActuator()
 {
@@ -419,12 +422,12 @@ String HeaterActuator::getJSON() {
 
 	
 	json += "\"shieldid\":" + String(Shield::id) + ",";
-	json += "\"enabled\":";
+	json += "\"heaterenabled\":";
 	if (Shield::getHeaterEnabled())
 		json += "true,";
 	else
 		json += "false,";
-	json += "\"pin\":\"" + Shield::getStrPinFromPin(Shield::getHeaterPin()) + "\",";
+	json += "\"heaterpin\":\"" + Shield::getStrHeaterPin() + "\",";
 	json += "\"remotetemperature\":" + String(getRemoteTemperature()) + ",";
 	json += "\"addr\":\"" + subaddress + "\",";
 	json += "\"status\":\"" + String(statusStr[getStatus()]) + "\",";
@@ -488,10 +491,11 @@ int HeaterActuator::getStatus()
 {
 	return currentStatus;
 }
-/*int HeaterActuator::getManualMode()
+String HeaterActuator::getStatusName()
 {
-	return manualMode;
-}*/
+	String name = statusStr[currentStatus];
+	return name;
+}
 
 void HeaterActuator::setReleStatus(int status)
 {

@@ -5,9 +5,14 @@
 class HeaterActuator :
 	public Actuator
 {
+public:
+	//static Logger logger;
+	//String tag;
 	
 private:
-	String tag;
+	static char* statusStr[];// = { "unused", "idle", "program", "manual", "disabled", "restarted", "manualoff" };
+
+	
 	int manualMode;
 	String subaddress = "HeaterActuator-";
 	int relePin = D5; // rel? pin
@@ -39,6 +44,7 @@ public:
 	virtual String sendCommand(String json) override;
 	void setStatus(int status);
 	int getStatus();
+	String getStatusName();
 	void setReleStatus(int status);
 	int getReleStatus();
 	void enableRele(boolean on);
@@ -83,14 +89,11 @@ private:
 	bool sensorRemote = false;//indica se il sensore è locale o remoto
 	int activeProgram = -1;
 	int activeTimerange = -1;
-
 	unsigned long totalConsumptionTime = 0;
 	unsigned long lastConsumptionEnableTime = 0;
 	unsigned long ConsumptionStartTime;
-
 	float localAvTemperature = 0;
-	float oldLocalAvTemperature = 0;
-	
+	float oldLocalAvTemperature = 0;	
 };
 
 

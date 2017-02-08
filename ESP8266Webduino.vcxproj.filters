@@ -16,11 +16,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="ESP8266Webduino.ino" />
-    <None Include="index.html" />
     <None Include="ESP8266.css" />
-    <None Include="prova.htm" />
-    <None Include="heater.html" />
-    <None Include="switch.css" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="__vm\.ESP8266Webduino.vsarduino.h">
@@ -71,13 +67,19 @@
     <ClInclude Include="ESP8266Webduino.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="html.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="HtmlFileClass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="js.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="_html.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="html.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="POSTData.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -122,6 +124,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="HtmlFileClass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="POSTData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

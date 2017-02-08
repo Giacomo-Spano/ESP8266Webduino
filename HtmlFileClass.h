@@ -22,7 +22,7 @@ class HtmlFileClass
 	 HtmlFileClass();
 	 ~HtmlFileClass();
 	void init();
-	void sendFile(WiFiClient* pClient, String fileName);
+	bool sendFile(WiFiClient* pClient, String fileName);
 	void sendHeader(WiFiClient* pClient, String fileName);
 };
 

@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.30501.0
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ESP8266Webduino", "ESP8266Webduino.vcxproj", "{C5F80730-F44F-4478-BDAE-6634EFC2CA88}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowsFormsApplication1", "..\WindowsFormsApplication1\WindowsFormsApplication1.csproj", "{AFC3944E-ACB1-4120-9980-820515F5CACC}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "releswitch", "..\releswitch\releswitch.vcxproj", "{03772055-743B-495B-9747-83315871D63D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -37,6 +39,16 @@ Global
 		{AFC3944E-ACB1-4120-9980-820515F5CACC}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{AFC3944E-ACB1-4120-9980-820515F5CACC}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{AFC3944E-ACB1-4120-9980-820515F5CACC}.Release|Win32.ActiveCfg = Release|Any CPU
+		{03772055-743B-495B-9747-83315871D63D}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{03772055-743B-495B-9747-83315871D63D}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{03772055-743B-495B-9747-83315871D63D}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{03772055-743B-495B-9747-83315871D63D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{03772055-743B-495B-9747-83315871D63D}.Debug|Win32.Build.0 = Debug|Win32
+		{03772055-743B-495B-9747-83315871D63D}.Release|Any CPU.ActiveCfg = Release|Win32
+		{03772055-743B-495B-9747-83315871D63D}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{03772055-743B-495B-9747-83315871D63D}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{03772055-743B-495B-9747-83315871D63D}.Release|Win32.ActiveCfg = Release|Win32
+		{03772055-743B-495B-9747-83315871D63D}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

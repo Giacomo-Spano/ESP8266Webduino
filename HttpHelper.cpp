@@ -3,7 +3,7 @@
 
 extern Logger logger;
 
-HttpHelper::HttpHelper(/*WiFiClient *client*/)
+HttpHelper::HttpHelper()
 {
 	tag = "HttpHelper";
 }

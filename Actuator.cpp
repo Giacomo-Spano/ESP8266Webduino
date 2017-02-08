@@ -1,5 +1,7 @@
 #include "Actuator.h"
 
+Logger Actuator::logger;
+String Actuator::tag = "Command";
 
 Actuator::Actuator()
 {

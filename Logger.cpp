@@ -1,6 +1,9 @@
 #include "Logger.h"
 #include "Command.h"
 
+//#include <Time.h>
+//#include "TimeLib.h"
+
 extern Logger logger;
 
 Logger::Logger()
@@ -96,7 +99,7 @@ void Logger::println(String tag, int val) {
 
 int packetcounter = 0;
 
-bool Logger::send(/*int shieldid, String servername, int port*/) {
+bool Logger::send() {
 
 	//String temp = "**FINE*";
 	if (toBeSent.length() > Command::maxLogSize) {
@@ -112,7 +115,7 @@ bool Logger::send(/*int shieldid, String servername, int port*/) {
 		//Serial.print(packetcounter++,DEC);
 		//Serial.print(":");
 		//Serial.println(substr);
-		bool res = command.sendLog(substr/*, shieldid, servername, port*/);
+		bool res = command.sendLog(substr/*, shieldid, serverName, port*/);
 		if (res) {
 			truncated = false;
 			Serial.println("PACKET SENT");

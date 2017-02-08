@@ -3,6 +3,7 @@
 #include "HtmlFileClass.h"
 #include "ESP8266Webduino.h"
 #include <ESP8266WiFi.h>
+#include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
@@ -25,16 +26,20 @@
 #include "FS.h"
 
 #define Versione 0.92
-
 int EPROM_Table_Schema_Version = 6;
 const char SWVERSION[] = "1.01";
 
+
+
+MDNSResponder mdns;
+ESP8266WebServer webServer(80);
+String webPage = "";
+
+
 Logger logger;
 String sensorNames = "";
-
 const char* ssidx = "Telecom-29545833";
 const char* password = "6oGzjkdMJU2q9XoQLfWiV3nj";
-
 String tag = "Webduino";
 const char *ssidAP = "ES8266";
 const char *passwordAP = "thereisnospoon";
@@ -57,6 +62,7 @@ String getJsonStatus();
 String getJsonSensorsStatus();
 String getJsonActuatorsStatus();
 String getJsonHeaterStatus();
+String getJsonSettings();
 int findIndex(const char* data, const char* target);
 String showMain(String param);
 String showSettings(String param);
@@ -108,7 +114,7 @@ bool shieldRegistered = false; // la shield si registra all'inizio e tutte le vo
 
 void writeEPROM() {
 
-	logger.println(tag, "write EPROM");
+	logger.println(tag, ">>write EPROM");
 
 	int addr = TIMERTIME_ADDR;
 	EEPROM.write(ID_ADDR, EEPROM_ID); // write the ID to indicate valid data
@@ -119,6 +125,7 @@ void writeEPROM() {
 	byte dummy;
 	dummy = 3;
 	EEPROM.write(addr++, dummy);
+	logger.print(tag, "\n\t dummy = " + String(dummy));
 
 	// build version
 	hiByte = highByte(EPROM_Table_Schema_Version);
@@ -129,14 +136,15 @@ void writeEPROM() {
 	// heater pin
 	uint8_t pin = Shield::getHeaterPin();
 	EEPROM.write(addr++, pin);
+	logger.print(tag, "\n\t pin = " + String(pin));
 
 	// heater enabled
 	bool heaterEnabled = Shield::getHeaterEnabled();
 	EEPROM.write(addr++, heaterEnabled);
 	if (heaterEnabled)
-		logger.println(tag, "\n\t>>>heaterenabled = true");
+		logger.print(tag, "\n\t heaterenabled = true");
 	else
-		logger.println(tag, "\n\t>>>heaterenabled = false");
+		logger.print(tag, "\n\t heaterenabled = false");
 
 	// io devices
 	for (int i = 0; i < 10; i++) {
@@ -144,32 +152,46 @@ void writeEPROM() {
 		loByte = lowByte(Shield::getIODevice(i));
 		EEPROM.write(addr++, hiByte);
 		EEPROM.write(addr++, loByte);
+		logger.print(tag, "\n\t iodevice = " + String(Shield::getIODevice(i)));
 	}
-
 	// local port
-	hiByte = highByte(shield.localPort);
-	loByte = lowByte(shield.localPort);
+	int port = Shield::getLocalPort();
+	hiByte = highByte(port);
+	loByte = lowByte(port);
 	EEPROM.write(addr++, hiByte);
 	EEPROM.write(addr++, loByte);
+	logger.print(tag, "\n\t port = " + String(port));
 	// ssid
-	//Serial.print("networkSSID=");
-	//Serial.println(shield.networkSSID);
-	int res = EEPROM_writeAnything(addr, shield.networkSSID);
+	char networkSSID[Shield::networkSSIDLen];
+	Shield::getNetworkSSID().toCharArray(networkSSID, sizeof(networkSSID));
+	int res = EEPROM_writeAnything(addr, networkSSID);
 	addr += res;
+	logger.print(tag, "\n\t networkSSID = " + String(networkSSID));
 	// password
-	res = EEPROM_writeAnything(addr, shield.networkPassword);
+	char networkPasswordBuffer[Shield::networkPasswordLen];
+	Shield::getNetworkPassword().toCharArray(networkPasswordBuffer, sizeof(networkPasswordBuffer));
+	res = EEPROM_writeAnything(addr, networkPasswordBuffer);
 	addr += res;
+	logger.print(tag, "\n\t networkPasswordBuffer = " + String(networkPasswordBuffer));
 	// server name
-	res = EEPROM_writeAnything(addr, shield.servername);
+	char serverNameBuffer[Shield::serverNameLen];
+	Shield::getServerName().toCharArray(serverNameBuffer, sizeof(serverNameBuffer));
+	res = EEPROM_writeAnything(addr, serverNameBuffer);
 	addr += res;
+	logger.print(tag, "\n\t serverNameBuffer = " + String(serverNameBuffer));
 	// server port
-	hiByte = highByte(shield.serverPort);
-	loByte = lowByte(shield.serverPort);
+	port = Shield::getServerPort();
+	hiByte = highByte(port);
+	loByte = lowByte(port);
 	EEPROM.write(addr++, hiByte);
 	EEPROM.write(addr++, loByte);
+	logger.print(tag, "\n\t port = " + String(port));
 	// board name
-	res = EEPROM_writeAnything(addr, shield.boardname);
+	char shieldNameBuffer[Shield::shieldNameLen];
+	Shield::getServerName().toCharArray(shieldNameBuffer, sizeof(shieldNameBuffer));
+	res = EEPROM_writeAnything(addr, shieldNameBuffer);
 	addr += res;
+	logger.print(tag, "\n\t shieldNameBuffer = " + String(shieldNameBuffer));
 	// sensor names
 	String str = "";
 	for (int i = 0; i < shield.sensorList.count; i++) {
@@ -177,12 +199,13 @@ void writeEPROM() {
 		str += String(sensor->sensorname);
 		str += ";";
 	}
-	logger.print(tag, "\n\tstr=" + str);
+	logger.print(tag, "\n\t str=" + str);
 	char buffer[100];
 	str.toCharArray(buffer, sizeof(buffer));
 	res = EEPROM_writeAnything(addr, buffer);
 	addr += res;
 	EEPROM.commit();
+	logger.println(tag, "<<write EPROM");
 }
 
 void readEPROM() {
@@ -195,8 +218,7 @@ void readEPROM() {
 	// dummy
 	byte dummy = EEPROM.read(addr++);
 
-	logger.print(tag, "\ndummy=");
-	logger.print(tag, String(dummy));
+	logger.print(tag, "\n\t dummy=" + String(dummy));
 
 	logger.print(tag, "\EPROM_Table_Schema_Version=");
 	logger.print(tag, String(EPROM_Table_Schema_Version));
@@ -206,8 +228,7 @@ void readEPROM() {
 	hiByte = EEPROM.read(addr++);
 	lowByte = EEPROM.read(addr++);
 	epromversion = word(hiByte, lowByte);
-	logger.print(tag, "\nepromversion=");
-	logger.print(tag, String(epromversion));
+	logger.print(tag, "\n\t epromversion=" + String(epromversion));
 
 	if (epromversion >= 6/*EPROM_Table_Schema_Version*/) {
 		uint8_t pin = EEPROM.read(addr++);
@@ -217,9 +238,9 @@ void readEPROM() {
 		Shield::setHeaterEnabled(heaterEnabled);
 
 		if (heaterEnabled)
-			logger.println(tag, "\n\t>>>heaterenabled = true");
+			logger.println(tag, "\n\t heaterenabled = true");
 		else
-			logger.println(tag, "\n\t>>>heaterenabled = false");
+			logger.println(tag, "\n\t heaterenabled = false");
 
 	}
 
@@ -229,32 +250,50 @@ void readEPROM() {
 			lowByte = EEPROM.read(addr++);
 			Shield::setIODevice(i, word(hiByte, lowByte));
 
-			logger.print(tag, "\ni=");
-			logger.print(tag, String(i));
-			logger.print(tag, ", dev=");
-			logger.print(tag, String(Shield::getIODevice(i)));
+			logger.print(tag, "\ni=" + String(i));
+			logger.print(tag, ", dev=" + String(Shield::getIODevice(i)));
 		}
 	}
 
 	// local port
 	hiByte = EEPROM.read(addr++);
 	lowByte = EEPROM.read(addr++);
-	shield.localPort = word(hiByte, lowByte);
+	int port = word(hiByte, lowByte);
+	logger.print(tag, "\n\t port = ");
+	logger.print(tag, String(port));
+	Shield::setLocalPort(port);
 	// ssid
-	int res = EEPROM_readAnything(addr, shield.networkSSID);
+	char networkSSIDBuffer[Shield::networkSSIDLen];
+	int res = EEPROM_readAnything(addr, networkSSIDBuffer);
+	//int res = EEPROM_readAnything(addr, buffer);
+	logger.print(tag, "\n\t networkSSIDBuffer=" + String(networkSSIDBuffer));
+	Shield::setNetworkSSID(String(networkSSIDBuffer)/*"TP-LINK_3BD796"*/);
 	addr += res;
 	// password
-	res = EEPROM_readAnything(addr, shield.networkPassword);
+	char networkPasswordBuffer[Shield::networkPasswordLen];
+	res = EEPROM_readAnything(addr, networkPasswordBuffer);
+	//res = EEPROM_readAnything(addr, buffer);
+	logger.print(tag, "\n\t networkPasswordBuffer = " + String(networkPasswordBuffer));
+	Shield::setNetworkPassword(String(networkPasswordBuffer)/*"giacomocasa"*/);
+	//Shield::setNetworkPassword("giacomocasa");
 	addr += res;
 	//server name
-	res = EEPROM_readAnything(addr, shield.servername);
+	char servernnameBuffer[Shield::serverNameLen];
+	res = EEPROM_readAnything(addr,servernnameBuffer);
+	logger.print(tag, "\n\tservernnameBuffer=" + String(servernnameBuffer));
+	Shield::setServerName(String(servernnameBuffer));
 	addr += res;
 	// server port
 	hiByte = EEPROM.read(addr++);
 	lowByte = EEPROM.read(addr++);
-	shield.serverPort = word(hiByte, lowByte);
+	port = word(hiByte, lowByte);
+	logger.print(tag, "\n\t port=" + String(port));
+	Shield::setServerPort(port);
 	// board name
-	res = EEPROM_readAnything(addr, shield.boardname);
+	char shieldNameBuffer[Shield::shieldNameLen];
+	res = EEPROM_readAnything(addr, shieldNameBuffer);
+	logger.print(tag, "\n\t shieldNameBuffer ="  + String(shieldNameBuffer));
+	Shield::setShieldName(String(shieldNameBuffer));	
 	addr += res;
 	// sensor names
 	char buffer[100];
@@ -459,15 +498,37 @@ void setup()
 	logger.print(tag, "\n\tSensorNames=" + sensorNames);
 
 	// Connect to WiFi network
-	logger.print(tag, "\n\nConnecting to " + String(shield.networkSSID) + " " + String(shield.networkPassword));
+	logger.print(tag, "\n\nConnecting to " + Shield::getNetworkSSID() + " " + Shield::getNetworkPassword());
 
 	WiFi.mode(WIFI_STA);//??????
 	//delay(5000);
 
-	WiFi.begin(shield.networkSSID, shield.networkPassword);
+	char networkSSID[Shield::networkSSIDLen];
+	Shield::getNetworkSSID().toCharArray(networkSSID, sizeof(networkSSID));
+	char networkPassword[Shield::networkPasswordLen];
+	Shield::getNetworkPassword().toCharArray(networkPassword, sizeof(networkPassword));
+	logger.print(tag, "\n\tnetworkSSID=");
+	logger.print(tag, networkSSID);
+	logger.print(tag, "\n\tnetworkPassword=");
+	logger.print(tag, networkPassword);
+
+	WiFi.begin(networkSSID,networkPassword);
 	if (testWifi() == 20/*WL_CONNECTED*/) {
 
 		checkOTA();
+
+
+		if (mdns.begin("esp8266", WiFi.localIP())) {
+			Serial.println("MDNS responder started");
+		}
+		webPage += "<p>Socket #2 <a href=\"socket2On\"><button>ON</button></a>&nbsp;<a href=\"socket2Off\"><button>OFF</button></a></p>";
+		webServer.on("/provami", []() {
+			webServer.send(200, "text/html", webPage);
+			delay(1000);
+		});
+
+
+
 
 		// Start the server
 		server.begin();
@@ -491,7 +552,7 @@ void setup()
 
 
 		Command command;
-		command.setServer(shield.servername, shield.serverPort);
+		//command.setServer(Shield::getServerName(), Shield::getServerPort());
 		shield.id = command.registerShield(shield);
 
 		if (shield.id != -1) {
@@ -518,8 +579,16 @@ void setup()
 		shield.hearterActuator.setStatus(Program::STATUS_DISABLED);
 	}
 
+	logger.print(tag, "\n\t lastRestartDate=" + Shield::getLastRestartDate());
+	if (Shield::getLastRestartDate().equals("") == true) {
+		Shield::setLastRestartDate(logger.getStrDate());
+		logger.print(tag, "\n\t *lastRestartDate=" + Shield::getLastRestartDate());
+	}
+
+	
 	Command commannd;
 	commannd.sendRestartNotification();
+
 }
 
 void showwol(String param) {
@@ -577,7 +646,7 @@ String softwareReset() {
 }
 
 String getNextWord(int n, const char* source) {
-	int len = strlen_P(html_index);
+	/*int len = strlen_P(html_index);
 	String str = "";
 	for (int k = 0; k < 1000; k++)
 	{
@@ -587,12 +656,13 @@ String getNextWord(int n, const char* source) {
 		char s = pgm_read_byte_near(source + n + k);
 		str += s;
 	}
-	return str;
+	return str;*/
+	return "";
 }
 
 String showIndex() {
 
-	logger.println(tag, F("showIndex"));
+/*	logger.println(tag, F("showIndex"));
 
 	String header = F("HTTP/1.1 200 OK\r\nContent-Type: text/html\n\n");
 	client.println(header);
@@ -603,17 +673,6 @@ String showIndex() {
 		String str = "";
 		str = getNextWord(i, html_index);
 		i += str.length();
-
-		/*for (k = 0; k < 1000; k++)
-		{
-			if (i + k >= len) {
-				break;
-			}
-			char s = pgm_read_byte_near(html_index + i + k);
-			str += s;
-		}
-		i += k;*/
-
 
 		String ip = WiFi.localIP().toString();
 		str.replace("%datetime", logger.getStrDate());
@@ -631,24 +690,10 @@ String showIndex() {
 			//str.replace("%powercommand", "OFF");
 		}
 		client.print(str);
-	}
+	}*/
 
 	return "";
 }
-
-/*String showHeater2() {
-
-	logger.println(tag, F("showHeater2"));
-
-	String header = F("HTTP/1.1 200 OK\r\nContent-Type: text/html\n\n");
-	client.println(header);
-
-	String str = getStrPage(html_heater);
-
-	client.print(str);
-
-	return "";
-}*/
 
 String download() {
 
@@ -684,12 +729,9 @@ void receiveCommand(String param) {
 	logger.println(tag, F(">>receiveCommand "));
 
 	String str = getPostdata();
-
 	String jsonResult = shield.sendCommand(str);
-	//logger.print(tag, F("\n\tresult= "));
-	//logger.print(tag, jsonResult);
-
 	client.println(jsonResult);
+	client.stop();
 
 	logger.println(tag, F("<<receiveCommand "));
 }
@@ -818,24 +860,9 @@ void showRele(String GETparam) {
 		client.println(data);
 	}
 
+	client.stop();
 	logger.print(tag, F("\n\t<<end show rele\n"));
 }
-
-/*void flash() {
-
-	logger.println(tag, F("FLASH - start -----"));
-
-	//time_t currentTime = millis();
-
-	shield.checkTemperatures();
-
-	// se il sensore attivo è quello locale aggiorna lo stato
-	// del rele in base alla temperatur del sensore locale
-	if (!shield.hearterActuator.sensorIsRemote())
-		shield.hearterActuator.updateReleStatus();
-
-	logger.print(tag, F("\n\tFLASH - END \n\t"));
-}*/
 
 void loop()
 {
@@ -843,6 +870,7 @@ void loop()
 
 	wdt_enable(WDTO_8S);
 
+	webServer.handleClient();
 	//////////////////
 	String page, param;
 	client = server.available();
@@ -853,7 +881,7 @@ void loop()
 
 		if (res) {
 
-			logger.println(tag, ">>loop.shownextpage");
+			logger.println(tag, ">>loop.shownextpage " + page);
 
 			String data = "";
 			if (page.equalsIgnoreCase("main")) {
@@ -900,6 +928,10 @@ void loop()
 				data = getJsonStatus();
 				showPage(data);
 			}
+			else if (page.equalsIgnoreCase("settings")) {
+				data = getJsonSettings();
+				showPage(data);
+			}
 			else if (page.equalsIgnoreCase("heaterstatus")) {
 				data = getJsonHeaterStatus();
 				showPage(data);
@@ -920,20 +952,12 @@ void loop()
 				data = registerShield();
 				showPage(data);
 			}
-			else if (page.equalsIgnoreCase("index.html")) {
-				data = showIndex();
-				showPage(data);
-			}
-			else if (	page.equalsIgnoreCase("heater.html") ||
-						page.equalsIgnoreCase("ESP8266.css") ||
-						page.equalsIgnoreCase("switch.css") ||
-						page.equalsIgnoreCase("webduino.js") ||
-						page.equalsIgnoreCase("heater.js")) {
+			else if (page.endsWith(".html") ||
+						page.endsWith(".css") || 
+						page.endsWith(".js")) {
+
 				HtmlFileClass html;
-				html.sendFile(&client, page);
-				/*logger.println(tag, ">>loop.getFile heater.html");
-				getFile(page);
-				logger.println(tag, "<<loop.getFile heater.html");*/
+				bool res = html.sendFile(&client, page);
 			}
 			else if (page.equalsIgnoreCase("prova3.html")) {
 				getFile(page);
@@ -946,10 +970,10 @@ void loop()
 			}
 		}
 		// give the web browser time to receive the data
-		//delay(20);
+		delay(100);
 		client.stop();
 
-		logger.println(tag, "<<loop.shownextpage\n");
+		logger.println(tag, "<<loop.shownextpage " + page + "\n");
 
 		return;
 	}
@@ -1073,38 +1097,38 @@ String showSettings(String param)
 	// local port
 	data += F("<tr><td>Local port</td><td><input type='num' name='localport");
 	data += F("' value='");
-	data += shield.localPort;
+	data += Shield::getLocalPort();
 	data += F("' size='4' maxlength='4'> </td></tr>");
 	// board name
-	data += F("<tr><td>Board name</td><td><input type='num' name='boardname' value='");
-	data += String(shield.boardname);
+	data += F("<tr><td>Board name</td><td><input type='num' name='shieldname' value='");
+	data += String(Shield::getShieldName());
 	data += F("' size='");
-	data += String(shield.boardnamelen - 1);
+	data += String(shield.shieldNameLen - 1);
 	data += F("' maxlength='");
-	data += String(shield.boardnamelen - 1);
+	data += String(shield.shieldNameLen - 1);
 	data += F("'> </td></tr>");
 	// ssid
 	data += F("<tr><td>SSID</td><td><input type='num' name='ssid");
 	data += F("' value='");
-	data += String(shield.networkSSID);
+	data += String(Shield::getNetworkSSID());
 	data += F("' size='32' maxlength='32'> </td></tr>");
 	// password
 	data += F("<tr><td>password</td><td><input type='num' name='password");
 	data += F("' value='");
-	data += String(shield.networkPassword);
+	data += String(Shield::getNetworkPassword());
 	data += F("' size='96' maxlength='96'> </td></tr>");
 	// server name
 	data += F("<tr><td>Server name</td><td><input type='num' name='servername' value='");
-	data += String(shield.servername);
+	data += String(Shield::getServerName());
 	data += F("' size='");
-	data += (shield.servernamelen - 1);
+	data += (Shield::serverNameLen - 1);
 	data += F("' maxlength='");
-	data += (shield.servernamelen - 1);
+	data += (Shield::serverNameLen - 1);
 	data += F("'> </td></tr>");
 	// server port
 	data += F("<tr><td>Server port</td><td><input type='num' name='serverport");
 	data += F("' value='");
-	data += String(shield.serverPort);
+	data += String(Shield::getServerPort());
 	data += F("' size='4' maxlength='4'> </td></tr>");
 
 	data += F("</table><input type='submit' value='save'/></form>");
@@ -1557,43 +1581,50 @@ void showChangeSettings(String param) {
 	// localport
 	val = parsePostdata(databuff, "localport", posdata);
 	if (val != -1) {
-		shield.localPort = val;
+		Shield::setLocalPort(val);
 		logger.print(tag, "\n\tlocalPort=");
-		logger.print(tag, shield.localPort);
+		logger.print(tag, Shield::getLocalPort());
 	}
 	// ssid
 	if (val != -1) {
 		val = parsePostdata(databuff, "ssid", posdata);
-		memccpy_P(shield.networkSSID, posdata, '\0', sizeof(shield.networkSSID));
+		//memccpy_P(Shield::getNetworkSSID(), posdata, '\0', Shield::networkSSIDLen);
+		Shield::setNetworkSSID(String(posdata));
 		logger.print(tag, "\n\tnetworkSSID=");
-		logger.print(tag, shield.networkSSID);
+		logger.print(tag, Shield::getNetworkSSID());
 	}
 	// password
+	val = parsePostdata(databuff, "password", posdata);
 	if (val != -1) {
-		val = parsePostdata(databuff, "password", posdata);
-		memccpy_P(shield.networkPassword, posdata, '\0', sizeof(shield.networkPassword));
+		//memccpy_P(Shield::getNetworkPassword(), posdata, '\0', Shield::networkPasswordLen);
+		Shield::setNetworkPassword(String(posdata));
 		logger.print(tag, "\n\tnetworkPassword=");
+		logger.print(tag, Shield::getNetworkPassword());
 	}
 	// server name
 	val = parsePostdata(databuff, "servername", posdata);
 	if (val != -1) {
-		memccpy_P(shield.servername, posdata, '\0', shield.servernamelen);
+		//memccpy_P(Shield::getServerName(), posdata, '\0', Shield::serverNameLen);
+		//memccpy_P(shield.serverName, posdata, '\0', shield.serverNameLen);
+		Shield::setServerName(String(posdata));
 		logger.print(tag, "\n\tservername ");
-		logger.print(tag, shield.servername);
+		logger.print(tag, Shield::getServerName());
 	}
 	// server port
 	val = parsePostdata(databuff, "serverport", posdata);
 	if (val != -1) {
 		logger.print(tag, "\n\tserver port ");
 		logger.print(tag, val);
-		shield.serverPort = val;
+		Shield::setServerPort(val);
+		//shield.serverPort = val;
 	}
 	// board name
-	val = parsePostdata(databuff, "boardname", posdata);
+	val = parsePostdata(databuff, "shieldname", posdata);
 	if (val != -1) {
-		memccpy_P(shield.boardname, posdata, '\0', shield.boardnamelen);
-		logger.print(tag, "\n\tboardname=");
-		logger.print(tag, shield.boardname);
+		//memccpy_P(shield.shieldName, posdata, '\0', shield.shieldNameLen);
+		Shield::setShieldName(String(posdata));
+		logger.print(tag, "\n\shieldName=");
+		logger.print(tag, Shield::getShieldName());
 	}
 	// sensor names
 
@@ -1621,9 +1652,9 @@ void showChangeSettings(String param) {
 	client.println(data);
 	//client.stop();
 
-	// reimposta servername e port (sono due var static in Command quindi bast chiamare costruttore)
+	// reimposta serverName e port (sono due var static in Command quindi bast chiamare costruttore)
 	Command command;
-	command.setServer(shield.servername, shield.serverPort);
+	//command.setServer(Shield::getServerName(), Shield::getServerPort());
 
 	writeEPROM();
 	client.stop();
@@ -1873,7 +1904,7 @@ String getJsonActuatorsStatus()
 
 String getJsonHeaterStatus()
 {
-	logger.println(tag, F("CALLED getJsonActuatorsStatus"));
+	logger.println(tag, F(">>getJsonActuatorsStatus"));
 
 	String data;
 	data += "";
@@ -1882,7 +1913,23 @@ String getJsonHeaterStatus()
 
 	data += shield.getHeaterStatusJson();
 
-	logger.println(tag, data);
+	logger.print(tag, "\n\t" + data);
+	logger.println(tag, F(">>getJsonActuatorsStatus"));
+	return data;
+}
+
+String getJsonSettings() {
+	logger.println(tag, F(">> getJsonSettings"));
+
+	String data;
+	data += "";
+	data += "HTTP/1.0 200 OK\r\nContent-Type: application/json; ";
+	data += "\r\nPragma: no-cache\r\n\r\n";
+
+	data += shield.getSettingsJson();
+
+	logger.print(tag, "\n\t" + data);
+	logger.println(tag, F("<< getJsonSettings"));
 	return data;
 }
 
@@ -1949,46 +1996,6 @@ void showPower(String GETparam) {
 
 }
 
-
-/*void showPower2(String GETparam) {
-
-	logger.println(tag, F("showPower "));
-
-	getPostdata(databuff, maxposdataChangeSetting);
-	char posdata[maxposdata];
-
-	int val;
-	// status
-	val = parsePostdata(databuff, "status", posdata);
-	logger.print(tag, F("\n\tstatus="));
-	logger.println(tag, val);
-
-
-	if (val == 1 && programSettings.currentStatus == Program::STATUS_DISABLED) {
-		programSettings.currentStatus = Program::STATUS_IDLE;
-		enableRele(false);
-
-	}
-	else if (val == 0) {
-		programSettings.currentStatus = Program::STATUS_DISABLED;
-		enableRele(false);
-	}
-
-	String data;
-	data += "";
-	data += F("HTTP/1.1 200 OK\r\nContent-Type: text/html");
-	data += F("\n\n<html><head><meta HTTP-EQUIV='REFRESH' content='2; url=/main?msg=2'><title>postStatus</title></head><body>");
-
-	char   buffer[50];
-	sprintf(buffer, "relestatus=%d,status=%s", programSettings.releStatus, statusStr[programSettings.currentStatus]);
-	data += String(buffer);
-
-	data += F("</body></html>");
-	client.println(data);
-
-}*/
-
-//String cssfile = "";
 String getFile(String filename) {
 
 	logger.print(tag, String("\n\t << getfile: free heap:)" + String(ESP.getFreeHeap())));
@@ -2038,47 +2045,3 @@ String getFile(String filename) {
 	return String(s);
 }
 
-/*
-void sendFile(String header, const char * file) {
-
-
-	logger.print(tag, String("\n\t >> sendFilefile: free heap:)" + String(ESP.getFreeHeap())));
-	
-	client.println(header);
-
-		int len = strlen_P(file);
-		int i = 0, k = 0;
-		logger.print(tag, "\n\t len=" + len);
-		while (i < len) {
-			logger.print(tag,String("\n\t -- sendFilefile: free heap:)" + String(ESP.getFreeHeap())));
-			String str = "";
-			for (k = 0; k < 500; k++)
-			{
-				if (i + k >= len) {
-					break;
-				}
-				char s = pgm_read_byte_near(file + i + k);
-				str += s;
-
-			}
-			i += k;
-			
-			client.print(str);
-			logger.print(tag, "\n\t k=" + k);
-		}
-
-		logger.print(tag, String("\n\t << sendFilefile: free heap:)" + String(ESP.getFreeHeap())));
-}
-
-String getStrPage(const char * file) {
-
-	String str = "";
-	int len = strlen_P(file);
-	int i = 0;
-	while (i < len) {
-		char s = pgm_read_byte_near(file + i);
-		str += s;
-		i ++;
-	}
-	return str;
-}*/

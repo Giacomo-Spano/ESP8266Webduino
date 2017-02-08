@@ -17,7 +17,7 @@ JSON::~JSON()
 
 String JSON::jsonGetString(String key) {
 
-	logger.print(tag, "\n\t>>jsonGetString : " + key);
+	//logger.print(tag, "\n\t>>jsonGetString : " + key);
 
 	key = "\"" + key + "\"";
 	String json = jsonString;
@@ -26,21 +26,21 @@ String JSON::jsonGetString(String key) {
 	if (index < 0) return "";
 
 	json = json.substring(index + key.length());
-	logger.print(tag, "\n\tjson=" + key);
+	//logger.print(tag, "\n\tjson=" + key);
 
 	index = json.indexOf("\"");
-	logger.print(tag, "\n\tindex=" + String(index));
+	//logger.print(tag, "\n\tindex=" + String(index));
 	if (index < 0) return "";
 
 	json = json.substring(index + 1);
-	logger.print(tag, "\n\tjson=" + json);
+	//logger.print(tag, "\n\tjson=" + json);
 
 	int end = json.indexOf("\"", index);
-	logger.print(tag, "\n\tend=" + String(end));
+	//logger.print(tag, "\n\tend=" + String(end));
 	if (end < 0) return "";
 
 	String value = json.substring(0, end);
-	logger.print(tag, "\n\tvalue=" + value);
+	//logger.print(tag, "\n\tvalue=" + value);
 	return value;
 }
 
@@ -51,23 +51,33 @@ bool JSON::has(String key) {
 	key = "\"" + key + "\"";
 
 	int index = json.indexOf(key);
-	if (index < 0) return false;
+	if (index < 0) {
+		//logger.print(tag, "\n\tjsonString " + jsonString);
+		logger.print(tag, "\n\tkey " + key + "not found");
+		return false;
+	}
 
 	json = json.substring(index + key.length());
 	index = json.indexOf(":");
-	if (index < 0) return false;
+	if (index < 0) {
+		logger.print(tag, "\n\t: char not found");
+		return false;
+	}
 
 	json = json.substring(index + 1);
 
 
-	int end = json.indexOf("\"", index);
+	/*int end = json.indexOf("\"", index);
 	if (end < 0)
 		end = json.indexOf("}", index);
 	if (end < 0)
 		end = json.indexOf("[", index);
 
-	if (end < 0) return false;
+	if (end < 0) {
+		return false;
+	}*/
 
+	logger.print(tag, "\n\tkey " + key + "found");
 	return true;
 	//String value = json.substring(0, end);
 	//value.trim();
@@ -116,31 +126,7 @@ String JSON::getRightOfKey(String key) {
 String JSON::getNum(String key) {
 	// ritorna il valore di una key senza apici
 
-	//logger.print(tag, "\n\tgetNum key = ");
-	//logger.print(tag, key);
-
-	String json = getRightOfKey(key);
-	//logger.print(tag, "\n\tjson= ");
-	//logger.print(tag, json);
-
-	int end = json.indexOf(",");
-	if (end < 0) {
-		end = json.indexOf("}");
-		if (end < 0) {
-			return "";
-		}
-	}
-	
-	String value = json.substring(0, end);
-	value.trim();
-
-	return value;
-}
-
-bool JSON::getBool(String key) {
-	// ritorna il valore di una key senza apici
-
-	logger.print(tag, "\n\tkey = ");
+	logger.print(tag, "\n\tgetNum key = ");
 	logger.print(tag, key);
 
 	String json = getRightOfKey(key);
@@ -151,7 +137,32 @@ bool JSON::getBool(String key) {
 	if (end < 0) {
 		end = json.indexOf("}");
 		if (end < 0) {
-			logger.print(tag, "\n\treturn false");
+			return "";
+		}
+	}
+	
+	String value = json.substring(0, end);
+	logger.print(tag, "\n\tvalue= "+ value);
+	value.trim();
+	logger.print(tag, "\n\tvalue= " + value);
+	return value;
+}
+
+bool JSON::getBool(String key) {
+	// ritorna il valore di una key senza apici
+
+	//logger.print(tag, "\n\tkey = ");
+	//logger.print(tag, key);
+
+	String json = getRightOfKey(key);
+	//logger.print(tag, "\n\tjson= ");
+	//logger.print(tag, json);
+
+	int end = json.indexOf(",");
+	if (end < 0) {
+		end = json.indexOf("}");
+		if (end < 0) {
+			//logger.print(tag, "\n\treturn false");
 			return false;
 		}
 	}
@@ -159,7 +170,7 @@ bool JSON::getBool(String key) {
 	String value = json.substring(0, end);
 	value.trim();
 
-	logger.print(tag, "\n\tvalue="+value);
+	//logger.print(tag, "\n\tvalue="+value);
 	if (value.equals("true"))
 		return true;
 	else
@@ -203,8 +214,8 @@ float JSON::jsonGetFloat(String key) {
 }
 
 int JSON::jsonGetInt(String key) {
-	//logger.print(tag, "\n\tjsonGetLong = ");
-	//logger.print(tag, key);
+	logger.print(tag, "\n\tjsonGetLong = ");
+	logger.print(tag, key);
 
 	String value = getNum(key);
 	if (value.equals(""))
@@ -213,8 +224,8 @@ int JSON::jsonGetInt(String key) {
 }
 
 bool JSON::jsonGetBool(String key) {
-	logger.print(tag, "\n\tjsonGetBool: ");
-	logger.print(tag, key);
+	//logger.print(tag, "\n\tjsonGetBool: ");
+	//logger.print(tag, key);
 
 	bool value = getBool(key);
 	return value;

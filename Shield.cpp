@@ -14,12 +14,26 @@ DallasTemperature* pDallasSensors;
 //extern Logger logger;
 Logger Shield::logger;
 String Shield::tag = "Shield";
-int Shield::id = 0; //// inizializzato a zero perchè viene impostato dalla chiamata a registershield
-int Shield::serverPort = 8080;
-char  Shield::servername[servernamelen];
+String Shield::lastRestartDate = "";
+
+
+/*const int Shield::shieldNameLen = 30;
+const int serverNameLen = 30;
+const char networkSSIDLen = 32;// = "ssid";
+const char networkPasswordLen = 96;// = "password";*/
+
 uint8_t Shield::heaterPin = D5;
 uint8_t Shield::oneWirePin = D4;
 bool Shield::heaterEnabled = true;
+
+int Shield::id = 0; //// inizializzato a zero perchè viene impostato dalla chiamata a registershield
+int Shield::serverPort = 8080;
+int Shield::localPort = 80;
+String Shield::networkSSID;// [networkSSIDLen];// = "ssid";
+String Shield::networkPassword;// [networkPasswordLen];// = "password";
+String Shield::serverName;//[serverNameLen];
+String Shield::shieldName;
+String Shield::powerStatus = "on";
 
 
 int Shield::ioDevices[maxIoDevices] = { 0,0,0,0,0,0,0,0,0,0 };
@@ -27,26 +41,22 @@ int Shield::ioDevices[maxIoDevices] = { 0,0,0,0,0,0,0,0,0,0 };
 
 Shield::Shield()
 {
-
-
 	serverPort = 8080;
-
 	//addOneWireSensors();
 
 	//Actuator* pActuator = new Actuator();
 	//actuatorList.push_back(*pActuator);
-
 }
-
 
 Shield::~Shield()
 {
 }
 
-String Shield::heaterSettingsCommand(JSON json) {
-	logger.print(tag, "\n\t>>heaterSettingsCommand");
-	if (json.has("pin")) {
-		String str = json.jsonGetString("pin");
+String Shield::sendHeaterSettingsCommand(JSON json) {
+
+	logger.print(tag, "\n\t>>sendHeaterSettingsCommand");
+	if (json.has("heaterpin")) {
+		String str = json.jsonGetString("heaterpin");
 		logger.print(tag, "\n\tpin=" + str);
 		if (str.equals("D1"))
 			setHeaterPin(D1);
@@ -63,9 +73,9 @@ String Shield::heaterSettingsCommand(JSON json) {
 		else if (str.equals("D7"))
 			setHeaterPin(D7);
 	}
-	if (json.has("enabled")) {
-		bool res = json.jsonGetBool("enabled");
-		logger.print(tag, "\n\tenabled= ");
+	if (json.has("heaterenabled")) {
+		bool res = json.jsonGetBool("heaterenabled");
+		logger.print(tag, "\n\t heaterenabled= ");
 		if (res)
 			logger.print(tag, "true");
 		else
@@ -77,24 +87,47 @@ String Shield::heaterSettingsCommand(JSON json) {
 	String result = "";
 	result += "{";
 	result += "\"result\": \"succes\"";
+	result += ",\"heaterpin\": \""+ getStrHeaterPin() + "\"";
+	result += ",\"heaterenabled\": ";
+	if (getHeaterEnabled() == true)
+		result += "true";
+	else
+		result += "false";
 	result += "}";
-	logger.print(tag, "\n\t<<heaterSettingsCommand");
+	logger.print(tag, "\n\t<<sendHeaterSettingsCommand");
 	return result;
 }
 
 String Shield::sendCommand(String jsonStr) {
 
-	logger.print(tag, "\n\t>>sendCommand json=");
-	logger.print(tag, jsonStr);
-
-
-
+	logger.print(tag, "\n\t>>sendCommand json=" + jsonStr);
+	
 	JSON json(jsonStr);
 	if (json.has("command")) {
 
 		String command = json.jsonGetString("command");
 		if (command.equals("heatersettings")) {
-			String result = heaterSettingsCommand(json);
+			String result = sendHeaterSettingsCommand(json);
+			logger.print(tag, "\n\t<<sendCommand result=" + String(result));
+			return result;
+		}
+		else if (command.equals("shieldsettings")) {
+			String result = sendShieldSettingsCommand(json);
+			logger.print(tag, "\n\t<<sendCommand result=" + String(result));
+			return result;
+		}
+		else if (command.equals("power")) {
+			String result = sendPowerCommand(json);
+			logger.print(tag, "\n\t<<sendCommand result=" + String(result));
+			return result;
+		}
+		else if (command.equals("reset")) {
+			String result = sendResetCommand(json);
+			logger.print(tag, "\n\t<<sendCommand result=" + String(result));
+			return result;
+		}
+		else if (command.equals("register")) {
+			String result = sendRegisterCommand(json);
 			logger.print(tag, "\n\t<<sendCommand result=" + String(result));
 			return result;
 		}
@@ -117,6 +150,134 @@ String Shield::sendCommand(String jsonStr) {
 	logger.println(tag, "\n\t<<sendCommand result=" + String(result));
 	return result;
 }
+
+String Shield::sendShieldSettingsCommand(JSON json)
+{
+	logger.print(tag, "\n\t>>sendShieldSettingsCommand");
+	
+	if (json.has("localport")) {
+		int localPortr = json.jsonGetInt("localport");
+		logger.print(tag, "\n\tlocalport=" + localPort);
+		setLocalPort(localPort);
+	}
+	if (json.has("shieldname")) {
+		String name = json.jsonGetString("shieldname");
+		logger.print(tag, "\n\tshieldname=" + name);
+		setShieldName(name);
+	}
+	if (json.has("ssid")) {
+		String name = json.jsonGetString("ssid");
+		logger.print(tag, "\n\tssid=" + name);
+		setNetworkSSID(name);
+	}
+	if (json.has("password")) {
+		String name = json.jsonGetString("password");
+		logger.print(tag, "\n\tshieldname=" + name);
+		setNetworkPassword(name);
+	}
+	if (json.has("servername")) {
+		String name = json.jsonGetString("servername");
+		logger.print(tag, "\n\tshieldname=" + name);
+		setServerName(name);
+	}
+	if (json.has("serverport")) {
+		int serverPort = json.jsonGetInt("serverport");
+		logger.print(tag, "\n\tserverPort=" + serverPort);
+		setServerPort(serverPort);
+	}
+	writeEPROM();
+
+	String result = "";
+	result += "{";
+	result += "\"result\": \"succes\"";
+
+	result += ",\"localport\": \"" + String(getLocalPort()) + "\"";
+	result += ",\"shieldname\": \"" + getShieldName() + "\"";
+	result += ",\"ssid\": \"" + getNetworkSSID() + "\"";
+	result += ",\"password\": \"" + getNetworkPassword() + "\"";
+	result += ",\"servername\": \"" + getServerName() + "\"";
+	result += ",\"serverport\": \"" + String(getServerPort()) + "\"";
+
+
+	result += "}";
+
+	logger.print(tag, "\n\t<<sendShieldSettingsCommand");
+	return result;
+	
+}
+
+String Shield::sendRegisterCommand(JSON json)
+{
+	logger.print(tag, "\n\t>> sendRegisterCommand");
+		
+	Command command;
+	int id = command.registerShield(*this);
+
+	String result = "";
+	result += "{";
+
+	if (id != 0) {
+		result += "\"result\": \"succes\"";
+		result += ",\"power\": \"" + String(Shield::getShieldId()) + "\"";
+	}
+	else {
+		result += "\"result\": \"failed\"";
+	}
+
+	result += "}";
+
+	
+
+	logger.print(tag, "\n\t<< sendRegisterCommand");
+	return result;
+}
+
+String Shield::sendResetCommand(JSON json)
+{
+	logger.print(tag, "\n\t>> sendResetCommand");
+
+	ESP.restart();
+
+	
+	return "";
+}
+
+String Shield::sendPowerCommand(JSON json)
+{
+	logger.print(tag, "\n\t>> sendPowerCommand");
+	bool res = false;
+
+	if (json.has("status")) {
+		String status = json.jsonGetString("status");
+		logger.print(tag, "\n\t status=" + status);
+
+		if (status.equals("on") ) {
+			setPowerStatus(status);
+			res = true;			
+		}
+		else if (status.equals("off")) {
+			setPowerStatus(status);
+			res = true;
+		}		
+	}
+	
+	String result = "";
+	result += "{";
+
+	if (res) {
+		result += "\"result\": \"succes\"";
+		result += ",\"power\": \"" + getPowerStatus() + "\"";
+	}
+	else {
+		result += "\"result\": \"failed\"";
+	}
+
+	result += "}";
+
+	logger.print(tag, "\n\t<< sendPowerCommand");
+	return result;
+}
+
 
 String Shield::getSensorsStatusJson() {
 	String json = "{";
@@ -152,6 +313,27 @@ String Shield::getActuatorsStatusJson() {
 	return json;
 }
 
+String Shield::getSettingsJson() {
+	String json = "{";
+	
+	json += "\"localport\":" + String(localPort);
+	json += ",\"shieldname\":\"" + shieldName + "\"";
+	json += ",\"ssid\":\"" + networkSSID + "\"";
+	json += ",\"password\":\"" + networkPassword + "\"";
+	json += ",\"servername\":\"" + serverName + "\"";
+	json += ",\"serverport\":" + String(serverPort);	
+	json += ",\"localip\":\"" + String(localIP) + "\"";
+	json += ",\"macaddress\":\"" + String(MAC_char) + "\"";
+	json += ",\"shieldid\":" + String(id);
+	json += ",\"datetime\":\"" + logger.getStrDate() + "\"";
+	json += ",\"power\":\"" + powerStatus + "\"";
+	json += ",\"lastrestart\":\"" + lastRestartDate + "\"";
+	
+	
+	json += "}";
+	return json;
+}
+
 String Shield::getHeaterStatusJson() {
 
 	String json = hearterActuator.getJSON();
@@ -164,8 +346,6 @@ String Shield::getHeaterStatusJson() {
 	return json;
 }
 
-
-
 void Shield::checkActuatorsStatus()
 {
 	if (heaterEnabled) {
@@ -176,7 +356,6 @@ void Shield::checkActuatorsStatus()
 void Shield::checkSensorsStatus()
 {
 	//logger.println(tag, F(">>checkSensorsStatus"));
-
 	unsigned long currMillis = millis();
 	unsigned long timeDiff = currMillis - lastCheckTemperature;
 	if (timeDiff > checkTemperature_interval) {
@@ -247,14 +426,11 @@ void Shield::addOneWireSensors(String sensorNames) {
 		sensorList.add((Sensor*)pSensorNew);
 		sensorList.show();
 
-
 		String txt = "\n\tADDDED sensor " + String(pSensorNew->sensorname) + "addr ";
 		logger.print(tag, txt);
 		logger.print(tag, pSensorNew->getSensorAddress());
 		logger.print(tag, " end");
 	}
-
-
 	oneWirePtr->reset_search();
 	sensorList.show();
 	logger.println(tag, "<<addOneWireSensors");
@@ -268,7 +444,6 @@ void Shield::addActuators() {
 	if (heaterEnabled) {
 		hearterActuator.setRelePin(heaterPin);
 	}
-
 	//HeaterActuator* pActuatorNew = new HeaterActuator();
 	//pActuatorNew->sensorname = "riscaldamento";
 }
