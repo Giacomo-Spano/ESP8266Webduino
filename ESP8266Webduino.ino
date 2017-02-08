@@ -1,3 +1,5 @@
+#include "ESPWebServer.h"
+#include "HttpRequest.h"
 #include "js.h"
 #include "html.h"
 #include "HtmlFileClass.h"
@@ -55,8 +57,8 @@ void readEPROM();
 extern void writeEPROM();
 void showPage(String data);
 void getPostdata(char *data, int maxposdata);
-String getPostdata();
-void receiveCommand(String param);
+//String getPostdata();
+void receiveCommand(HttpRequest request);
 int parsePostdata(const char* data, const char* param, char* value);
 String getJsonStatus();
 String getJsonSensorsStatus();
@@ -724,11 +726,11 @@ String download() {
 	return "";
 }
 
-void receiveCommand(String param) {
+void receiveCommand(HttpRequest request) {
 
 	logger.println(tag, F(">>receiveCommand "));
 
-	String str = getPostdata();
+	String str = request.body;// getPostdata();
 	String jsonResult = shield.sendCommand(str);
 	client.println(jsonResult);
 	client.stop();
@@ -875,11 +877,17 @@ void loop()
 	String page, param;
 	client = server.available();
 	HttpHelper http;
-	bool res = false;
-	if (client) {
-		res = http.getNextPage(&client, &server, &page, &param);
 
-		if (res) {
+	ESPWebServer espWebServer;
+	//bool res = false;
+	if (client) {
+		//res = http.getNextPage(&client, &server, &page, &param);
+		HttpRequest request = espWebServer.getHttpRequest(&client);
+		HttpRequest::HttpRequestMethod method = request.method;
+		page = request.page;
+		param = request.param;
+
+		if (/*res*/request.method != HttpRequest::HTTP_NULL) {
 
 			logger.println(tag, ">>loop.shownextpage " + page);
 
@@ -889,7 +897,7 @@ void loop()
 				showPage(data);
 			}
 			else if (page.equalsIgnoreCase("command")) {
-				receiveCommand(param);
+				receiveCommand(request);
 			}
 			else if (page.equalsIgnoreCase("heater")) {
 				data = showHeater(param);
@@ -1695,7 +1703,7 @@ int parsePostdata(const char* data, const char* param, char* value) {
 	}
 	return -1;
 }
-
+#ifdef dopo
 String getPostdata() {
 
 	//Serial.print(F("getPostdata "));
@@ -1733,7 +1741,7 @@ String getPostdata() {
 
 	return str;
 }
-
+#endif
 void getPostdata(char *data, int maxposdata) {
 
 	//Serial.print(F("getPostdata "));
@@ -1771,6 +1779,7 @@ void getPostdata(char *data, int maxposdata) {
 	if (i < maxposdata)
 		data[i] = '\0';
 }
+
 
 int findIndex(const char* data, const char* target) {
 

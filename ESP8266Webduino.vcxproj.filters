@@ -82,6 +82,12 @@
     <ClInclude Include="POSTData.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="HttpRequest.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ESPWebServer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="wol.cpp">
@@ -127,6 +133,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="POSTData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="HttpRequest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ESPWebServer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
