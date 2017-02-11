@@ -10,20 +10,32 @@
 #endif
 
 #include "HttpRequest.h"
+#include "HttpResponse.h"
 #include "WiFiClient.h"
 
 
 class ESPWebServer
 {
 public:
-	ESPWebServer();
+	//static const char* jsonContentType;// = "application/json",
+	static const String jsonContentType;// = "application/json";
+	static const String htmlContentType;// = "application/json";
+		
+
+	ESPWebServer(WiFiClient* pClient);
 	~ESPWebServer();
 	void init();
-	HttpRequest getHttpRequest(WiFiClient* pClient);
+
+	HttpRequest getHttpRequest();
+	HttpResponse getHttpResponse();
 
 private:
 	static String tag;
 	static Logger logger;
+	WiFiClient* pClient;
+	HttpRequest request;
+	HttpResponse response;
+
 	static const int MAX_PAGE_NAME_LEN = 32;
 	static const int MAX_PARAM_LEN = 32;
 	int findIndex(const char* data, const char* target);

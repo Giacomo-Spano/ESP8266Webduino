@@ -1,3 +1,4 @@
+#include "HttpResponse.h"
 #include "ESPWebServer.h"
 #include "HttpRequest.h"
 #include "js.h"
@@ -26,87 +27,81 @@
 #include "TimeLib.h"
 #include "css.h"
 #include "FS.h"
+#include "POSTData.h"
 
 #define Versione 0.92
 int EPROM_Table_Schema_Version = 6;
 const char SWVERSION[] = "1.01";
 
-
-
-MDNSResponder mdns;
-ESP8266WebServer webServer(80);
-String webPage = "";
-
-
 Logger logger;
 String sensorNames = "";
+
 const char* ssidx = "Telecom-29545833";
 const char* password = "6oGzjkdMJU2q9XoQLfWiV3nj";
 String tag = "Webduino";
 const char *ssidAP = "ES8266";
 const char *passwordAP = "thereisnospoon";
 const char* ssid = "xxBUBBLES";
-/*   da eliminare*/
-byte mac[] = { 0x00, 0xA0, 0xB0, 0xC0, 0xD0, 0x90 };
-
-extern const char* statusStr[] = { "unused", "idle", "program", "manual", "disabled", "restarted", "manualoff" };
 Shield shield;
 
 void initEPROM();
 void readEPROM();
 extern void writeEPROM();
-void showPage(String data);
-void getPostdata(char *data, int maxposdata);
-//String getPostdata();
-void receiveCommand(HttpRequest request);
-int parsePostdata(const char* data, const char* param, char* value);
-String getJsonStatus();
-String getJsonSensorsStatus();
-String getJsonActuatorsStatus();
-String getJsonHeaterStatus();
-String getJsonSettings();
-int findIndex(const char* data, const char* target);
-String showMain(String param);
-String showSettings(String param);
-String showIODevices(String param);
-String showHeater(String param);
-void showChangeIODevices(String param);
-void showChangeSettings(String param);
-void showPower(String param);
-String softwareReset();
-String showIndex();
-void setRemoteTemperature(String param);
+
+// html page old style
+String showMain(HttpRequest request, HttpResponse response);
+String showHeater(HttpRequest request, HttpResponse response);
+String showSettings(HttpRequest request, HttpResponse response);
+String showIODevices(HttpRequest request, HttpResponse response);
+
+// POST request
+String receiveCommand(HttpRequest request, HttpResponse httpResponse);
+String setRemoteTemperature(HttpRequest request, HttpResponse httpResponse);
+String showPower(HttpRequest request, HttpResponse response);
+String showRele(HttpRequest request, HttpResponse response);
+String showChangeSettings(HttpRequest request, HttpResponse response);
+String showChangeIODevices(HttpRequest request, HttpResponse response);
+String softwareReset(HttpRequest request, HttpResponse response);
+
+// GET request
+String getJsonStatus(HttpRequest request, HttpResponse response);
+String getJsonSensorsStatus(HttpRequest request, HttpResponse response);
+String getJsonActuatorsStatus(HttpRequest request, HttpResponse response);
+String getJsonHeaterStatus(HttpRequest request, HttpResponse response);
+String getJsonSettings(HttpRequest request, HttpResponse response);
+
+//String showIndex();
+
 String getFile(String filename);
-void sendFile(String header, const char * file);
 
 // Create an instance of the server
 // specify the port to listen on as an argument
 WiFiServer server(80);
 WiFiClient client;
 
-const int maxposdataChangeSetting = 150;
-char databuff[maxposdataChangeSetting];
+//const int maxposdataChangeSetting = 150;
+//char databuff[maxposdataChangeSetting];
 
 #define P(name) static const prog_uchar name[] PROGMEM // declare a static string
 const byte EEPROM_ID = 0x99; // used to identify if valid data in EEPROM
 const int ID_ADDR = 0; // the EEPROM address used to store the ID
-const int TIMERTIME_ADDR = 1; // the EEPROM address used to store the pin
-const int maxposdata = 101; // massimo numero di caratteri della variabile posdata
-const int maxvaluesize = maxposdata - 1/*10*/; // massimo numero di digit del valore di una variabile nel POS data
+//const int TIMERTIME_ADDR = 1; // the EEPROM address used to store the pin
+//const int maxposdata = 101; // massimo numero di caratteri della variabile posdata
+//const int maxvaluesize = maxposdata - 1/*10*/; // massimo numero di digit del valore di una variabile nel POS data
 
-bool statusChangeSent = true;
+//bool statusChangeSent = true;
 
 const int flash_interval = 30000;
 unsigned long lastFlash = 0;//-flash_interval;
-const int lastStatusChange_interval = 60000; // timeout retry invio status change
-unsigned long lastStatusChange = 0;//-lastStatusChange_interval;// 0;
-unsigned long lastNotification = 0;
-const int Notification_interval = 20000;
+//const int lastStatusChange_interval = 60000; // timeout retry invio status change
+//unsigned long lastStatusChange = 0;//-lastStatusChange_interval;// 0;
+//unsigned long lastNotification = 0;
+//const int Notification_interval = 20000;
 unsigned long lastSendLog = 0;
 const int SendLog_interval = 10000;// 10 secondi
 unsigned long lastTimeSync = 0;
 const int timeSync_interval = 60000;// 60 secondi
-int offlineCounter = 0;
+//int offlineCounter = 0;
 // variables created by the build process when compiling the sketch
 extern int __bss_end;
 extern void *__brkval;
@@ -519,19 +514,6 @@ void setup()
 
 		checkOTA();
 
-
-		if (mdns.begin("esp8266", WiFi.localIP())) {
-			Serial.println("MDNS responder started");
-		}
-		webPage += "<p>Socket #2 <a href=\"socket2On\"><button>ON</button></a>&nbsp;<a href=\"socket2Off\"><button>OFF</button></a></p>";
-		webServer.on("/provami", []() {
-			webServer.send(200, "text/html", webPage);
-			delay(1000);
-		});
-
-
-
-
 		// Start the server
 		server.begin();
 		logger.print(tag, "Server started");
@@ -593,45 +575,9 @@ void setup()
 
 }
 
-void showwol(String param) {
+String softwareReset(HttpRequest request, HttpResponse response) {
 
-	logger.println(tag, F("showwol "));
-
-	/*wol* w = new wol();
-	w->init();
-	w->wakeup();
-	delete w;*/
-
-	String data;
-	data += "";
-	data += F("HTTP/1.1 200 OK\r\nContent-Type: text/html");
-	data += F("\n\n<html><head><meta HTTP-EQUIV='REFRESH' content='0; url=/main?msg=2'><title>WOL</title></head><body>");
-	data += F("</body></html>");
-	client.println(data);
-	client.stop();
-}
-
-String registerShield() {
-	logger.println(tag, F("register shield "));
-
-	String data;
-	data += "";
-	data += F("HTTP/1.1 200 OK\r\nContent-Type: text/html");
-	data += F("\n\n<html><head><meta HTTP-EQUIV='REFRESH' content='0; url=/main?msg=2'><title>rele</title></head><body>");
-	data += F("REGISTER SHIELD - Attendere prego");
-	data += F("</body></html>");
-
-	//client.println(data);
-	//client.stop();
-	Command command;
-	command.registerShield(shield);
-
-	return data;
-}
-
-String softwareReset() {
-
-	logger.println(tag, F(">>software reset "));
+	logger.println(tag, F("\n\n\t >>software reset "));
 	
 	String data;
 	data += "";
@@ -640,115 +586,97 @@ String softwareReset() {
 	data += F("SOFTWARE RESET - Attendere prego");
 	data += F("</body></html>");
 
-	client.println(data);
-	client.stop();
+	response.send(HttpResponse::HTTPRESULT_OK, ESPWebServer::htmlContentType, data);
 
 	ESP.restart();
+
+	logger.println(tag, F("\n\t <<software reset "));
 	return "";
 }
 
-String getNextWord(int n, const char* source) {
-	/*int len = strlen_P(html_index);
-	String str = "";
-	for (int k = 0; k < 1000; k++)
-	{
-		if (n + k >= len) {
-			break;
-		}
-		char s = pgm_read_byte_near(source + n + k);
-		str += s;
-	}
-	return str;*/
-	return "";
-}
+String receiveCommand(HttpRequest request,HttpResponse response) {
 
-String showIndex() {
+	logger.println(tag, F("\n\n\t >>receiveCommand "));
 
-/*	logger.println(tag, F("showIndex"));
-
-	String header = F("HTTP/1.1 200 OK\r\nContent-Type: text/html\n\n");
-	client.println(header);
-
-	int len = strlen_P(html_index);
-	int i = 0, k = 0;
-	while (i < len) {
-		String str = "";
-		str = getNextWord(i, html_index);
-		i += str.length();
-
-		String ip = WiFi.localIP().toString();
-		str.replace("%datetime", logger.getStrDate());
-		str.replace("%ipaddress", ip);
-		str.replace("%macaddress", String(shield.MAC_char));
-		str.replace("%shieldid", String(shield.id));
-		if (shield.hearterActuator.getStatus() == Program::STATUS_DISABLED) {
-			str.replace("%powerstatus", "OFF");
-			//str.replace("%powervalue", "1");
-			//str.replace("%powercommand", "ON");
-		}
-		else {
-			str.replace("%powerstatus", "ON");
-			//str.replace("%powervalue", "0");
-			//str.replace("%powercommand", "OFF");
-		}
-		client.print(str);
-	}*/
-
-	return "";
-}
-
-String download() {
-
-	logger.println(tag, F("download "));
-
-	String data;
-	data += "";
-	data += F("HTTP/1.1 200 OK\r\nContent-Type: text/html");
-	data += F("\n\n<html><head><meta HTTP-EQUIV='REFRESH' content='0; url=/main?msg=2'><title>rele</title></head><body>");
-	data += F("SOFTWARE RESET - Attendere prego");
-	data += F("</body></html>");
-
-	client.println(data);
-
-	Command command;
-	command.download("ESP8266.css", shield);
-	//command.download("prova3.html", shield);
-
-	command.download("prova3.html", shield);
-	//command.download("ESP8266.css", shield);
-
-
-	client.stop();
-
-	//delay(3000);
-	//ESP.reset();
-
-	return "";
-}
-
-void receiveCommand(HttpRequest request) {
-
-	logger.println(tag, F(">>receiveCommand "));
-
-	String str = request.body;// getPostdata();
+	String str = request.body;
 	String jsonResult = shield.sendCommand(str);
-	client.println(jsonResult);
-	client.stop();
-
-	logger.println(tag, F("<<receiveCommand "));
+	
+	logger.println(tag, "\n\t <<receiveCommand " + jsonResult);
+	return jsonResult;
 }
 
-void showRele(String GETparam) {
+String setRemoteTemperature(HttpRequest request, HttpResponse response) {
 
-	logger.println(tag, F("\n\t>>called showRele "));
+	logger.print(tag, F("\n\n\t >>setRemoteTemperature: "));
 
-	getPostdata(databuff, maxposdataChangeSetting);
-	char posdata[maxposdata];
-	int status;
+	String str = request.body;
+	POSTData data(str);
+
+	if (data.has("temperature")) {
+		String str = data.getString("temperature");
+		logger.println(tag, "\n\t temperature=" + str);
+		float temperature = str.toFloat();
+		shield.hearterActuator.setRemoteTemperature(temperature);
+	}
+	String result = "";
+	result += getJsonStatus(request, response);
+	
+	logger.print(tag, "\n\t <<setRemoteTemperature: " + result);
+	return result;
+}
+
+String showPower(HttpRequest request, HttpResponse response) {
+
+	logger.print(tag, F("\n\n\t >>showPower "));
+
+	logger.print(tag, F("\n\tprogramSettings.currentStatus="));
+	logger.print(tag, shield.hearterActuator.getStatus());
+	
+	String str = request.body;
+	POSTData posData(str);
+	if (posData.has("status")) {
+		String str = posData.getString("status");
+		logger.println(tag, "\n\t status=" + str);
+		if (str.equals("on") && shield.hearterActuator.getStatus() == Program::STATUS_DISABLED) {
+			shield.hearterActuator.setStatus(Program::STATUS_IDLE);
+			shield.hearterActuator.enableRele(true);
+
+		}
+		else if (str.equals("on")) {
+			shield.hearterActuator.setStatus(Program::STATUS_DISABLED);
+			shield.hearterActuator.enableRele(false);
+		}
+	}	
+	String data = "<result><rele>" + String(shield.hearterActuator.getReleStatus()) + "</rele>" +
+		"<status>" + String(shield.hearterActuator.getStatus()) + "</status></result>";
+
+	logger.print(tag, F("\n\t <<showPower "));
+	return data;
+}
+
+String showRele(HttpRequest request, HttpResponse response) {
+
+	logger.print(tag, F("\n\n\t >>called showRele "));
+
+	String str = request.body;
+	POSTData posData(str);
+	logger.print(tag, "\n\t posData=" + posData.getDataString());
+
+	if (posData.has("temperature")) {
+		String str = posData.getString("temperature");
+		shield.hearterActuator.setRemoteTemperature(str.toFloat());
+		logger.print(tag, "\n\t temperature=" + String(shield.hearterActuator.getRemoteTemperature()));
+	}
+	else {
+		logger.print(tag, "\n\t invalid temperature");
+	}
 	// status
-	status = parsePostdata(databuff, "status", posdata);
-	logger.print(tag, F("\n\tstatus="));
-	logger.print(tag, status);
+	int status;
+	if (posData.has("status")) {
+		String str = posData.getString("status");
+		status = str.toInt();
+		logger.print(tag, "\n\t status=" + status);
+	}
 	String command = "";
 	switch (status) {
 	case 0:
@@ -773,97 +701,247 @@ void showRele(String GETparam) {
 		command = "manualend";
 		break;
 	}
-
-
-
+	logger.print(tag, "\n\t command=" + command);
 	// duration
-	long duration = parsePostdata(databuff, "duration", posdata);
-	logger.print(tag, F("\n\tduration="));
-	logger.print(tag, duration);
-	logger.print(tag, F(" minuti"));
+	long duration = 0;
+	if (posData.has("duration")) {
+		duration = posData.getString("duration").toInt();
+	}
+	logger.print(tag, "\n\t duration=" + String(duration) + " minuti");
 	duration = duration * 60 * 1000;
-	logger.print(tag, F("\n\tduration ="));
-	logger.print(tag, duration);
-	logger.print(tag, F(" millisecondi"));
-	// sensor
-	String str = "";
-	int sensorId = parsePostdata(databuff, "sensorid", posdata);
-	str = String(sensorId);
-	logger.print(tag, F("\n\tsensorId="));
-	logger.print(tag, str);
+	logger.print(tag, "\n\t duration =" + String(duration) + " millisecondi");
+	// sensorid
+	int sensorId = 0;
+	if (posData.has("sensorid")) {
+		sensorId = posData.getString("sensorid").toInt();
+	}
+	logger.print(tag, "\n\t sensorId=" + sensorId);
 	// target
-	int res = parsePostdata(databuff, "target", posdata);
-	//if (res != -1) {
-	str = posdata;
-	float target = str.toFloat();
-	logger.print(tag, F("\n\ttarget ="));
-	logger.print(tag, str);
+	float target = 0;
+	if (posData.has("target")) {
+		target = posData.getString("target").toFloat();
+	}
+	logger.print(tag, "\n\t target =" + String(target));
 	shield.hearterActuator.setTargetTemperature(target);
-
 	// remote temperature
 	float remoteTemperature = -1;
-	res = parsePostdata(databuff, "temperature", posdata);
-	if (res != -1) {
-		str = "";
-		str += posdata;
-		remoteTemperature = str.toFloat();
-		logger.print(tag, F("\n\tremoteTemperature ="));
-		logger.print(tag, str);
+	if (posData.has("temperature")) {
+		remoteTemperature = posData.getString("temperature").toFloat();
+		logger.print(tag, "\n\t remoteTemperature =" + String(remoteTemperature));
 		shield.hearterActuator.setRemoteTemperature(remoteTemperature);
 	}
 	else {
-		logger.print(tag, F("\n\tremoteTemperature MISSING"));
+		logger.print(tag, F("\n\t remoteTemperature MISSING"));
 	}
 	// program
-	int program = parsePostdata(databuff, "program", posdata);
-	logger.print(tag, F("\n\tprogram="));
-	logger.print(tag, program);
+	int program = 0;
+	if (posData.has("program")) {
+		program = posData.getString("program").toInt();
+	}
+	logger.print(tag, "\n\t program=" + program);
 	// timerange
-	int timerange = parsePostdata(databuff, "timerange", posdata);
-	logger.print(tag, F("\n\ttimerange="));
-	logger.print(tag, timerange);
+	int timerange = 0;
+	if (posData.has("timerange")) {
+		timerange = posData.getString("timerange").toInt();
+	}
+	logger.print(tag, "\n\t timerange=" + timerange);
 	// local sensor
-	int localSensor = parsePostdata(databuff, "localsensor", posdata);
-	logger.print(tag, F("\n\tlocalsensor="));
-	logger.print(tag, localSensor);
-
-	// jsonRequest
-	// DA CAMBIARE. Controllarer in base all'header
-	int json = parsePostdata(databuff, "json", posdata);
-	logger.print(tag, F("\n\tjson="));
-	logger.print(tag, json);
+	int localsensor = 0;
+	if (posData.has("localsensor")) {
+		localsensor = posData.getString("localsensor").toInt();
+	}
+	logger.print(tag, "\n\t localsensor=" + localsensor);
 
 	shield.hearterActuator.changeProgram(command, duration,
-		!localSensor,
+		!localsensor,
 		remoteTemperature,
 		sensorId,
 		target, program, timerange);
 
+	String data;
+	data += "";
+	data += F("<html><head><meta HTTP-EQUIV='REFRESH' content='0; url=/main?msg=2'><title>rele</title></head><body>");
+	data += F("</body></html>");
 
+	logger.print(tag, F("\n\t <<end show rele\n"));
+	return data;
+}
 
-	//lastFlash = millis() - flash_interval;
+String showChangeSettings(HttpRequest request, HttpResponse response) {
 
-	//////////////////
-	if (json == 1) {
-		String data = getJsonStatus();
-		client.println(data);
+	logger.println(tag, F("\n\t >>showChangeSettings "));
+
+	String str = request.body;
+	POSTData posData(str);
+	logger.print(tag, "\n\t posData=" + posData.getDataString());
+		
+	// localport
+	if (posData.has("localport")) {
+		int localport = posData.getString("localport").toInt();
+		Shield::setLocalPort(localport);
+		logger.print(tag, "\n\t localPort=" + Shield::getLocalPort());
 	}
-	else {
-		String data;
-		data += "";
-		data += F("HTTP/1.1 200 OK\r\nContent-Type: text/html");
-		data += F("\n\n<html><head><meta HTTP-EQUIV='REFRESH' content='0; url=/main?msg=2'><title>rele</title></head><body>");
-
-		char   buffer[50];
-		sprintf(buffer, "relestatus=%d,status=%s", shield.hearterActuator.getReleStatus(), statusStr[shield.hearterActuator.getStatus()]);
-		data += String(buffer);
-
-		data += F("</body></html>");
-		client.println(data);
+	// ssid
+	if (posData.has("ssid")) {
+		Shield::setNetworkSSID(posData.getString("ssid"));
+		logger.print(tag, "\n\t networkSSID=" + Shield::getNetworkSSID());
 	}
+	// password
+	if (posData.has("password")) {
+		Shield::setNetworkPassword(posData.getString("password"));
+		logger.print(tag, "\n\t networkPassword=" + Shield::getNetworkPassword());
+	}
+	// server name
+	if (posData.has("servername")) {
+		Shield::setServerName(posData.getString("servername"));
+		logger.print(tag, "\n\t servername=" + Shield::getServerName());
+	}
+	// server port
+	if (posData.has("serverport")) {
+		Shield::setServerPort(posData.getString("serverport").toInt());
+		logger.print(tag, "\n\tserver port=" + Shield::getServerPort());
+	}
+	// shield name
+	if (posData.has("shieldname")) {
+		Shield::setShieldName(posData.getString("shieldname"));
+		logger.print(tag, "\n\shieldName=" + Shield::getShieldName());
+	}
+	// sensor names
+	for (int i = 0; i < shield.sensorList.count; i++) {
+		DS18S20Sensor*  sensor = (DS18S20Sensor*)shield.sensorList.get(i);
+		char buffer[20];
+		String str = "sensor" + String(i + 1);
+		str.toCharArray(buffer, sizeof(buffer));
+		logger.print(tag, "\n\tbuffer=");
+		logger.print(tag, buffer);
+		if (posData.has(buffer)) {
+			sensor->sensorname = posData.getString(buffer);
+			logger.print(tag, "\n\t " + String(buffer) + "=" + sensor->sensorname);
+			logger.print(tag, "\n\t sensor->sensorname=" + sensor->sensorname);
+		}
+	}
+	String data = "";
+	data += F("<html><head><meta HTTP-EQUIV='REFRESH' content='0; url=/main'><title>Timer</title></head><body></body></html>");
+	data += F("</body></html>");
+	
+	writeEPROM();
+	
+	logger.println(tag, F("\n\t >>showChangeSettings "));
+	return data;
+}
 
-	client.stop();
-	logger.print(tag, F("\n\t<<end show rele\n"));
+String showChangeIODevices(HttpRequest request, HttpResponse response) {
+
+	logger.println(tag, "\n\t >>showChangeIODevices ");
+
+	String str = request.body;
+	POSTData posData(str);
+	logger.print(tag, "\n\t posData=" + posData.getDataString());
+	
+	for (int i = 0; i < Shield::getMaxIoDevices(); i++) {
+
+		char buffer[20];
+		String str = "iodevice" + String(i + 1);
+		str.toCharArray(buffer, sizeof(buffer));
+		
+		if (posData.has(buffer)) {			
+			Shield::setIODevice(i, posData.getString(buffer).toInt());
+			logger.print(tag, "\n\t" + String(buffer) + "=" + String(Shield::getIODevice(i)));
+		}
+	}
+	String data;
+	data += "";
+	data += F("<html><head><meta HTTP-EQUIV='REFRESH' content='0; url=/main'><title>Timer</title></head><body></body></html>");
+	data += F("</body></html>");
+	writeEPROM();
+	logger.println(tag, "\n\t <<showChangeIODevices ");
+}
+
+String showwol(HttpRequest request, HttpResponse response) {
+
+	logger.println(tag, "\n\t >>showwol ");
+
+	/*wol* w = new wol();
+	w->init();
+	w->wakeup();
+	delete w;*/
+
+	String data;
+	data += "";
+	data += F("HTTP/1.1 200 OK\r\nContent-Type: text/html");
+	data += F("\n\n<html><head><meta HTTP-EQUIV='REFRESH' content='0; url=/main?msg=2'><title>WOL</title></head><body>");
+	data += F("</body></html>");
+	//client.println(data);
+	//client.stop();
+
+	logger.println(tag, "\n\t >>showwol ");
+	return data;
+}
+
+
+String getJsonStatus(HttpRequest request, HttpResponse response)
+{
+	logger.print(tag, F("\n\n\t >>getJsonStatus"));
+
+	String data;
+	data += "";
+	data += shield.getSettingsJson();
+	
+	logger.print(tag, "\n\t <<getJsonStatus " + data + "\n");
+	return data;
+}
+
+String getJsonSensorsStatus(HttpRequest request, HttpResponse response)
+{
+	logger.println(tag, F("\n\t >> getJsonSensorStatus"));
+
+	String data = "";
+	data += shield.getSensorsStatusJson();
+
+	
+	logger.println(tag, "\n\t >> getJsonSensorStatus " + data + "\n");
+	return data;
+}
+
+String getJsonActuatorsStatus(HttpRequest request, HttpResponse response)
+{
+	logger.println(tag, F("CALLED getJsonActuatorsStatus"));
+
+	String data = "";
+	//data += "HTTP/1.0 200 OK\r\nContent-Type: application/json; ";
+	//data += "\r\nPragma: no-cache\r\n\r\n";
+
+	String json = shield.getActuatorsStatusJson();
+	logger.println(tag, json);
+
+	data += json;
+	return data;
+}
+
+String getJsonHeaterStatus(HttpRequest request, HttpResponse response)
+{
+	logger.println(tag, F("\n\t >>getJsonActuatorsStatus"));
+
+	String data = "";
+	//data += "HTTP/1.0 200 OK\r\nContent-Type: application/json; ";
+	//data += "\r\nPragma: no-cache\r\n\r\n";
+
+	data += shield.getHeaterStatusJson();
+
+	logger.print(tag, "\n\t" + data);
+	logger.println(tag, F("\n\t <<getJsonActuatorsStatus"));
+	return data;
+}
+
+String getJsonSettings(HttpRequest request, HttpResponse response) {
+	logger.println(tag, F("\n\t >> getJsonSettings"));
+
+	String data;
+	data += "";
+	data += shield.getSettingsJson();
+
+	logger.println(tag, "\n\t << getJsonSettings" + data + "\n");
+	return data;
 }
 
 void loop()
@@ -872,114 +950,87 @@ void loop()
 
 	wdt_enable(WDTO_8S);
 
-	webServer.handleClient();
 	//////////////////
 	String page, param;
 	client = server.available();
 	HttpHelper http;
 
-	ESPWebServer espWebServer;
-	//bool res = false;
+	ESPWebServer espWebServer(&client);
 	if (client) {
-		//res = http.getNextPage(&client, &server, &page, &param);
-		HttpRequest request = espWebServer.getHttpRequest(&client);
+		HttpRequest request = espWebServer.getHttpRequest();
 		HttpRequest::HttpRequestMethod method = request.method;
 		page = request.page;
 		param = request.param;
+		HttpResponse response = espWebServer.getHttpResponse();
 
-		if (/*res*/request.method != HttpRequest::HTTP_NULL) {
+		if (request.method != HttpRequest::HTTP_NULL) {
 
-			logger.println(tag, ">>loop.shownextpage " + page);
-
-			String data = "";
+			logger.print(tag, "\n");
+			logger.println(tag, " >>loop.shownextpage " + page);
+			
 			if (page.equalsIgnoreCase("main")) {
-				data = showMain(param);
-				showPage(data);
-			}
-			else if (page.equalsIgnoreCase("command")) {
-				receiveCommand(request);
+				response.send(response.HTTPRESULT_OK, ESPWebServer::htmlContentType, showMain(request, response));
 			}
 			else if (page.equalsIgnoreCase("heater")) {
-				data = showHeater(param);
-				showPage(data);
-				/*logger.println(tag, ">>loop.showHeater2");
-				showHeater2();
-				logger.println(tag, "<<loop.showHeater2");*/
+				response.send(response.HTTPRESULT_OK, ESPWebServer::htmlContentType, showHeater(request, response));
 			}
 			else if (page.equalsIgnoreCase("setting")) {
-				data = showSettings(param);
-				showPage(data);
+				response.send(response.HTTPRESULT_OK, ESPWebServer::htmlContentType, showSettings(request, response));
 			}
 			else if (page.equalsIgnoreCase("iodevices")) {
-				data = showIODevices(param);
-				showPage(data);
+				response.send(response.HTTPRESULT_OK, ESPWebServer::htmlContentType, showIODevices(request, response));
 			}
-			else if (page.equalsIgnoreCase("chstt")) {
-				showChangeSettings(param);
-			}
-			else if (page.equalsIgnoreCase("chiodevices")) {
-				showChangeIODevices(param);
-			}
-			else if (page.equalsIgnoreCase("wol")) {
-				showwol(param);
-			}
-			else if (page.equalsIgnoreCase("rele")) {
-				showRele(param);
-			}
-			else if (page.equalsIgnoreCase("power")) {
-				showPower(param);
+			
+			
+			else if (page.equalsIgnoreCase("command")) {
+				response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, receiveCommand(request, response));
 			}
 			else if (page.equalsIgnoreCase("temp")) {
-				setRemoteTemperature(param);
+				response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, setRemoteTemperature(request, response));
 			}
+			else if (page.equalsIgnoreCase("power")) {
+				response.send(response.HTTPRESULT_OK, ESPWebServer::htmlContentType, showPower(request, response));
+			}
+			else if (page.equalsIgnoreCase("rele")) {
+				response.send(response.HTTPRESULT_OK, ESPWebServer::htmlContentType, showRele(request, response));
+			}
+			else if (page.equalsIgnoreCase("chstt")) {
+				response.send(response.HTTPRESULT_OK, ESPWebServer::htmlContentType, showChangeSettings(request, response));
+			}
+			else if (page.equalsIgnoreCase("chiodevices")) {
+				response.send(response.HTTPRESULT_OK, ESPWebServer::htmlContentType, showChangeIODevices(request, response));
+			}
+			else if (page.equalsIgnoreCase("wol")) {
+				response.send(response.HTTPRESULT_OK, ESPWebServer::htmlContentType, showwol(request, response));
+			}		
+			
+			
 			else if (page.equalsIgnoreCase("status")) {
-				data = getJsonStatus();
-				showPage(data);
+				response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, getJsonStatus(request, response));
 			}
 			else if (page.equalsIgnoreCase("settings")) {
-				data = getJsonSettings();
-				showPage(data);
+				response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, getJsonSettings(request, response));
 			}
 			else if (page.equalsIgnoreCase("heaterstatus")) {
-				data = getJsonHeaterStatus();
-				showPage(data);
+				response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, getJsonHeaterStatus(request, response));
 			}
 			else if (page.equalsIgnoreCase("sensorstatus")) {
-				data = getJsonSensorsStatus();
-				showPage(data);
+				response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, getJsonSensorsStatus(request, response));
 			}
 			else if (page.equalsIgnoreCase("actuatorsstatus")) {
-				data = getJsonActuatorsStatus();
-				showPage(data);
+				response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, getJsonActuatorsStatus(request, response));
 			}
+
 			else if (page.equalsIgnoreCase("reset")) {
-				data = softwareReset();
-				showPage(data);
-			}
-			else if (page.equalsIgnoreCase("register")) {
-				data = registerShield();
-				showPage(data);
+				// la chiamara a  send è dentro software reset perchè il metodo non torna mai
+				softwareReset(request, response);
 			}
 			else if (page.endsWith(".html") ||
 						page.endsWith(".css") || 
 						page.endsWith(".js")) {
-
-				HtmlFileClass html;
-				bool res = html.sendFile(&client, page);
-			}
-			else if (page.equalsIgnoreCase("prova3.html")) {
-				getFile(page);
-			} 
-			else if (page.endsWith(".css")) {
-				getFile(page);
-			}
-			else if (page.equalsIgnoreCase("download")) {
-				download();
+				response.sendFile(response.HTTPRESULT_OK, ESPWebServer::htmlContentType, request.page);
 			}
 		}
-		// give the web browser time to receive the data
-		delay(100);
-		client.stop();
 
 		logger.println(tag, "<<loop.shownextpage " + page + "\n");
 
@@ -989,7 +1040,7 @@ void loop()
 	if (shield.id >= 0 && !WiFi.localIP().toString().equals(shield.localIP)) {
 
 		Command command;
-		logger.println(tag, "IP ADDRESS ERROR - re-register shield");
+		logger.println(tag, "IP ADDRESS ERROR - re-register shield\n");
 		command.registerShield(shield);
 		shield.localIP = WiFi.localIP().toString();
 		return;
@@ -1005,10 +1056,9 @@ void loop()
 		lastFlash = currMillis;
 		if (shield.id <= 0) {
 			Command command;
-			logger.println(tag, F("ID NON VALIDO"));
+			logger.println(tag, F("ID NON VALIDO\n"));
 			shield.id = command.registerShield(shield);
 		}
-
 		return;
 	}
 
@@ -1026,137 +1076,16 @@ void loop()
 	}
 }
 
-void showPage(String data) {
 
-	logger.println(tag, "showPage ");
 
-	client.println(data);
-	delay(1000);
-	//client.stop();
-}
 
-String showIODevices(String param)
+String showMain(HttpRequest request, HttpResponse response)
 {
-	logger.println(tag, F("showIODevices "));
+	logger.println(tag, "\n\t >>showMain ");
 
 	String data;
 	data += "";
-	data += F("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<!DOCTYPE html><html><head><title>Webduino</title><body>\r\n");
-
-	data += F("<font color='#53669E' face='Verdana' size='2'><b>IO devices </b></font>\r\n<form action='/chiodevices' method='POST'><table width='80%' border='1'><colgroup bgcolor='#B6C4E9' width='20%' align='left'></colgroup><colgroup bgcolor='#FFFFFF' width='30%' align='left'></colgroup>");
-
-	for (int i = 0; i < Shield::getMaxIoDevices(); i++) {
-		// local port
-		data += F("<tr><td>device ");
-		data += String(i);
-		data += F("</td><td>");
-
-		data += F("<select name='iodevice");
-		data += String(i);
-		data += F("' >");
-
-		for (int k = 0; k < Shield::getMaxIoDeviceTypes(); k++) {
-
-			data += F("<option value='");
-			data += String(k);
-			if (Shield::getIODevice(i) == k)
-				data += F(" selected ");
-			data += F("' >");
-
-			data += Shield::getIoDevicesTypeName(k);
-			data += F("</option>");
-
-
-
-		}
-
-		/*data += F("<option value='1' >");
-		data += Shield::getIoDevicesTypeName(1);
-		data += F("</option>");
-
-		data += F("<option value='2' >");
-		data += Shield::getIoDevicesTypeName(2);
-		data += F("</option>");*/
-
-
-		data += F("</select>");
-
-		data += F("</td></tr>");
-	}
-
-	data += F("</table><input type='submit' value='save'/></form>");
-
-
-	data += F("</body></html>");
-
-	return data;
-
-}
-
-String showSettings(String param)
-{
-	logger.println(tag, F("showSettings "));
-
-	String data;
-	data += "";
-	data += F("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<!DOCTYPE html><html><head><title>Webduino</title><body>\r\n");
-
-	data += F("<font color='#53669E' face='Verdana' size='2'><b>Impostazioni </b></font>\r\n<form action='/chstt' method='POST'><table width='80%' border='1'><colgroup bgcolor='#B6C4E9' width='20%' align='left'></colgroup><colgroup bgcolor='#FFFFFF' width='30%' align='left'></colgroup>");
-	// local port
-	data += F("<tr><td>Local port</td><td><input type='num' name='localport");
-	data += F("' value='");
-	data += Shield::getLocalPort();
-	data += F("' size='4' maxlength='4'> </td></tr>");
-	// board name
-	data += F("<tr><td>Board name</td><td><input type='num' name='shieldname' value='");
-	data += String(Shield::getShieldName());
-	data += F("' size='");
-	data += String(shield.shieldNameLen - 1);
-	data += F("' maxlength='");
-	data += String(shield.shieldNameLen - 1);
-	data += F("'> </td></tr>");
-	// ssid
-	data += F("<tr><td>SSID</td><td><input type='num' name='ssid");
-	data += F("' value='");
-	data += String(Shield::getNetworkSSID());
-	data += F("' size='32' maxlength='32'> </td></tr>");
-	// password
-	data += F("<tr><td>password</td><td><input type='num' name='password");
-	data += F("' value='");
-	data += String(Shield::getNetworkPassword());
-	data += F("' size='96' maxlength='96'> </td></tr>");
-	// server name
-	data += F("<tr><td>Server name</td><td><input type='num' name='servername' value='");
-	data += String(Shield::getServerName());
-	data += F("' size='");
-	data += (Shield::serverNameLen - 1);
-	data += F("' maxlength='");
-	data += (Shield::serverNameLen - 1);
-	data += F("'> </td></tr>");
-	// server port
-	data += F("<tr><td>Server port</td><td><input type='num' name='serverport");
-	data += F("' value='");
-	data += String(Shield::getServerPort());
-	data += F("' size='4' maxlength='4'> </td></tr>");
-
-	data += F("</table><input type='submit' value='save'/></form>");
-
-
-	data += F("</body></html>");
-
-	return data;
-
-}
-
-String showMain(String param)
-{
-	logger.println(tag, F("showMain "));
-
-	char buffer[200];
-
-	String data;
-	data += "";
-	data += F("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<!DOCTYPE html><html><head><title>Webduino</title><body>\r\n");
+	data += F("<!DOCTYPE html><html><head><title>Webduino</title><body>\r\n");
 	// comandi
 	data += F("\n<font color='#53669E' face='Verdana' size='2'><b>Webduino - ");
 	data += logger.getStrDate();
@@ -1166,19 +1095,18 @@ String showMain(String param)
 	data += F("<tr><td>Power ");
 	if (shield.hearterActuator.getStatus() == Program::STATUS_DISABLED) {
 		data += F("OFF</td><td><form action='/power' method='POST'>");
-		data += F("<input type='hidden' name='status' value='1' >");
+		data += F("<input type='hidden' name='status' value='on' >");
 		data += F("<input type='submit' value='on'></form>");
 	}
 	else {
 		data += F("ON</td><td><form action='/power' method='POST'>");
-		data += F("<input type='hidden' name='status' value='0' >");
+		data += F("<input type='hidden' name='status' value='off' >");
 		data += F("<input type='submit' value='off'></form>");
 	}
-	//client.print(F("<input type='submit' value='set'></form>"));
 	data += F("</td></tr>");
 	// status & rele	
 	data += "<tr><td>Actuator:</td><td>";
-	data += statusStr[shield.hearterActuator.getStatus()];
+	data += shield.hearterActuator.getStatusName();
 	data += " - Rele: ";
 	if (shield.hearterActuator.getReleStatus()) {
 		data += F("on - ");
@@ -1186,7 +1114,6 @@ String showMain(String param)
 	else {
 		data += F("off - ");
 	}
-
 	if (shield.hearterActuator.getStatus() == Program::STATUS_PROGRAMACTIVE ||
 		shield.hearterActuator.getStatus() == Program::STATUS_MANUAL_AUTO ||
 		shield.hearterActuator.getStatus() == Program::STATUS_MANUAL_OFF) {
@@ -1194,12 +1121,9 @@ String showMain(String param)
 		time_t onStatusDuration = (millis() - shield.hearterActuator.programStartTime) / 1000;
 		time_t duration = (shield.hearterActuator.programDuration) / 1000;
 		time_t remainingTime = (duration - onStatusDuration);
-
-
 		time_t hr = remainingTime / 3600L;
 		time_t mn = (remainingTime - hr * 3600L) / 60L;
 		time_t sec = (remainingTime - hr * 3600L) % 60L;
-
 
 		data += F(" onStatusDuration:");
 		data += String(onStatusDuration);
@@ -1213,43 +1137,8 @@ String showMain(String param)
 		data += String(remainingTime);
 		data += F(" ");
 		data += String(remainingTime / 60L);
-
-		/*sprintf(buffer, " duration:(%2d) ", shield.hearterActuator.programDuration);
-		data += String(buffer);
-		sprintf(buffer, "%02d:", hr);
-		data += String(buffer);
-		sprintf(buffer, "%02d:", mn);
-		data += String(buffer);
-		sprintf(buffer, "%02d", sec);
-		data += String(buffer);*/
-
-
-		/*sprintf(buffer, " tempo rimanente:(%2d) ", remainingTime);
-		data += String(buffer);
-		sprintf(buffer, "%02d:", hr);
-		data += String(buffer);
-		sprintf(buffer, "%02d:", mn);
-		data += String(buffer);
-		sprintf(buffer, "%02d", sec);
-		data += String(buffer);
-
-		hr = onStatusDuration / 3600L;
-		mn = (onStatusDuration - hr * 3600L) / 60L;
-		sec = (onStatusDuration - hr * 3600L) % 60L;
-		sprintf(buffer, " programma attivo da:(%2d) ", onStatusDuration);
-		data += String(buffer);
-		sprintf(buffer, "%02d:", hr);
-		data += String(buffer);
-		sprintf(buffer, "%02d:", mn);
-		data += String(buffer);
-		sprintf(buffer, "%02d", sec);
-		data += String(buffer);*/
-
 	}
-
-
 	data += F("</td></tr>");
-
 	// program
 	data += F("<tr><td>program </td><td>");
 	if (shield.hearterActuator.getStatus() == Program::STATUS_PROGRAMACTIVE) {
@@ -1286,6 +1175,7 @@ String showMain(String param)
 		data += F("<tr><td>Manual ON</td><td>");
 
 		if (shield.hearterActuator.getStatus() == Program::STATUS_MANUAL_AUTO) {
+			char buffer[200];
 			sprintf(buffer, "Target: %d.%02d<BR>", (int)shield.hearterActuator.getTargetTemperature(), (int)(shield.hearterActuator.getTargetTemperature() * 100.0) % 100);
 			data += String(buffer);
 
@@ -1319,9 +1209,6 @@ String showMain(String param)
 		data += F("<input type='hidden' name='status' value='4'>"); // 4 = manual off 
 		data += F("<input type='submit' value='start manual off'></form>");
 	}
-	/*else {
-		data += F("</td><td>--");
-	}*/
 	data += F("</td></tr>");
 	// temperature sensor
 	int count = 0;
@@ -1341,23 +1228,8 @@ String showMain(String param)
 			+ "</form></td></tr>";
 		pSensor = (DS18S20Sensor*)shield.sensorList.getNext();
 	}
-	// targetTemperature
-	/*data += "<tr><td>Target Temperature: </td><td>" + String(targetTemperature)  + "°C</td></tr>";
-	// remote Sensor
-	data += "<tr><td>Remote Sensor: </td><td>" + String(temperatureSensor) + "(" +
-		String(remoteTemperature)+ "°C)</td></tr>";
-	// remote temperature
-	//sprintf(buffer, "<tr><td>Remote Temperature: </td><td>%d.%02d</td></tr>", (int)remoteTemperature, (int)(remoteTemperature * 100.0) % 100);
-	//data += String(buffer);
-	// program update
-	sprintf(buffer, "<tr><td>Last program or temperature update: </td><td>%d msec</td></tr>", (millis() - last_RemoteSensor));
-	data += String(buffer);*/
-	// wol
-	//data += F("<tr><td>WOL</td><td><form action='/wol' method='POST'><input type='submit' value='send'></form></td></tr>");
-
 	// sofware reset
 	data += F("<tr><td>Software reset</td><td><form action='/reset' method='POST'><input type='submit' value='reset'></form></td></tr>");
-
 
 	// MACAddress
 	data += "<tr><td>MACAddress: </td><td>";
@@ -1372,36 +1244,31 @@ String showMain(String param)
 	data += "<tr><td>Local IP: </td><td>" + WiFi.localIP().toString() +
 		"(" + shield.localIP + ")</td></tr>";
 	// shield id
-	//data += "<tr><td>ID</td><td>" + String(shield.id) + "</td></tr>";
 	data += "<tr><td>Shield Id</td><td>" + String(shield.id) + "<form action='/register' method='POST'><input type='submit' value='register'></form></td></tr>";
 
 	data += F("</table>");
-
 	data += String(Versione);
-
 	data += "\nEPROM_Table_Schema_Version=" + String(EPROM_Table_Schema_Version);
-
 	data += F("</body></html>");
 
+	logger.println(tag, "\n\t <<showMain ");
 	return data;
 }
 
-String showHeater(String param)
+String showHeater(HttpRequest request, HttpResponse response)
 {
-	logger.println(tag, F("showHeater "));
-
-	char buffer[200];
+	logger.println(tag, F("\n\t >>showHeater "));	
 
 	String data;
 	data += "";
-	data += F("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<!DOCTYPE html><html><head><title>Webduino</title><body>\r\n");
+	data += F("<!DOCTYPE html><html><head><title>Webduino</title><body>\r\n");
 	data += F("\n<font color='#53669E' face='Verdana' size='2'><b>Webduino - ");
 	data += logger.getStrDate();
 	data += F("</b></font>");
 	data += F("\r\n<table width='80%' border='1'><colgroup bgcolor='#B6C4E9' width='20%' align='left'></colgroup><colgroup bgcolor='#FFFFFF' width='30%' align='left'></colgroup>");
 	// status & rele	
 	data += "<tr><td>Actuator:</td><td>";
-	data += statusStr[shield.hearterActuator.getStatus()];
+	data += shield.hearterActuator.getStatusName();
 	data += " - Rele: ";
 	if (shield.hearterActuator.getReleStatus()) {
 		data += F("on - ");
@@ -1472,6 +1339,7 @@ String showHeater(String param)
 		data += F("<tr><td>Manual ON</td><td>");
 
 		if (shield.hearterActuator.getStatus() == Program::STATUS_MANUAL_AUTO) {
+			char buffer[200];
 			sprintf(buffer, "Target: %d.%02d<BR>", (int)shield.hearterActuator.getTargetTemperature(), (int)(shield.hearterActuator.getTargetTemperature() * 100.0) % 100);
 			data += String(buffer);
 
@@ -1541,131 +1409,111 @@ String showHeater(String param)
 
 	data += F("</body></html>");
 
+	logger.println(tag, F("\n\t <<showHeater "));
+	return data;
+}
+
+String showSettings(HttpRequest request, HttpResponse response)
+{
+	logger.println(tag, F("\n\t >>showSettings "));
+
+	String data;
+	data += "";
+	data += F("<!DOCTYPE html><html><head><title>Webduino</title><body>\r\n");
+
+	data += F("<font color='#53669E' face='Verdana' size='2'><b>Impostazioni </b></font>\r\n<form action='/chstt' method='POST'><table width='80%' border='1'><colgroup bgcolor='#B6C4E9' width='20%' align='left'></colgroup><colgroup bgcolor='#FFFFFF' width='30%' align='left'></colgroup>");
+	// local port
+	data += F("<tr><td>Local port</td><td><input type='num' name='localport");
+	data += F("' value='");
+	data += Shield::getLocalPort();
+	data += F("' size='4' maxlength='4'> </td></tr>");
+	// board name
+	data += F("<tr><td>Board name</td><td><input type='num' name='shieldname' value='");
+	data += String(Shield::getShieldName());
+	data += F("' size='");
+	data += String(shield.shieldNameLen - 1);
+	data += F("' maxlength='");
+	data += String(shield.shieldNameLen - 1);
+	data += F("'> </td></tr>");
+	// ssid
+	data += F("<tr><td>SSID</td><td><input type='num' name='ssid");
+	data += F("' value='");
+	data += String(Shield::getNetworkSSID());
+	data += F("' size='32' maxlength='32'> </td></tr>");
+	// password
+	data += F("<tr><td>password</td><td><input type='num' name='password");
+	data += F("' value='");
+	data += String(Shield::getNetworkPassword());
+	data += F("' size='96' maxlength='96'> </td></tr>");
+	// server name
+	data += F("<tr><td>Server name</td><td><input type='num' name='servername' value='");
+	data += String(Shield::getServerName());
+	data += F("' size='");
+	data += (Shield::serverNameLen - 1);
+	data += F("' maxlength='");
+	data += (Shield::serverNameLen - 1);
+	data += F("'> </td></tr>");
+	// server port
+	data += F("<tr><td>Server port</td><td><input type='num' name='serverport");
+	data += F("' value='");
+	data += String(Shield::getServerPort());
+	data += F("' size='4' maxlength='4'> </td></tr>");
+
+	data += F("</table><input type='submit' value='save'/></form>");
+	data += F("</body></html>");
+
+	logger.println(tag, F("\n\t >>showSettings "));
+	return data;
+
+}
+
+String showIODevices(HttpRequest request, HttpResponse response)
+{
+	logger.println(tag, F("\n\t >>showIODevices "));
+
+	String data = "";
+	data += F("<!DOCTYPE html><html><head><title>Webduino</title><body>\r\n");
+	data += F("<font color='#53669E' face='Verdana' size='2'><b>IO devices </b></font>\r\n<form action='/chiodevices' method='POST'><table width='80%' border='1'><colgroup bgcolor='#B6C4E9' width='20%' align='left'></colgroup><colgroup bgcolor='#FFFFFF' width='30%' align='left'></colgroup>");
+
+	for (int i = 0; i < Shield::getMaxIoDevices(); i++) {
+		// local port
+		data += F("<tr><td>device ");
+		data += String(i);
+		data += F("</td><td>");
+
+		data += F("<select name='iodevice");
+		data += String(i);
+		data += F("' >");
+
+		for (int k = 0; k < Shield::getMaxIoDeviceTypes(); k++) {
+
+			data += F("<option value='");
+			data += String(k);
+			if (Shield::getIODevice(i) == k)
+				data += F(" selected ");
+			data += F("' >");
+			data += Shield::getIoDevicesTypeName(k);
+			data += F("</option>");
+		}
+		data += F("</select>");
+		data += F("</td></tr>");
+	}
+	data += F("</table><input type='submit' value='save'/></form>");
+	data += F("</body></html>");
+
+	logger.println(tag, F("\n\t >>showIODevices "));
 	return data;
 }
 
 
-void showChangeIODevices(String param) {
+/*
+void showPage(String data) {
 
-	logger.println(tag, F("showChangeIODevices "));
+	logger.println(tag, "showPage ");
 
-	getPostdata(databuff, maxposdataChangeSetting);
-	char posdata[maxposdata];
-
-	int val;
-
-	for (int i = 0; i < Shield::getMaxIoDevices(); i++) {
-
-		char buffer[20];
-		String str = "iodevice" + String(i + 1);
-		str.toCharArray(buffer, sizeof(buffer));
-		//logger.print(tag, "\n\tiodevice=");
-		//logger.print(tag, buffer);
-		val = parsePostdata(databuff, buffer, posdata);
-		if (val != -1) {
-			logger.print(tag, "\n\t" + String(buffer) + "=");
-			logger.print(tag, String(val));
-			Shield::setIODevice(i, val);
-		}
-	}
-	String data;
-	data += "";
-	data += F("HTTP/1.1 200 OK\r\nContent-Type: text/html\n\n<html><head><meta HTTP-EQUIV='REFRESH' content='0; url=/main'><title>Timer</title></head><body></body></html>");
-	data += F("</body></html>");
 	client.println(data);
-
-	writeEPROM();
-	client.stop();
-}
-
-void showChangeSettings(String param) {
-
-	logger.println(tag, F("showChangeSettings "));
-
-	getPostdata(databuff, maxposdataChangeSetting);
-	char posdata[maxposdata];
-
-	int val;
-	// localport
-	val = parsePostdata(databuff, "localport", posdata);
-	if (val != -1) {
-		Shield::setLocalPort(val);
-		logger.print(tag, "\n\tlocalPort=");
-		logger.print(tag, Shield::getLocalPort());
-	}
-	// ssid
-	if (val != -1) {
-		val = parsePostdata(databuff, "ssid", posdata);
-		//memccpy_P(Shield::getNetworkSSID(), posdata, '\0', Shield::networkSSIDLen);
-		Shield::setNetworkSSID(String(posdata));
-		logger.print(tag, "\n\tnetworkSSID=");
-		logger.print(tag, Shield::getNetworkSSID());
-	}
-	// password
-	val = parsePostdata(databuff, "password", posdata);
-	if (val != -1) {
-		//memccpy_P(Shield::getNetworkPassword(), posdata, '\0', Shield::networkPasswordLen);
-		Shield::setNetworkPassword(String(posdata));
-		logger.print(tag, "\n\tnetworkPassword=");
-		logger.print(tag, Shield::getNetworkPassword());
-	}
-	// server name
-	val = parsePostdata(databuff, "servername", posdata);
-	if (val != -1) {
-		//memccpy_P(Shield::getServerName(), posdata, '\0', Shield::serverNameLen);
-		//memccpy_P(shield.serverName, posdata, '\0', shield.serverNameLen);
-		Shield::setServerName(String(posdata));
-		logger.print(tag, "\n\tservername ");
-		logger.print(tag, Shield::getServerName());
-	}
-	// server port
-	val = parsePostdata(databuff, "serverport", posdata);
-	if (val != -1) {
-		logger.print(tag, "\n\tserver port ");
-		logger.print(tag, val);
-		Shield::setServerPort(val);
-		//shield.serverPort = val;
-	}
-	// board name
-	val = parsePostdata(databuff, "shieldname", posdata);
-	if (val != -1) {
-		//memccpy_P(shield.shieldName, posdata, '\0', shield.shieldNameLen);
-		Shield::setShieldName(String(posdata));
-		logger.print(tag, "\n\shieldName=");
-		logger.print(tag, Shield::getShieldName());
-	}
-	// sensor names
-
-	for (int i = 0; i < shield.sensorList.count; i++) {
-		DS18S20Sensor*  sensor = (DS18S20Sensor*)shield.sensorList.get(i);
-		char buffer[20];
-		String str = "sensor" + String(i + 1);
-		str.toCharArray(buffer, sizeof(buffer));
-		logger.print(tag, "\n\tbuffer=");
-		logger.print(tag, buffer);
-		val = parsePostdata(databuff, buffer, posdata);
-		if (val != -1) {
-			sensor->sensorname = String(posdata);
-			logger.print(tag, "\n\t" + String(buffer) + "=");
-			logger.print(tag, String(posdata));
-			logger.print(tag, "\n\tsensor->sensorname=");
-			logger.print(tag, sensor->sensorname);
-
-		}
-	}
-	String data;
-	data += "";
-	data += F("HTTP/1.1 200 OK\r\nContent-Type: text/html\n\n<html><head><meta HTTP-EQUIV='REFRESH' content='0; url=/main'><title>Timer</title></head><body></body></html>");
-	data += F("</body></html>");
-	client.println(data);
+	delay(1000);
 	//client.stop();
-
-	// reimposta serverName e port (sono due var static in Command quindi bast chiamare costruttore)
-	Command command;
-	//command.setServer(Shield::getServerName(), Shield::getServerPort());
-
-	writeEPROM();
-	client.stop();
 }
 
 int len(const char* data) {
@@ -1692,7 +1540,7 @@ int parsePostdata(const char* data, const char* param, char* value) {
 			i++;
 		}
 		//if (i < maxvaluesize) value[i] = '\0';
-		/*if (i < maxvaluesize)*/ value[i] = '\0';
+		value[i] = '\0';
 		int val = 0;
 
 		for (int k = 0; k < i; k++) {
@@ -1703,45 +1551,7 @@ int parsePostdata(const char* data, const char* param, char* value) {
 	}
 	return -1;
 }
-#ifdef dopo
-String getPostdata() {
 
-	//Serial.print(F("getPostdata "));
-
-	String str = "";
-
-	int datalen = 0;
-
-	if (client.findUntil("Content-Length:", "\n\r"))
-	{
-		datalen = client.parseInt();
-	}
-
-	delay(400);
-	if (client.findUntil("\n\r", "\n\r"))
-	{
-		;
-	}
-	delay(400);
-	client.read();
-
-	int i = 0;
-	while (i < datalen) {
-		str += char(client.read());
-		//Serial.print(data[i]); // ailitare questa riga per vedere il contenuto della post
-		delay(2);
-		i++;
-	}
-
-	Serial.println(str);
-	//Serial.print("datalen ");
-	//Serial.print(datalen);
-	/*if (i < maxposdata)
-		data[i] = '\0';*/
-
-	return str;
-}
-#endif
 void getPostdata(char *data, int maxposdata) {
 
 	//Serial.print(F("getPostdata "));
@@ -1780,7 +1590,6 @@ void getPostdata(char *data, int maxposdata) {
 		data[i] = '\0';
 }
 
-
 int findIndex(const char* data, const char* target) {
 
 	boolean found = false;
@@ -1812,198 +1621,7 @@ int findIndex(const char* data, const char* target) {
 	}
 	return -1;
 }
-
-String getJsonStatus()
-{
-	logger.print(tag, F("\n\tCALLED getJsonStatus"));
-
-	String data;
-	data += "";
-	data += "HTTP/1.0 200 OK\r\nContent-Type: application/json; ";
-	data += "\r\nPragma: no-cache\r\n\r\n";
-
-	data += shield.hearterActuator.getJSON();
-	/*data += F("{\"id\":");
-	data += String(shield.id);
-
-	data += F(",\"remotetemperature\":");
-	data += String(shield.hearterActuator.getRemoteTemperature());
-
-	char buf[50];
-	sprintf(buf, ",\"status\":\"%s\"", statusStr[shield.hearterActuator.getStatus()]);
-	data += String(buf);
-
-	data += String(F(",\"relestatus\":"));
-	if (shield.hearterActuator.getReleStatus())
-		data += F("true");
-	else
-		data += F("false");
-
-	data += F(",\"name\":");
-	data += shield.hearterActuator.sensorname;
-
-	if (shield.hearterActuator.getStatus() == Program::STATUS_PROGRAMACTIVE
-		|| shield.hearterActuator.getStatus() == Program::STATUS_MANUAL_AUTO
-		|| shield.hearterActuator.getStatus() == Program::STATUS_MANUAL_OFF) {
-
-		data += F(",\"duration\":");
-		data += String(shield.hearterActuator.programDuration);
-
-		int remainingTime = shield.hearterActuator.programDuration - (millis() - shield.hearterActuator.programStartTime);
-		data += String(F(",\"remaining\":"));
-		data += String(remainingTime);
-
-		data += F(",\"localsensor\":");
-		if (!shield.hearterActuator.sensorIsRemote())
-			data += F("true");
-		else
-			data += F("false");
-
-		if (shield.hearterActuator.getStatus() == Program::STATUS_MANUAL_OFF) {
-			data += F(",\"target\":");
-			data += String(shield.hearterActuator.getTargetTemperature());
-		}
-
-		if (shield.hearterActuator.getStatus() == Program::STATUS_PROGRAMACTIVE) {
-			data += F(",\"program\":");
-			data += String(shield.hearterActuator.getActiveProgram());
-
-			data += F(",\"timerange\":");
-			data += String(shield.hearterActuator.getActiveTimeRange());
-		}
-
-	}
-	data += F("}");*/
-
-	//logger.print(tag, F("\n\t json="));
-	//logger.print(tag, data);
-	return data;
-}
-
-String getJsonSensorsStatus()
-{
-	logger.println(tag, F("CALLED getJsonSensorStatus"));
-
-	String data;
-	data += "";
-	data += "HTTP/1.0 200 OK\r\nContent-Type: application/json; ";
-	data += "\r\nPragma: no-cache\r\n\r\n";
-
-	data += shield.getSensorsStatusJson();
-
-	logger.println(tag, data);
-	return data;
-}
-
-String getJsonActuatorsStatus()
-{
-	logger.println(tag, F("CALLED getJsonActuatorsStatus"));
-
-	String data;
-	data += "";
-	data += "HTTP/1.0 200 OK\r\nContent-Type: application/json; ";
-	data += "\r\nPragma: no-cache\r\n\r\n";
-
-	String json = shield.getActuatorsStatusJson();
-	logger.println(tag, json);
-
-	data += json;	
-	return data;
-}
-
-String getJsonHeaterStatus()
-{
-	logger.println(tag, F(">>getJsonActuatorsStatus"));
-
-	String data;
-	data += "";
-	data += "HTTP/1.0 200 OK\r\nContent-Type: application/json; ";
-	data += "\r\nPragma: no-cache\r\n\r\n";
-
-	data += shield.getHeaterStatusJson();
-
-	logger.print(tag, "\n\t" + data);
-	logger.println(tag, F(">>getJsonActuatorsStatus"));
-	return data;
-}
-
-String getJsonSettings() {
-	logger.println(tag, F(">> getJsonSettings"));
-
-	String data;
-	data += "";
-	data += "HTTP/1.0 200 OK\r\nContent-Type: application/json; ";
-	data += "\r\nPragma: no-cache\r\n\r\n";
-
-	data += shield.getSettingsJson();
-
-	logger.print(tag, "\n\t" + data);
-	logger.println(tag, F("<< getJsonSettings"));
-	return data;
-}
-
-void setRemoteTemperature(String param) {
-
-	logger.println(tag, F("called setRemoteTemperature: "));
-
-	getPostdata(databuff, maxposdataChangeSetting);
-	char posdata[maxposdata];
-
-	int val;
-
-	parsePostdata(databuff, "temperature", posdata);
-	String str = "";
-	str += posdata;
-
-	shield.hearterActuator.setRemoteTemperature(str.toFloat());
-
-	String data;
-	data += getJsonStatus();
-
-	client.println(data);
-}
-
-void showPower(String GETparam) {
-
-	logger.println(tag, F("showPower "));
-
-	getPostdata(databuff, maxposdataChangeSetting);
-	char posdata[maxposdata];
-
-	int val;
-	// status
-	val = parsePostdata(databuff, "status", posdata);
-	logger.print(tag, F("\n\tstatus="));
-	logger.print(tag, val);
-
-	logger.print(tag, F("\n\tprogramSettings.currentStatus="));
-	logger.print(tag, shield.hearterActuator.getStatus());
-
-	if (val == 1 && shield.hearterActuator.getStatus() == Program::STATUS_DISABLED) {
-		shield.hearterActuator.setStatus(Program::STATUS_IDLE);
-		shield.hearterActuator.enableRele(true);
-
-	}
-	else if (val == 0) {
-		shield.hearterActuator.setStatus(Program::STATUS_DISABLED);
-		shield.hearterActuator.enableRele(false);
-	}
-
-	/*String data;
-	data += "";
-	data += F("HTTP/1.1 200 OK\r\nContent-Type: text/html");
-	data += F("\n\n<html><head><meta HTTP-EQUIV='REFRESH' content='2; url=/main?msg=2'><title>postStatus</title></head><body>");
-	char   buffer[50];
-	sprintf(buffer, "relestatus=%d,status=%s", programSettings.releStatus, statusStr[programSettings.currentStatus]);
-	data += String(buffer);
-	data += F("</body></html>");*/
-
-	String data = "HTTP/1.1 200 OK\r\nContent-Type: text/xml\n\n<result><rele>" + String(shield.hearterActuator.getReleStatus()) + "</rele>" +
-		"<status>" + String(shield.hearterActuator.getStatus()) + "</status></result>";
-
-	client.println(data);
-
-}
+*/
 
 String getFile(String filename) {
 
@@ -2038,14 +1656,14 @@ String getFile(String filename) {
 			return "";
 		}
 		
-		client.println(header);
+		//client.println(header);
 		// we could open the file
 		String line = "";
 		while (f.available()) {
 			//Lets read line by line from the file
 			line += f.readStringUntil('\n');
 		}
-		client.println(line);
+		//client.println(line);
 		f.close();
 
 		logger.print(tag, String("\n\t << getfile: free heap:)" + String(ESP.getFreeHeap())));

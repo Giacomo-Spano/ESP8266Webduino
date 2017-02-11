@@ -328,11 +328,12 @@ String Shield::getSettingsJson() {
 	json += ",\"datetime\":\"" + logger.getStrDate() + "\"";
 	json += ",\"power\":\"" + powerStatus + "\"";
 	json += ",\"lastrestart\":\"" + lastRestartDate + "\"";
-	
-	
+	json += ",\"heap\":\"" + String(ESP.getFreeHeap()) + "\"";
+		
 	json += "}";
 	return json;
 }
+
 
 String Shield::getHeaterStatusJson() {
 

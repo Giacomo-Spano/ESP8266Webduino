@@ -9,7 +9,6 @@ POSTData::POSTData(String json)
 	String tag = "POSTData";
 }
 
-
 POSTData::~POSTData()
 {
 }
@@ -21,51 +20,48 @@ bool POSTData::has(String key) {
 
 	int index = data.indexOf(key);
 	if (index < 0) {
-		logger.print(tag, "\n\tkey " + key + "not found");
+		//logger.print(tag, "\n\tkey " + key + "not found");
 		return false;
 	}
 
-	data = data.substring(index + key.length());
+	/*data = data.substring(index + key.length());
 	index = data.indexOf("=");
 	if (index < 0) {
 		logger.print(tag, "\n\t: char not found");
 		return false;
-	}
+	}*/
 
-	logger.print(tag, "\n\tkey " + key + "found");
+	//logger.print(tag, "\n\tkey " + key + "found");
 	return true;
 }
 
-
-
-String POSTData::getRightOfKey(String key) {
-
-	
+String POSTData::getDataString() {
+	return dataString;
 }
 
-
 String POSTData::getString(String key) {
-	
-	logger.print(tag, "\n\t getstring " + key);
+
+	//logger.print(tag, "\n\t getstring " + key);
 	String data = dataString;
 	key += "=";
 
 	int index = data.indexOf(key);
-	logger.print(tag, "\n\t index=" + String(index));
+	//logger.print(tag, "\n\t index=" + String(index));
 	if (index < 0) return "";
 
-	data = data.substring(index + key.length() + 1);
+	data = data.substring(index + key.length());
+	//logger.print(tag, "\n\t data=" + data);
 
 	index = data.indexOf("&");
-	logger.print(tag, "\n\t index=" + String(index));
+	//logger.print(tag, "\n\t index=" + String(index));
 	if (index < 0) {
-		logger.print(tag, "\n\t data=" + data);
+		//logger.print(tag, "\n\t data=" + data);
 		return data;
 	}
 	else
 		data = data.substring(index + 1);
 
-	logger.print(tag, "\n\t data=" + data);
+	//logger.print(tag, "\n\t data=" + data);
 	return data;
 }
 

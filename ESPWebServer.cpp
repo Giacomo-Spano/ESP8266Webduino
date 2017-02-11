@@ -8,8 +8,15 @@
 Logger ESPWebServer::logger;
 String ESPWebServer::tag = "ESPWebServer";
 
-ESPWebServer::ESPWebServer()
+const String ESPWebServer::jsonContentType = "application/json";
+const String ESPWebServer::htmlContentType = "text/html;";
+
+//char* ESPWebServer::jsonContentType = "application/json";
+
+ESPWebServer::ESPWebServer(WiFiClient* pClient)
 {
+	this->pClient = pClient;
+	response.init(pClient);
 }
 
 ESPWebServer::~ESPWebServer()
@@ -20,12 +27,17 @@ void ESPWebServer::init()
 {
 }
 
-ESPWebServer espWebServer;
+//ESPWebServer espWebServer;
 
-HttpRequest ESPWebServer::getHttpRequest(WiFiClient* pClient)
+HttpResponse ESPWebServer::getHttpResponse()
+{
+	return response;
+}
+
+HttpRequest ESPWebServer::getHttpRequest()
 {
 	logger.print(tag, "\n\t >> getHttpRequest");
-	HttpRequest request;
+	/*HttpRequest */request;
 	request.method = HttpRequest::HTTP_NULL;
 
 	char buffer[ESPWebServer::MAX_PAGE_NAME_LEN + 1]; // additional character for terminating null

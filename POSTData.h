@@ -18,12 +18,13 @@ public:
 	~POSTData();
 	bool has(String key);
 	String getString(String key);
+	String getDataString();
 	
 private:
 	static String tag;
 	static Logger logger;
 	String dataString;
-	String getRightOfKey(String key);
+	//String getRightOfKey(String key);
 };
 
 #endif

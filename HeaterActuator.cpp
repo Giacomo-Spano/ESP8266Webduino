@@ -417,9 +417,7 @@ String HeaterActuator::getSensorAddress()
 String HeaterActuator::getJSON() {
 	String json = "";
 	json += "{";
-
 	//json += "\"event\":\"update\",";
-
 	
 	json += "\"shieldid\":" + String(Shield::id) + ",";
 	json += "\"heaterenabled\":";
@@ -434,9 +432,7 @@ String HeaterActuator::getJSON() {
 	json += "\"type\":\"heater\",";
 	json += "\"name\":\"" + sensorname + "\",";
 	json += "\"relestatus\":\"" + String((getReleStatus()) ? "true" : "false") + "\"";
-	//json += "\"duration\":" + String(getProgramDuration()/1000) + ",";
-	//json += "\"remaining\":" + String(getRemaininTime()/1000) + "";
-
+	
 	if (getStatus() == Program::STATUS_PROGRAMACTIVE
 		|| getStatus() == Program::STATUS_MANUAL_AUTO
 		|| getStatus() == Program::STATUS_MANUAL_OFF) {
@@ -468,7 +464,7 @@ String HeaterActuator::getJSON() {
 		}
 
 	}
-
+		
 	json += "}";
 
 
