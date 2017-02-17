@@ -11,13 +11,10 @@ public:
 	static const int STATUS_DISABLED = 4;
 	static const int STATUS_RESTARTED = 5;
 	static const int STATUS_MANUAL_OFF = 6;
-
 	
-
 	Program();
 	~Program();
-
-	/*time_t programStartTime = 0;
+		/*time_t programStartTime = 0;
 	time_t programDuration = 30000;*/
 
 	/*int currentStatus = STATUS_IDLE;
