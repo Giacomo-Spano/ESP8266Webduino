@@ -1,15 +1,14 @@
 #include "JSON.h"
 #include "HardwareSerial.h"
 
-extern Logger logger;
+Logger JSON::logger;
+String JSON::tag = "Shield";
 
 JSON::JSON(String json)
 {
 	this->jsonString = json;
-
-	String tag = "getNtpTime";
+	String tag = "JSON";
 }
-
 
 JSON::~JSON()
 {
@@ -47,7 +46,6 @@ String JSON::jsonGetString(String key) {
 bool JSON::has(String key) {
 
 	String json = jsonString;
-
 	key = "\"" + key + "\"";
 
 	int index = json.indexOf(key);
@@ -65,8 +63,7 @@ bool JSON::has(String key) {
 	}
 
 	json = json.substring(index + 1);
-
-
+	
 	/*int end = json.indexOf("\"", index);
 	if (end < 0)
 		end = json.indexOf("}", index);
@@ -77,15 +74,13 @@ bool JSON::has(String key) {
 		return false;
 	}*/
 
-	logger.print(tag, "\n\tkey " + key + "found");
+	//logger.print(tag, "\n\tkey " + key + "found");
 	return true;
 	//String value = json.substring(0, end);
 	//value.trim();
 
 	//return value;
 }
-
-
 
 String JSON::getRightOfKey(String key) {
 	// ritorna la stringa a destra di 'key' del json
@@ -126,12 +121,12 @@ String JSON::getRightOfKey(String key) {
 String JSON::getNum(String key) {
 	// ritorna il valore di una key senza apici
 
-	logger.print(tag, "\n\tgetNum key = ");
-	logger.print(tag, key);
+	//logger.print(tag, "\n\tgetNum key = ");
+	//logger.print(tag, key);
 
 	String json = getRightOfKey(key);
-	logger.print(tag, "\n\tjson= ");
-	logger.print(tag, json);
+	//logger.print(tag, "\n\tjson= ");
+	//logger.print(tag, json);
 
 	int end = json.indexOf(",");
 	if (end < 0) {
@@ -142,9 +137,9 @@ String JSON::getNum(String key) {
 	}
 	
 	String value = json.substring(0, end);
-	logger.print(tag, "\n\tvalue= "+ value);
+	//logger.print(tag, "\n\tvalue= "+ value);
 	value.trim();
-	logger.print(tag, "\n\tvalue= " + value);
+	//logger.print(tag, "\n\tvalue= " + value);
 	return value;
 }
 
@@ -214,8 +209,8 @@ float JSON::jsonGetFloat(String key) {
 }
 
 int JSON::jsonGetInt(String key) {
-	logger.print(tag, "\n\tjsonGetLong = ");
-	logger.print(tag, key);
+	//logger.print(tag, "\n\tjsonGetLong = ");
+	//logger.print(tag, key);
 
 	String value = getNum(key);
 	if (value.equals(""))

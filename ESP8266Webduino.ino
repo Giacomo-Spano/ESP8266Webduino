@@ -1,19 +1,14 @@
 #include "HttpResponse.h"
 #include "ESPWebServer.h"
 #include "HttpRequest.h"
-#include "js.h"
-#include "html.h"
-#include "HtmlFileClass.h"
 #include "ESP8266Webduino.h"
 #include <ESP8266WiFi.h>
-#include <ESP8266WebServer.h>
-#include <ESP8266mDNS.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
-#include <string.h>
+//#include <string.h>
 #include <EEPROM.h>
 #include "EEPROMAnything.h"
-#include "user_interface.h"
+//#include "user_interface.h"
 #include "wol.h"
 #include "Logger.h"
 #include "HttpHelper.h"
@@ -25,18 +20,20 @@
 #include "DS18S20Sensor.h"
 #include <Time.h>
 #include "TimeLib.h"
-#include "css.h"
-#include "FS.h"
+//#include "FS.h"
 #include "POSTData.h"
+//#include "html.h"
 
-#define Versione 0.92
-int EPROM_Table_Schema_Version = 6;
-const char SWVERSION[] = "1.01";
+//#define P(name) static const prog_uchar name[] PROGMEM // declare a static string
+
+//#define Versione 0.92
+int EPROM_Table_Schema_Version = 7;
+//const char SWVERSION[] = "1.01";
 
 Logger logger;
 String sensorNames = "";
 
-const char* ssidx = "Telecom-29545833";
+const char* ssidx = "Telecom-29545833"; // TP-LINK_3BD796
 const char* password = "6oGzjkdMJU2q9XoQLfWiV3nj";
 String tag = "Webduino";
 const char *ssidAP = "ES8266";
@@ -44,9 +41,14 @@ const char *passwordAP = "thereisnospoon";
 const char* ssid = "xxBUBBLES";
 Shield shield;
 
+const byte EEPROM_ID = 0x99; // used to identify if valid data in EEPROM
+const int ID_ADDR = 0; // the EEPROM address used to store the ID
+const int TIMERTIME_ADDR = 1; // the EEPROM address used to store the pin
 void initEPROM();
 void readEPROM();
 extern void writeEPROM();
+
+
 
 // html page old style
 String showMain(HttpRequest request, HttpResponse response);
@@ -65,44 +67,25 @@ String softwareReset(HttpRequest request, HttpResponse response);
 
 // GET request
 String getJsonStatus(HttpRequest request, HttpResponse response);
-String getJsonSensorsStatus(HttpRequest request, HttpResponse response);
+String getJsonTempearatureSensorsStatus(HttpRequest request, HttpResponse response);
 String getJsonActuatorsStatus(HttpRequest request, HttpResponse response);
 String getJsonHeaterStatus(HttpRequest request, HttpResponse response);
 String getJsonSettings(HttpRequest request, HttpResponse response);
-
-//String showIndex();
-
-String getFile(String filename);
 
 // Create an instance of the server
 // specify the port to listen on as an argument
 WiFiServer server(80);
 WiFiClient client;
 
-//const int maxposdataChangeSetting = 150;
-//char databuff[maxposdataChangeSetting];
 
-#define P(name) static const prog_uchar name[] PROGMEM // declare a static string
-const byte EEPROM_ID = 0x99; // used to identify if valid data in EEPROM
-const int ID_ADDR = 0; // the EEPROM address used to store the ID
-//const int TIMERTIME_ADDR = 1; // the EEPROM address used to store the pin
-//const int maxposdata = 101; // massimo numero di caratteri della variabile posdata
-//const int maxvaluesize = maxposdata - 1/*10*/; // massimo numero di digit del valore di una variabile nel POS data
-
-//bool statusChangeSent = true;
 
 const int flash_interval = 30000;
 unsigned long lastFlash = 0;//-flash_interval;
-//const int lastStatusChange_interval = 60000; // timeout retry invio status change
-//unsigned long lastStatusChange = 0;//-lastStatusChange_interval;// 0;
-//unsigned long lastNotification = 0;
-//const int Notification_interval = 20000;
 unsigned long lastSendLog = 0;
 const int SendLog_interval = 10000;// 10 secondi
 unsigned long lastTimeSync = 0;
-const int timeSync_interval = 60000;// 60 secondi
-//int offlineCounter = 0;
-// variables created by the build process when compiling the sketch
+const int timeSync_interval = 60000 * 60 * 12;// 60 secondi * 60 minuti * 12 ore
+
 extern int __bss_end;
 extern void *__brkval;
 
@@ -111,7 +94,7 @@ bool shieldRegistered = false; // la shield si registra all'inizio e tutte le vo
 
 void writeEPROM() {
 
-	logger.println(tag, ">>write EPROM");
+	logger.print(tag, "\n\n\t >>write EPROM");
 
 	int addr = TIMERTIME_ADDR;
 	EEPROM.write(ID_ADDR, EEPROM_ID); // write the ID to indicate valid data
@@ -142,6 +125,19 @@ void writeEPROM() {
 		logger.print(tag, "\n\t heaterenabled = true");
 	else
 		logger.print(tag, "\n\t heaterenabled = false");
+
+	// oneWire pin
+	uint8_t oneWirePin = Shield::getOneWirePin();
+	EEPROM.write(addr++, oneWirePin);
+	logger.print(tag, "\n\t oneWirePin = " + String(oneWirePin));
+
+	// onewire enabled
+	bool temperatureSensorsEnabled = Shield::getTemperatureSensorsEnabled();
+	EEPROM.write(addr++, temperatureSensorsEnabled);
+	if (temperatureSensorsEnabled)
+		logger.print(tag, "\n\t temperatureSensorsEnabled = true");
+	else
+		logger.print(tag, "\n\t temperatureSensorsEnabled = false");
 
 	// io devices
 	for (int i = 0; i < 10; i++) {
@@ -202,12 +198,12 @@ void writeEPROM() {
 	res = EEPROM_writeAnything(addr, buffer);
 	addr += res;
 	EEPROM.commit();
-	logger.println(tag, "<<write EPROM");
+	logger.println(tag, "\n\t <<write EPROM\n");
 }
 
 void readEPROM() {
 
-	logger.println(tag, "read EPROM");
+	logger.print(tag, "\n\n\t >>read EPROM");
 
 	byte hiByte;
 	byte lowByte;
@@ -227,21 +223,28 @@ void readEPROM() {
 	epromversion = word(hiByte, lowByte);
 	logger.print(tag, "\n\t epromversion=" + String(epromversion));
 
-	if (epromversion >= 6/*EPROM_Table_Schema_Version*/) {
+	if (epromversion >= 7/*EPROM_Table_Schema_Version*/) {
 		uint8_t pin = EEPROM.read(addr++);
 		Shield::setHeaterPin(pin);
-
 		bool heaterEnabled = EEPROM.read(addr++);
 		Shield::setHeaterEnabled(heaterEnabled);
-
 		if (heaterEnabled)
 			logger.println(tag, "\n\t heaterenabled = true");
 		else
 			logger.println(tag, "\n\t heaterenabled = false");
 
+		uint8_t oneWirePin = EEPROM.read(addr++);
+		Shield::setOneWirePin(oneWirePin);
+		bool temperatureSensorsEnabled = EEPROM.read(addr++);
+		Shield::setTemperatureSensorsEnabled(temperatureSensorsEnabled);
+		if (temperatureSensorsEnabled)
+			logger.println(tag, "\n\t temperatureSensorsEnabled = true");
+		else
+			logger.println(tag, "\n\t temperatureSensorsEnabled = false");
+		
 	}
 
-	if (epromversion >= 5/*EPROM_Table_Schema_Version*/) {
+	if (epromversion >= 7/*EPROM_Table_Schema_Version*/) {
 		for (int i = 0; i < Shield::getMaxIoDevices(); i++) {
 			hiByte = EEPROM.read(addr++);
 			lowByte = EEPROM.read(addr++);
@@ -276,7 +279,7 @@ void readEPROM() {
 	addr += res;
 	//server name
 	char servernnameBuffer[Shield::serverNameLen];
-	res = EEPROM_readAnything(addr,servernnameBuffer);
+	res = EEPROM_readAnything(addr, servernnameBuffer);
 	logger.print(tag, "\n\tservernnameBuffer=" + String(servernnameBuffer));
 	Shield::setServerName(String(servernnameBuffer));
 	addr += res;
@@ -289,8 +292,8 @@ void readEPROM() {
 	// board name
 	char shieldNameBuffer[Shield::shieldNameLen];
 	res = EEPROM_readAnything(addr, shieldNameBuffer);
-	logger.print(tag, "\n\t shieldNameBuffer ="  + String(shieldNameBuffer));
-	Shield::setShieldName(String(shieldNameBuffer));	
+	logger.print(tag, "\n\t shieldNameBuffer =" + String(shieldNameBuffer));
+	Shield::setShieldName(String(shieldNameBuffer));
 	addr += res;
 	// sensor names
 	char buffer[100];
@@ -305,11 +308,12 @@ void readEPROM() {
 		sensor->sensorname = String(buffer);
 		addr += res;
 	}*/
+	logger.print(tag, "\n\n\t <<read EPROM\n");
 }
 
 void initEPROM()
 {
-	logger.println(tag, "initEPROM");
+	logger.print(tag, "\n\n\t >>initEPROM");
 
 	EEPROM.begin(512);
 
@@ -322,6 +326,7 @@ void initEPROM()
 	{
 		writeEPROM();
 	}
+	logger.print(tag, "\n\n\t <<initEPROM");
 }
 
 int testWifi(void) {
@@ -436,45 +441,13 @@ void setup()
 {
 	Serial.begin(115200);
 	delay(10);
-	/*Serial.println("");
-	Serial.println("");
-	Serial.println("RESTARTING.... \n");*/
-
-	logger.print(tag, "\n\n\"*******************RESTARTING************************--");
 	
-	// always use this to "mount" the filesystem
-	bool result = SPIFFS.begin();
-	Serial.println("SPIFFS opened: " + result);
-
-	// this opens the file "f.txt" in read-mode
-	File f = SPIFFS.open("/f.txt", "r");
-
-	if (!f) {
-		Serial.println("File doesn't exist yet. Creating it");
-
-		// open the file in write mode
-		File f = SPIFFS.open("/f.txt", "w");
-		if (!f) {
-			Serial.println("file creation failed");
-		}
-		// now write two lines in key/value style with  end-of-line characters
-		f.println("ssid=abc");
-		f.println("password=123455secret");
-	}
-	else {
-		// we could open the file
-		while (f.available()) {
-			//Lets read line by line from the file
-			String line = f.readStringUntil('\n');
-			Serial.println(line);
-		}
-
-	}
-	f.close();
-
-
+	Logger::init();
+	logger.print(tag, "\n\n *******************RESTARTING************************");
+	
+	
 	String str = "\n\nstarting.... Versione ";
-	str += String(Versione);
+	str += Shield::swVersion;
 	logger.print(tag, str);
 
 	// get MAC Address
@@ -509,7 +482,7 @@ void setup()
 	logger.print(tag, "\n\tnetworkPassword=");
 	logger.print(tag, networkPassword);
 
-	WiFi.begin(networkSSID,networkPassword);
+	WiFi.begin(networkSSID, networkPassword);
 	if (testWifi() == 20/*WL_CONNECTED*/) {
 
 		checkOTA();
@@ -524,19 +497,12 @@ void setup()
 		wdt_disable();
 		wdt_enable(WDTO_8S);
 
-		// rele
-		//pinMode(relePin, OUTPUT);
-		//enableRele(false);
 		shield.hearterActuator.init(String(shield.MAC_char));
-		//Temperature sensor
 		
-
 		shield.addOneWireSensors(sensorNames);
 		shield.addActuators();
-
-
+		
 		Command command;
-		//command.setServer(Shield::getServerName(), Shield::getServerPort());
 		shield.id = command.registerShield(shield);
 
 		if (shield.id != -1) {
@@ -559,26 +525,23 @@ void setup()
 		wdt_disable();
 		wdt_enable(WDTO_8S);
 
-		//programSettings.currentStatus = Program::STATUS_DISABLED;
 		shield.hearterActuator.setStatus(Program::STATUS_DISABLED);
 	}
 
 	logger.print(tag, "\n\t lastRestartDate=" + Shield::getLastRestartDate());
 	if (Shield::getLastRestartDate().equals("") == true) {
-		Shield::setLastRestartDate(logger.getStrDate());
+		Shield::setLastRestartDate(Logger::getStrDate());
 		logger.print(tag, "\n\t *lastRestartDate=" + Shield::getLastRestartDate());
 	}
 
-	
 	Command commannd;
 	commannd.sendRestartNotification();
-
 }
 
 String softwareReset(HttpRequest request, HttpResponse response) {
 
 	logger.println(tag, F("\n\n\t >>software reset "));
-	
+
 	String data;
 	data += "";
 	data += F("HTTP/1.1 200 OK\r\nContent-Type: text/html");
@@ -588,19 +551,21 @@ String softwareReset(HttpRequest request, HttpResponse response) {
 
 	response.send(HttpResponse::HTTPRESULT_OK, ESPWebServer::htmlContentType, data);
 
+	delay(5000);
+
 	ESP.restart();
 
 	logger.println(tag, F("\n\t <<software reset "));
 	return "";
 }
 
-String receiveCommand(HttpRequest request,HttpResponse response) {
+String receiveCommand(HttpRequest request, HttpResponse response) {
 
 	logger.println(tag, F("\n\n\t >>receiveCommand "));
 
 	String str = request.body;
 	String jsonResult = shield.sendCommand(str);
-	
+
 	logger.println(tag, "\n\t <<receiveCommand " + jsonResult);
 	return jsonResult;
 }
@@ -620,7 +585,7 @@ String setRemoteTemperature(HttpRequest request, HttpResponse response) {
 	}
 	String result = "";
 	result += getJsonStatus(request, response);
-	
+
 	logger.print(tag, "\n\t <<setRemoteTemperature: " + result);
 	return result;
 }
@@ -631,7 +596,7 @@ String showPower(HttpRequest request, HttpResponse response) {
 
 	logger.print(tag, F("\n\tprogramSettings.currentStatus="));
 	logger.print(tag, shield.hearterActuator.getStatus());
-	
+
 	String str = request.body;
 	POSTData posData(str);
 	if (posData.has("status")) {
@@ -646,7 +611,7 @@ String showPower(HttpRequest request, HttpResponse response) {
 			shield.hearterActuator.setStatus(Program::STATUS_DISABLED);
 			shield.hearterActuator.enableRele(false);
 		}
-	}	
+	}
 	String data = "<result><rele>" + String(shield.hearterActuator.getReleStatus()) + "</rele>" +
 		"<status>" + String(shield.hearterActuator.getStatus()) + "</status></result>";
 
@@ -774,7 +739,7 @@ String showChangeSettings(HttpRequest request, HttpResponse response) {
 	String str = request.body;
 	POSTData posData(str);
 	logger.print(tag, "\n\t posData=" + posData.getDataString());
-		
+
 	// localport
 	if (posData.has("localport")) {
 		int localport = posData.getString("localport").toInt();
@@ -823,9 +788,9 @@ String showChangeSettings(HttpRequest request, HttpResponse response) {
 	String data = "";
 	data += F("<html><head><meta HTTP-EQUIV='REFRESH' content='0; url=/main'><title>Timer</title></head><body></body></html>");
 	data += F("</body></html>");
-	
+
 	writeEPROM();
-	
+
 	logger.println(tag, F("\n\t >>showChangeSettings "));
 	return data;
 }
@@ -837,14 +802,14 @@ String showChangeIODevices(HttpRequest request, HttpResponse response) {
 	String str = request.body;
 	POSTData posData(str);
 	logger.print(tag, "\n\t posData=" + posData.getDataString());
-	
+
 	for (int i = 0; i < Shield::getMaxIoDevices(); i++) {
 
 		char buffer[20];
 		String str = "iodevice" + String(i + 1);
 		str.toCharArray(buffer, sizeof(buffer));
-		
-		if (posData.has(buffer)) {			
+
+		if (posData.has(buffer)) {
 			Shield::setIODevice(i, posData.getString(buffer).toInt());
 			logger.print(tag, "\n\t" + String(buffer) + "=" + String(Shield::getIODevice(i)));
 		}
@@ -886,61 +851,58 @@ String getJsonStatus(HttpRequest request, HttpResponse response)
 	String data;
 	data += "";
 	data += shield.getSettingsJson();
-	
+
 	logger.print(tag, "\n\t <<getJsonStatus " + data + "\n");
 	return data;
 }
 
-String getJsonSensorsStatus(HttpRequest request, HttpResponse response)
+String getJsonTempearatureSensorsStatus(HttpRequest request, HttpResponse response)
 {
-	logger.println(tag, F("\n\t >> getJsonSensorStatus"));
+	logger.print(tag, F("\n\t >> getJsonTempearatureSensorsStatus"));
 
 	String data = "";
 	data += shield.getSensorsStatusJson();
 
-	
-	logger.println(tag, "\n\t >> getJsonSensorStatus " + data + "\n");
+
+	logger.print(tag, "\n\t << getJsonTempearatureSensorsStatus " + data + "\n");
 	return data;
 }
 
 String getJsonActuatorsStatus(HttpRequest request, HttpResponse response)
 {
-	logger.println(tag, F("CALLED getJsonActuatorsStatus"));
+	logger.print(tag, F("\n\t >> getJsonActuatorsStatus"));
 
 	String data = "";
-	//data += "HTTP/1.0 200 OK\r\nContent-Type: application/json; ";
+	//data += "HTTP/1.0 200 OK\r\nCont + ent-Type: application/json; ";
 	//data += "\r\nPragma: no-cache\r\n\r\n";
 
 	String json = shield.getActuatorsStatusJson();
 	logger.println(tag, json);
 
 	data += json;
+	logger.print(tag, "\n\t << getJsonActuatorsStatus" + data + "\n");
 	return data;
 }
 
 String getJsonHeaterStatus(HttpRequest request, HttpResponse response)
 {
-	logger.println(tag, F("\n\t >>getJsonActuatorsStatus"));
+	logger.print(tag, F("\n\t >> getJsonHeaterStatus"));
 
 	String data = "";
-	//data += "HTTP/1.0 200 OK\r\nContent-Type: application/json; ";
-	//data += "\r\nPragma: no-cache\r\n\r\n";
-
 	data += shield.getHeaterStatusJson();
 
-	logger.print(tag, "\n\t" + data);
-	logger.println(tag, F("\n\t <<getJsonActuatorsStatus"));
+	logger.print(tag, "\n\t <<getJsonActuatorsStatus" + data + "\n");
 	return data;
 }
 
 String getJsonSettings(HttpRequest request, HttpResponse response) {
-	logger.println(tag, F("\n\t >> getJsonSettings"));
+	logger.print(tag, F("\n\t >> getJsonSettings"));
 
 	String data;
 	data += "";
 	data += shield.getSettingsJson();
 
-	logger.println(tag, "\n\t << getJsonSettings" + data + "\n");
+	logger.print(tag, "\n\t << getJsonSettings" + data + "\n");
 	return data;
 }
 
@@ -966,8 +928,8 @@ void loop()
 		if (request.method != HttpRequest::HTTP_NULL) {
 
 			logger.print(tag, "\n");
-			logger.println(tag, " >>loop.shownextpage " + page);
-			
+			logger.println(tag, ">>next request " + page);
+
 			if (page.equalsIgnoreCase("main")) {
 				response.send(response.HTTPRESULT_OK, ESPWebServer::htmlContentType, showMain(request, response));
 			}
@@ -980,8 +942,8 @@ void loop()
 			else if (page.equalsIgnoreCase("iodevices")) {
 				response.send(response.HTTPRESULT_OK, ESPWebServer::htmlContentType, showIODevices(request, response));
 			}
-			
-			
+
+
 			else if (page.equalsIgnoreCase("command")) {
 				response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, receiveCommand(request, response));
 			}
@@ -1002,9 +964,9 @@ void loop()
 			}
 			else if (page.equalsIgnoreCase("wol")) {
 				response.send(response.HTTPRESULT_OK, ESPWebServer::htmlContentType, showwol(request, response));
-			}		
-			
-			
+			}
+
+
 			else if (page.equalsIgnoreCase("status")) {
 				response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, getJsonStatus(request, response));
 			}
@@ -1014,8 +976,8 @@ void loop()
 			else if (page.equalsIgnoreCase("heaterstatus")) {
 				response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, getJsonHeaterStatus(request, response));
 			}
-			else if (page.equalsIgnoreCase("sensorstatus")) {
-				response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, getJsonSensorsStatus(request, response));
+			else if (page.equalsIgnoreCase("temperaturesensorstatus")) {
+				response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, getJsonTempearatureSensorsStatus(request, response));
 			}
 			else if (page.equalsIgnoreCase("actuatorsstatus")) {
 				response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, getJsonActuatorsStatus(request, response));
@@ -1026,17 +988,19 @@ void loop()
 				softwareReset(request, response);
 			}
 			else if (page.endsWith(".html") ||
-						page.endsWith(".css") || 
-						page.endsWith(".js")) {
-				response.sendFile(response.HTTPRESULT_OK, ESPWebServer::htmlContentType, request.page);
+				page.endsWith(".css") ||
+				page.endsWith(".js") || 
+				page.endsWith(".txt")) {
+				response.sendVirtualFile(response.HTTPRESULT_OK, ESPWebServer::htmlContentType, request.page);
 			}
 		}
 
-		logger.println(tag, "<<loop.shownextpage " + page + "\n");
+		logger.println(tag, "<<next request " + page + "\n");
+		logger.print(tag, "\n");
 
 		return;
 	}
-	
+
 	if (shield.id >= 0 && !WiFi.localIP().toString().equals(shield.localIP)) {
 
 		Command command;
@@ -1088,7 +1052,7 @@ String showMain(HttpRequest request, HttpResponse response)
 	data += F("<!DOCTYPE html><html><head><title>Webduino</title><body>\r\n");
 	// comandi
 	data += F("\n<font color='#53669E' face='Verdana' size='2'><b>Webduino - ");
-	data += logger.getStrDate();
+	data += Logger::getStrDate();
 	data += F("</b></font>");
 	data += F("\r\n<table width='80%' border='1'><colgroup bgcolor='#B6C4E9' width='20%' align='left'></colgroup><colgroup bgcolor='#FFFFFF' width='30%' align='left'></colgroup>");
 	// power
@@ -1247,7 +1211,7 @@ String showMain(HttpRequest request, HttpResponse response)
 	data += "<tr><td>Shield Id</td><td>" + String(shield.id) + "<form action='/register' method='POST'><input type='submit' value='register'></form></td></tr>";
 
 	data += F("</table>");
-	data += String(Versione);
+	data += Shield::swVersion;
 	data += "\nEPROM_Table_Schema_Version=" + String(EPROM_Table_Schema_Version);
 	data += F("</body></html>");
 
@@ -1257,13 +1221,13 @@ String showMain(HttpRequest request, HttpResponse response)
 
 String showHeater(HttpRequest request, HttpResponse response)
 {
-	logger.println(tag, F("\n\t >>showHeater "));	
+	logger.println(tag, F("\n\t >>showHeater "));
 
 	String data;
 	data += "";
 	data += F("<!DOCTYPE html><html><head><title>Webduino</title><body>\r\n");
 	data += F("\n<font color='#53669E' face='Verdana' size='2'><b>Webduino - ");
-	data += logger.getStrDate();
+	data += Logger::getStrDate();
 	data += F("</b></font>");
 	data += F("\r\n<table width='80%' border='1'><colgroup bgcolor='#B6C4E9' width='20%' align='left'></colgroup><colgroup bgcolor='#FFFFFF' width='30%' align='left'></colgroup>");
 	// status & rele	
@@ -1376,19 +1340,19 @@ String showHeater(HttpRequest request, HttpResponse response)
 	data += F("</td></tr>");
 
 	data += F("</table>");
-	data += String(Versione);
+	data += Shield::swVersion;
 	data += "\nEPROM_Table_Schema_Version=" + String(EPROM_Table_Schema_Version);
 
 	data += "<script>"
 		"var form = document.getElementById('manualForm');"
-		"form.onsubmit = function(e) {"		
-			"e.preventDefault();"
-			"var data = {};"
-			"for (var i = 0, ii = form.length; i < ii; ++i) {"
-				"var input = form[i];"
-				"if (input.name) {"
-					"data[input.name] = input.value;"
-				"}"
+		"form.onsubmit = function(e) {"
+		"e.preventDefault();"
+		"var data = {};"
+		"for (var i = 0, ii = form.length; i < ii; ++i) {"
+		"var input = form[i];"
+		"if (input.name) {"
+		"data[input.name] = input.value;"
+		"}"
 		"}"
 
 		"alert('The form was submitted'+JSON.stringify(data));"
@@ -1401,7 +1365,7 @@ String showHeater(HttpRequest request, HttpResponse response)
 		"};"
 		"};"
 		""
-			
+
 		"function sendCommand() {"
 		"alert('The form was submitted');"
 		"}"
@@ -1505,170 +1469,4 @@ String showIODevices(HttpRequest request, HttpResponse response)
 	return data;
 }
 
-
-/*
-void showPage(String data) {
-
-	logger.println(tag, "showPage ");
-
-	client.println(data);
-	delay(1000);
-	//client.stop();
-}
-
-int len(const char* data) {
-
-	int l = 0;
-	while (data[l] != '\0')
-		l++;
-	return l;
-}
-
-int parsePostdata(const char* data, const char* param, char* value) {
-
-
-	int pos = findIndex(data, param);
-
-	if (pos != -1) {
-
-		int i = 0;
-		char c;
-		while (i < len(data) && i < maxvaluesize) {
-			if (data[i + pos + len(param) + 1] == '&' || data[i + pos + len(param) + 1] == '\0')
-				break;
-			value[i] = data[i + pos + len(param) + 1];
-			i++;
-		}
-		//if (i < maxvaluesize) value[i] = '\0';
-		value[i] = '\0';
-		int val = 0;
-
-		for (int k = 0; k < i; k++) {
-
-			val = (val * 10) + value[k] - 48;
-		}
-		return val;
-	}
-	return -1;
-}
-
-void getPostdata(char *data, int maxposdata) {
-
-	//Serial.print(F("getPostdata "));
-
-	int datalen = 0;
-
-	if (client.findUntil("Content-Length:", "\n\r"))
-	{
-		datalen = client.parseInt();
-	}
-
-	delay(400);
-	if (client.findUntil("\n\r", "\n\r"))
-	{
-		;
-	}
-	delay(400);
-	client.read();
-
-	if (datalen >= maxposdata) {
-		logger.println(tag, F("maxposdat to long"));
-	}
-
-	int i = 0;
-	while (i < datalen && i < maxposdata) {
-		data[i] = client.read();
-		//Serial.print(data[i]); // ailitare questa riga per vedere il contenuto della post
-		delay(2);
-		i++;
-	}
-
-	//Serial.println("");
-	//Serial.print("datalen ");
-	//Serial.print(datalen);
-	if (i < maxposdata)
-		data[i] = '\0';
-}
-
-int findIndex(const char* data, const char* target) {
-
-	boolean found = false;
-	int i = 0;
-	while (data[i] != '\0') {
-		i++;
-	}
-	i = 0;
-	int k = 0;
-	while (data[i] != '\0') {
-
-		if (data[i] == target[0]) {
-			found = true;
-			k = 0;
-			while (target[k] != '\0') {
-
-				if (data[i + k] == '\0')
-					return -1;
-				if (data[i + k] != target[k]) {
-					found = false;
-					break;
-				}
-				k++;
-			}
-			if (found == true)
-				return i;
-		}
-		i++;
-	}
-	return -1;
-}
-*/
-
-String getFile(String filename) {
-
-	logger.print(tag, String("\n\t << getfile: free heap:)" + String(ESP.getFreeHeap())));
-
-	char* s = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n";
-
-	String header = "";
-
-	if (filename.endsWith(".css"))
-		header += F("HTTP/1.1 200 OK\r\nContent-Type: text/css\n\n");
-	else
-		header += F("HTTP/1.1 200 OK\r\nContent-Type: text/html\n\n");
-		
-	/*if (filename.equals("ESP8266.css")) {
-			logger.print(tag, "\n\t file=" + filename);
-			sendFile(header, cssfile);
-		}
-	else if (filename.equals("switch.css")) {
-		logger.print(tag,"\n\t file" + filename);
-		sendFile(header, cssswitch);
-	}
-	else if (filename.equals("heater.html")) {
-		logger.print(tag, "\n\t file" + filename);
-		sendFile(header, html_heater);
-	}
-	else {*/
-
-		File f = SPIFFS.open("/" + filename, "r");
-		if (!f) {
-			Serial.println("File /" + filename + " doesn't exist");
-			return "";
-		}
-		
-		//client.println(header);
-		// we could open the file
-		String line = "";
-		while (f.available()) {
-			//Lets read line by line from the file
-			line += f.readStringUntil('\n');
-		}
-		//client.println(line);
-		f.close();
-
-		logger.print(tag, String("\n\t << getfile: free heap:)" + String(ESP.getFreeHeap())));
-	//}
-
-	return String(s);
-}
 

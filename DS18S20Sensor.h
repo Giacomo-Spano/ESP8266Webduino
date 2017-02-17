@@ -4,12 +4,14 @@
 #include <Arduino.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
+#include "Logger.h"
 
 class DS18S20Sensor :
 	public Sensor
 {
 private:
-	String tag;
+	static String tag;
+	static Logger logger;
 
 public:
 	static const int avTempsize = 10;
@@ -18,11 +20,9 @@ public:
 	DS18S20Sensor();
 	~DS18S20Sensor();
 	virtual String getJSON();
-	
 
 	int avTempCounter = 0;
-	float avTemp[avTempsize];
-	
+	float avTemp[avTempsize];	
 
 	void readTemperature(DallasTemperature *pDallasSensors);
 	float getTemperature();

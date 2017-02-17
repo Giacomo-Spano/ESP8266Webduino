@@ -1,10 +1,13 @@
 #include "Logger.h"
 #include "Command.h"
 
-//#include <Time.h>
-//#include "TimeLib.h"
 
 extern Logger logger;
+
+String Logger::tag = "Logger";
+String Logger::logFileName = "/log/log.txt";
+String Logger::toBeSent = "";
+File Logger::logFile;
 
 Logger::Logger()
 {
@@ -49,23 +52,22 @@ void Logger::print(String tag, String txt) {
 	//line += txt;
 	Serial.print(txt);
 
-	if (!truncated) {
+	if (logFile.size() > 100000) {
 
-		if (toBeSent.length() > maxLogbuffer) {
-			
-			/*if (txt.length() < maxLogbuffer)
-				toBeSent = toBeSent.substring(txt.length()) + txt.length();
-			else
-				toBeSent = "";*/
+		logFile.close();
+		
+		SPIFFS.remove("/log/log1.txt");
+		
+		if (SPIFFS.rename(logFileName, "/log/log1.txt")) {
+			Serial.println("file : " + logFileName + " renamed \n");
+		}
 
-			toBeSent += txt + "\n\n--- TRUNCATED ---\n\n";
-			truncated = true;
-		}
-		else {
-			toBeSent += txt;
-		}
+		logFile = SPIFFS.open(logFileName, "w");
+		logFile.println("----------------log restarted-----------");
+		//logFile.println(txt);
 	}
-	//line = "";
+	logFile.println(txt);
+	
 }
 
 /*void Logger::print(String tag, String txt) {
@@ -132,7 +134,7 @@ bool Logger::send() {
 
 String Logger::getHeader(String tag) {
 
-	String date = getStrDate();
+	String date = Logger::getStrDate();
 	String header = String(ESP.getFreeHeap()) + " " + date + " " + tag + ": ";
 	
 	return header;
@@ -144,4 +146,68 @@ String Logger::getStrDate() {
 	sprintf(buffer, "%02d-%02d-%02d %02d:%02d:%02d", day(), month(), year(), hour(), minute(), second());
 	String date = String(buffer);
 	return date;
+}
+
+void Logger::init() {
+
+	Serial.println("\n\n******INIT LOG*******");
+
+	// always use this to "mount" the filesystem
+	bool result = SPIFFS.begin();
+	Serial.println("SPIFFS opened: " + result);
+
+
+	/*Dir dir = SPIFFS.openDir("/log");
+	while (dir.next()) {
+
+		Serial.println(dir.fileName());
+		File f = dir.openFile("r");
+		Serial.println(f.size());
+	}
+
+
+	String filename = "/log/log.txt";
+	File f = SPIFFS.open(filename, "r");
+	if (f) { // file  exixt
+		Serial.println("filename: " + filename + " exist\n");
+		f.close();
+
+		SPIFFS.remove("/log/log1.txt");
+		if (SPIFFS.rename(filename, "/log/log1.txt"))
+			Serial.println("file : " + filename + " renamed: \n");
+	}*/
+
+	
+	Dir dir2 = SPIFFS.openDir("/log");
+	while (dir2.next()) {
+
+		Serial.println(dir2.fileName());
+		File f = dir2.openFile("r");
+		Serial.println(f.size());
+	}
+
+	
+
+
+	logFileName = "/log/log.txt";
+	Serial.println("opening " + logFileName);
+	// open the file in write mode
+	logFile = SPIFFS.open(logFileName, "w+");
+	if (!logFile) {
+		Serial.println("file open failed - file does not exit");
+
+		logFile = SPIFFS.open(logFileName, "w+");
+		if (!logFile) {
+			Serial.println("file creation failed");
+		}
+	}
+	else {
+		Serial.println("logFile: " + logFileName + " opened\n");
+
+		logFile.seek(logFile.size(), SeekSet);
+		// now write two lines in key/value style with  end-of-line characters
+		logFile.println(Logger::getStrDate());
+		logFile.println("inizioxx");
+	}	
+	//logFile.close();
 }

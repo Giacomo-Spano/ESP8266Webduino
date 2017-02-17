@@ -5,9 +5,7 @@
 #include "HtmlFileClass.h"
 
 #include "Logger.h"
-#include "css.h"
 #include "html.h"
-#include "js.h"
 
 extern Logger logger;
 
@@ -28,7 +26,7 @@ HtmlFileClass::~HtmlFileClass()
 
 HtmlFileClass HtmlFile;
 
-bool HtmlFileClass::sendFile(WiFiClient* pClient, String fileName) {
+bool HtmlFileClass::sendVirtualFile(WiFiClient* pClient, String fileName) {
 	
 	logger.print(tag, "\n\t>>sendFile: " + fileName);
 

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>(Type a title for your page here)</title>
+    <!-- build:css style.css -->
+    <link href="ESP8266.css" rel="stylesheet"/>
+    <!-- endbuild -->
+
+    <!-- build:js script.js -->
+    <script src="webduino.js"></script>
+    <script src="settings.js"></script>
+    <!-- endbuild -->
+
+</head>
+
+<body>
+<!-- The Modal -->
+<div id="modalPopup" class="modal">
+    <!-- Modal content -->
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <div id="modalText">Some text in the Modal..</div>
+        <input type="button" id="okButton" value="Ok">
+        <input type="button" id="cancelButton" value="Annulla">
+    </div>
+</div>
+
+<!--copiare da qui-->
+<h1 id="head">Webduino</h1>
+<ul id="navigation">
+    <li><a href="index.html" class="button hvr-underline-from-center">Home</a></li>
+    <li><span class="active">Impostazioni</span></li>
+    <li><a href="heater.html" class="button hvr-underline-from-center">Riscaldamento</a></li>
+    <li><a href="temperature.html" class="button hvr-underline-from-center">Sensori temperatura</a></li>
+</ul>
+<!--Content--->
+<div id="content" class="container_16 clearfix">
+    <div class="grid_5">
+        <div class="box">
+
+            <h2>Impostazioni scheda</h2>
+
+            <form action='/command' method='POST' id='shield'>
+                <p>
+                    <strong>Local Port: </strong><input type='number' id='localport' name='localport' value='80' step='1' min='1' max='9999'><BR><BR>
+                    <strong>Shield name: </strong><input type='text'  id='shieldname' name='shieldname' value='shieldname' size='29' maxlength='29'><BR><BR>
+                    <strong>SSID: </strong><input type='text' id='ssid' name='ssid' value='SSID' size='32' maxlength='32'><BR><BR>
+                    <strong>password: </strong><input type='text' id='password' name='password' value='password' size='96' maxlength='96'><BR><BR>
+                    <strong>Server name: </strong><input type='text' id='servername' name='servername' value='Server name' size='29' maxlength='29'><BR><BR>
+                    <strong>Server Port: </strong><input type='number' id='serverport' name='serverport' value='8080' step='1' min='1' max='9999'><BR><BR>
+
+                    <input type='hidden' name='command' value='shieldsettings'>
+                    <input type='submit' value="save" onclick='whichPressed=this'>
+                </p>
+            </form>
+        </div>
+
+    </div>
+</div>
+<!--Footer --->
+<div id="foot">
+    <div class="container_16 clearfix">
+        <div class="grid_16"><a href="#">Contact Me</a></div>
+    </div>
+</div>
+
+<label id="summary">summary</label><br>
+<label id="command">command</label><br>
+<label id="timer">timer</label>
+
+<script type="text/javascript">
+    document.addEventListener("DOMContentLoaded", function() {
+        load();
+    });
+</script>
+</body>
+</html>

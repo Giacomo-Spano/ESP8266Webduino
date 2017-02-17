@@ -13,10 +13,61 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="html">
+      <UniqueIdentifier>{25780139-20d3-4098-9edc-b6a2bcc9b4c9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="data">
+      <UniqueIdentifier>{aa714cc4-e968-4841-ad78-da0440c2a722}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="ESP8266Webduino.ino" />
     <None Include="ESP8266.css" />
+    <None Include="html\button.css">
+      <Filter>html</Filter>
+    </None>
+    <None Include="html\ESP8266.css">
+      <Filter>html</Filter>
+    </None>
+    <None Include="html\heater.html">
+      <Filter>html</Filter>
+    </None>
+    <None Include="html\heater.js">
+      <Filter>html</Filter>
+    </None>
+    <None Include="html\heaterstatus">
+      <Filter>html</Filter>
+    </None>
+    <None Include="html\index.html">
+      <Filter>html</Filter>
+    </None>
+    <None Include="html\index.js">
+      <Filter>html</Filter>
+    </None>
+    <None Include="html\settings.html">
+      <Filter>html</Filter>
+    </None>
+    <None Include="html\settings.js">
+      <Filter>html</Filter>
+    </None>
+    <None Include="html\webduino.js">
+      <Filter>html</Filter>
+    </None>
+    <None Include="gulpfile - Copia.js" />
+    <None Include="gulpfile.js" />
+    <None Include="package.json" />
+    <None Include="data\heater.html">
+      <Filter>data</Filter>
+    </None>
+    <None Include="data\index.html">
+      <Filter>data</Filter>
+    </None>
+    <None Include="data\settings.html">
+      <Filter>data</Filter>
+    </None>
+    <None Include="data\temperature.html">
+      <Filter>data</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="__vm\.ESP8266Webduino.vsarduino.h">
@@ -58,9 +109,6 @@
     <ClInclude Include="HeaterActuator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="css.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Shield.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -68,12 +116,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="HtmlFileClass.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="js.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="_html.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="html.h">

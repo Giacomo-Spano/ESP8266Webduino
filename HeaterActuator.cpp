@@ -25,77 +25,64 @@ String HeaterActuator::sendCommand(String jsonStr)
 	int actuatorId;
 	if (json.has("actuatorid")) {
 		actuatorId = json.jsonGetInt("actuatorid");
-		logger.print(tag, F("\n\tactuatorid="));
-		logger.print(tag, actuatorId);
+		logger.print(tag, "\n\t actuatorid=" + actuatorId);
 	}
 	// command
 	String command = "";
 	if (json.has("command")) {
 		command = json.jsonGetString("command");
-		logger.print(tag, F("\n\tcommand="));
-		logger.print(tag, command);
+		logger.print(tag,"\n\t command=" + command);
 	}
 	// duration
 	int duration = 0;
 	if (json.has("duration")) {
 		duration = json.jsonGetInt("duration");
-		logger.print(tag, F("\n\tduration="));
-		logger.print(tag, duration);
-		logger.print(tag, F(" minuti"));
+		logger.print(tag, "\n\t duration=" + String(duration) + " minuti");
 		duration = duration * 60 * 1000;
-		logger.print(tag, F("\n\tduration ="));
-		logger.print(tag, duration);
-		logger.print(tag, F(" millisecondi"));
+		logger.print(tag, "\n\t duration=" + String(duration) + " millisecondi");
 	}
 	// sensor
 	int sensorId = 0;
 	if (json.has("sensor")) {
 		sensorId = json.jsonGetInt("sensor");
-		logger.print(tag, F("\n\tsensorId="));
-		logger.print(tag, String(sensorId));
+		logger.print(tag, "\n\t sensorId=" + String(sensorId));
 	}
 	// localsensor
 	bool localSensor = false;
 	if (json.has("localsensor")) {
 		localSensor = json.jsonGetBool("localsensor");
-		logger.print(tag, F("\n\tlocalsensor="));
-		logger.print(tag, localSensor);
+		logger.print(tag, "\n\t localsensor=" + localSensor);
 	}
 	// target
 	float target = 0;
 	if (json.has("target")) {
 		target = json.jsonGetFloat("target");
-		logger.print(tag, F("\n\ttarget="));
-		logger.print(tag, String(target));
+		logger.print(tag, "\n\t target=" + String(target));
 	}
 	// remote temperature
 	float remoteTemperature = 0;
 	if (json.has("temperature")) {
-		target = json.jsonGetFloat("temperature");
-		logger.print(tag, F("\n\ttemperature="));
-		logger.print(tag, String(target));
+		remoteTemperature = json.jsonGetFloat("temperature");
+		logger.print(tag, "\n\t temperature=" + String(remoteTemperature));
 	}
 	// sensor
 	int program = 0;
 	if (json.has("program")) {
 		program = json.jsonGetInt("program");
-		logger.print(tag, F("\n\tprogram="));
-		logger.print(tag, String(program));
+		logger.print(tag, "\n\tprogram=" + String(program));
 	}
 	// sensor
 	int timerange = 0;
 	if (json.has("timerange")) {
 		sensorId = json.jsonGetInt("timerange");
-		logger.print(tag, F("\n\ttimerange="));
-		logger.print(tag, String(timerange));
+		logger.print(tag, "\n\ttimerange=" + String(timerange));
 	}
 
 	changeProgram(command, duration,
 		!localSensor,
 		remoteTemperature,
 		sensorId,
-		target, program, timerange);
-	
+		target, program, timerange);	
 	// result
 	String jsonResult = "";
 	jsonResult += "{";
@@ -106,19 +93,16 @@ String HeaterActuator::sendCommand(String jsonStr)
 
 void HeaterActuator::init(String MACAddress)
 {
-
 	ConsumptionStartTime = millis();
 	pinMode(relePin, OUTPUT);
 	setStatus(Program::STATUS_IDLE);
 	subaddress += MACAddress;
 
 	sensorname = "Riscaldamento";
-
 }
 
 void HeaterActuator::checkStatus()
 {
-
 	bool sendStatus = false;
 
 	// controlla se il programma attivo è finito.
@@ -139,9 +123,6 @@ void HeaterActuator::checkStatus()
 	if (statusChanged()) {
 
 		logger.println(tag, "\t!->status changed");
-		/*if (getStatus() == Program::STATUS_DISABLED) {
-			command.sendActuatorStatus(*this);
-		}*/
 		saveOldStatus();
 		sendStatus = true;
 	}
@@ -154,10 +135,7 @@ void HeaterActuator::checkStatus()
 
 void HeaterActuator::setTargetTemperature(float target)
 {
-	logger.print(tag, F("\n\tsetTargetTemperature"));
-
-	logger.print(tag, F(" targetTemperature="));
-	logger.print(tag, targetTemperature);
+	logger.print(tag, "\n\t >>setTargetTemperature " + String(targetTemperature));
 	targetTemperature = target;
 }
 
@@ -167,18 +145,12 @@ float HeaterActuator::getTargetTemperature() {
 
 void HeaterActuator::setRemoteTemperature(float remote)
 {
-	logger.print(tag, F("\n\tsetRemoteTemperature"));
-	logger.print(tag, F(" remote="));
-	logger.print(tag, remote);
+	logger.print(tag, "\n\tsetRemoteTemperature" + String(remote));
 
 	remoteTemperature = remote;
-
 	last_RemoteSensor = millis();
 	logger.print(tag, F(",last_RemoteSensor="));
 	logger.print(tag, last_RemoteSensor);
-
-	/*if (sensorRemote)
-		updateReleStatus();*/ // non serve. E' controllato da remoto'
 }
 
 float HeaterActuator::getRemoteTemperature() {
@@ -192,18 +164,15 @@ float HeaterActuator::getLocalTemperature()
 
 void HeaterActuator::setSensorRemote(bool enable, int sensorId)
 {
-	logger.print(tag, F("\n\tsetSensorRemote"));
-	logger.print(tag, F(" tenable="));
-	logger.print(tag, enable);
-	logger.print(tag, F(",sensorId="));
-	logger.print(tag, sensorId);
+	/*logger.print(tag, "\n\t >>setSensorRemote");
+	logger.print(tag, "\n\t tenable=" + String(enable));
+	logger.print(tag, "\n\t sensorId=" + sensorId);*/
 
 	sensorRemote = enable;
 	remoteSensorId = sensorId;
 
 	last_RemoteSensor = millis();
-	logger.print(tag, F(",last_RemoteSensor="));
-	logger.print(tag, last_RemoteSensor);
+	//logger.print(tag, "\n\t last_RemoteSensor=" + String(last_RemoteSensor));
 }
 
 int HeaterActuator::getRemoteSensorId() {
@@ -252,30 +221,23 @@ void HeaterActuator::updateReleStatus() {
 
 	logger.print(tag, "\n\n\t>>updateReleStatus");
 
-	logger.print(tag, "\n\tConsumptionStartTime=");
-	logger.print(tag, String(ConsumptionStartTime));
-	logger.print(tag, "\n\ttotalConsumptionTime=");
-	logger.print(tag, String(totalConsumptionTime));
-	logger.print(tag, "\n\tlastConsumptionEnableTime=");
-	logger.print(tag, String(lastConsumptionEnableTime));
-	logger.print(tag, "\n\ttargetTemperature=");
-	logger.print(tag, String(targetTemperature));
-	logger.print(tag, "\n\tsensorRemote=");
-	logger.print(tag, String(sensorRemote));
-	logger.print(tag, "\n\tremoteSensorId=");
-	logger.print(tag, String(remoteSensorId));
-	logger.print(tag, "\n\tremoteTemperature=");
-	logger.print(tag, String(remoteTemperature));
+	logger.print(tag, "\n\t ConsumptionStartTime=" + String(ConsumptionStartTime));
+	logger.print(tag, "\n\t totalConsumptionTime=" + String(totalConsumptionTime));
+	logger.print(tag, "\n\t lastConsumptionEnableTime=" + String(lastConsumptionEnableTime));
+	logger.print(tag, "\n\t targetTemperature=" + String(targetTemperature));
+	logger.print(tag, "\n\t sensorRemote=" + String(sensorRemote));
+	logger.print(tag, "\n\t remoteSensorId=" + String(remoteSensorId));
+	logger.print(tag, "\n\t remoteTemperature=" + String(remoteTemperature));
 	logger.print(tag, "\n\n");
 
 	if (currentStatus == Program::STATUS_MANUAL_OFF) {
 
-		logger.print(tag, "\n\tSTATUS_MANUAL_OFF");
+		logger.print(tag, "\n\t STATUS_MANUAL_OFF");
 		enableRele(false);
 	}
 	else if (currentStatus == Program::STATUS_MANUAL_AUTO) {
 
-		logger.print(tag, "\n\tSTATUS_MANUAL_AUTO");
+		logger.print(tag, "\n\t STATUS_MANUAL_AUTO");
 		// se stato manuale accendi il rel� se sensore == locale e temperatura sensore locale < temperatura target oppure
 		// se sensore == remoto e temperature sensore remoto < temperatura target 
 		if ((!sensorRemote && localAvTemperature < targetTemperature) ||
@@ -291,7 +253,7 @@ void HeaterActuator::updateReleStatus() {
 	}
 	else if (currentStatus == Program::STATUS_PROGRAMACTIVE) {
 
-		logger.print(tag, "\n\tSTATUS_PROGRAMACTIVE");
+		logger.print(tag, "\n\t STATUS_PROGRAMACTIVE");
 
 		if (sensorRemote) {
 			logger.print(tag, F("-REMOTE SENSOR")); // non modificare stato rele, controllato remotamente
@@ -310,22 +272,18 @@ void HeaterActuator::updateReleStatus() {
 		}
 	}
 	else {
-		logger.print(tag, "\n\tINACTIVE-rele OFF");
+		logger.print(tag, "\n\t INACTIVE-rele OFF");
 		enableRele(false);
 	}
 
-	logger.print(tag, "\n\t<<updateReleStatus\n");
+	logger.print(tag, "\n\t <<updateReleStatus\n");
 }
 
 void HeaterActuator::changeProgram(String command, long duration, bool sensorRemote, float remotetemperature, int sensorId, float target, int program, int timerange) {
 
-	logger.print(tag, F("\t>>changeProgram"));
+	logger.print(tag, F("\n\t >>HeaterActuator::changeProgram"));
 
-	logger.print(tag, F("\n\tcurrentStatus="));
-	logger.print(tag, currentStatus);
-
-
-	logger.print(tag, F("\n"));
+	logger.print(tag, "\n\t currentStatus=" + String(currentStatus));
 	logger.print(tag, String("\n\t command=") + command);
 	logger.print(tag, String("\n\t duration=") + String(duration));
 	logger.print(tag, String("\n\t sensorRemote=") + String(sensorRemote));
@@ -334,18 +292,16 @@ void HeaterActuator::changeProgram(String command, long duration, bool sensorRem
 	logger.print(tag, String("\n\t target=") + String(target));
 	logger.print(tag, String("\n\t program=") + String(program));
 	logger.print(tag, String("\n\t timerange=") + String(timerange));
-
-
+	
 	setSensorRemote(sensorRemote, sensorId);
 	setRemoteTemperature(remoteTemperature);
+	setTargetTemperature(target);
 
 	if (currentStatus == Program::STATUS_DISABLED) {
-
 		if (command.equals(command_enabled)) {
 			enableRele(false);
 			setStatus(Program::STATUS_IDLE);
 		}
-
 	}
 	else {
 
@@ -356,7 +312,7 @@ void HeaterActuator::changeProgram(String command, long duration, bool sensorRem
 		}
 		else if (command.equals(command_Manual)) {
 
-			logger.print(tag, F("\n\tmanual "));
+			logger.print(tag, F("\n\t manual "));
 			enableRele(true);
 			programDuration = duration;
 			programStartTime = millis();
@@ -365,7 +321,7 @@ void HeaterActuator::changeProgram(String command, long duration, bool sensorRem
 		}
 		else if (command.equals(command_ManualOff)) {
 
-			logger.print(tag, F("\n\tmanual off"));
+			logger.print(tag, F("\n\t manual off"));
 			enableRele(false);
 			programDuration = duration;
 			programStartTime = millis();
@@ -373,25 +329,22 @@ void HeaterActuator::changeProgram(String command, long duration, bool sensorRem
 
 		}
 		else if (command.equals(command_ProgramOn)) {
-
 			if (currentStatus != Program::STATUS_MANUAL_AUTO && currentStatus != Program::STATUS_MANUAL_OFF) {
-
-				logger.print(tag, F("\n\trele on not manual "));
+				logger.print(tag, F("\n\t rele on not manual "));
 				programDuration = duration;
 				programStartTime = millis();
 				activeProgram = program;
 				activeTimerange = timerange;
 				enableRele(true);
 				setStatus(Program::STATUS_PROGRAMACTIVE);
-
 			}
 		}
 		else if (command.equals(command_ProgramOff)) {
 
-			logger.print(tag, F("\n\trele program off "));
+			logger.print(tag, F("\n\t rele program off "));
 			if (currentStatus != Program::STATUS_MANUAL_AUTO || currentStatus != Program::STATUS_MANUAL_OFF) {
 			
-				logger.print(tag, F("\n\tprogram active rele off "));
+				logger.print(tag, F("\n\t program active rele off "));
 				enableRele(false);
 				setStatus(Program::STATUS_PROGRAMACTIVE);
 				programDuration = duration;
@@ -406,7 +359,7 @@ void HeaterActuator::changeProgram(String command, long duration, bool sensorRem
 			setStatus(Program::STATUS_DISABLED);
 		}
 	}
-	logger.println(tag, F("\t<<changeProgram"));
+	logger.print(tag, F("\n\t <<HeaterActuator::changeProgram"));
 }
 
 String HeaterActuator::getSensorAddress()
@@ -417,8 +370,6 @@ String HeaterActuator::getSensorAddress()
 String HeaterActuator::getJSON() {
 	String json = "";
 	json += "{";
-	//json += "\"event\":\"update\",";
-	
 	json += "\"shieldid\":" + String(Shield::id) + ",";
 	json += "\"heaterenabled\":";
 	if (Shield::getHeaterEnabled())
@@ -474,14 +425,7 @@ String HeaterActuator::getJSON() {
 void HeaterActuator::setStatus(int status)
 {
 	currentStatus = status;
-	//updateReleStatus();
 }
-
-/*void HeaterActuator::setManualMode(int status, int mode)
-{
-	setStatus(status);
-	manualMode = mode;
-}*/
 
 int HeaterActuator::getStatus()
 {
@@ -534,9 +478,7 @@ void HeaterActuator::setRelePin(int pin) {
 
 void HeaterActuator::enableRele(boolean on) {
 
-	logger.print(tag, F("\n\t>>enableRele "));
-	//logger.print(tag, F(" on="));
-	//logger.print(tag, String(on));
+	logger.print(tag, F("\n\t >>enableRele "));
 
 	if (releStatus) {
 		totalConsumptionTime += (millis() - lastConsumptionEnableTime);
@@ -544,18 +486,18 @@ void HeaterActuator::enableRele(boolean on) {
 
 	oldReleStatus = releStatus;
 	if (on) {
-		logger.print(tag, F(" enableRele:: RELE ON"));
+		logger.print(tag, F("\n\t enableRele:: RELE ON"));
 		digitalWrite(relePin, RELE_ON);
 		releStatus = true;
 
 		lastConsumptionEnableTime = millis();
 	}
 	else {
-		logger.print(tag, F(" enableRele:: RELE OFF"));
+		logger.print(tag, F("\n\t enableRele:: RELE OFF"));
 		digitalWrite(relePin, RELE_OFF);
 		releStatus = false;
 	}
-	logger.print(tag, F("\n\t<<enableRele "));
+	logger.print(tag, F("\n\t <<enableRele "));
 }
 
 bool HeaterActuator::statusChanged() {

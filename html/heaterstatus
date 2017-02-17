@@ -1,0 +1,2 @@
+"HTTP/1.0 200 OK\r\nContent-Type: application/json; "\r\nPragma: no-cache\r\n\r\n";{"shieldid":0,"enabled":true,"pin":14,"remotetemperature":0.00,"addr":"HeaterActuator-18:fe:34:d4:c6:87","status":"idle","type":"heater","name":"Riscaldamento","relestatus":"false"}
+{"shieldid":0,"enabled":true,"pin":14,"remotetemperature":0.00,"addr":"HeaterActuator-18:fe:34:d4:c6:87","status":"idle","type":"heater","name":"Riscaldamento","relestatus":"false"}

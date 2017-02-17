@@ -2,20 +2,24 @@
 #include <Arduino.h>
 #include <Time.h>
 #include "TimeLib.h"
+#include "FS.h"
 
 
 class Logger
 {
 private :
 	
+	static String tag;
 	
 	String getHeader(String tag);
 	static const int maxLogbuffer = 10000;
 	bool truncated = false;
+	static String logFileName;
+	static File logFile;
 
 	//String tag;
 	String line = "";
-	String toBeSent = "";
+	static String toBeSent;
 public:
 	Logger();
 	//Logger(String tag);
@@ -31,7 +35,8 @@ public:
 	
 	bool send(/*int shieldid, String serverName, int port*/);
 	
-	String getStrDate();
+	static String getStrDate();
+	static void init();
 	
 };
 

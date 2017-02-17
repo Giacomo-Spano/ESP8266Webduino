@@ -2,15 +2,12 @@
 
 #include <Arduino.h>
 #include "Logger.h"
-//#include <WString.h>
 
 class JSON
 {
 public:
 	JSON(String json);
-	~JSON();
-
-	
+	~JSON();	
 	int jsonGetInt(String key);
 	bool jsonGetBool(String key);
 	long jsonGetLong(String key);
@@ -19,7 +16,8 @@ public:
 	bool has(String key);
 
 private:
-	String tag;
+	static String tag;
+	static Logger logger;
 	String jsonString;
 	String getRightOfKey(String key);
 	String getNum(String key);

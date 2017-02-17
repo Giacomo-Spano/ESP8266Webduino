@@ -1,20 +1,13 @@
 #include "DS18S20Sensor.h"
-#include "Logger.h"
+
 #include "Util.h"
 #include "ESP8266Webduino.h"
 
-
-extern Logger logger;
-extern uint8_t OneWirePin;
-////extern OneWire oneWire;
-//extern OneWire *oneWirePtr;
-//extern DallasTemperature dallasSensors;
-//extern DallasTemperature* pDallasSensors;
-
+Logger DS18S20Sensor::logger;
+String DS18S20Sensor::tag = "DS18S20Sensor";
 
 DS18S20Sensor::DS18S20Sensor()
 {
-	tag = "DS18S20Sensor";	
 }
 
 DS18S20Sensor::~DS18S20Sensor()

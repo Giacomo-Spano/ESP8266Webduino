@@ -21,15 +21,19 @@ public:
 	HttpResponse();
 	~HttpResponse();
 	void init(WiFiClient* pClient);
-	String send(const String res, String contentType, String body);
-	bool sendFile(const String res, String contentType, String fileName);
+	void send(const String res, String contentType, String body);
+	void sendVirtualFile(const String res, String contentType, String fileName);
+	
 	
 private:
 	static String tag;
 	static Logger logger;
 	WiFiClient* pClient;
-	void sendData(WiFiClient* pClient, String fileName, const char * file);
-	String sendHeader(const String res, String contentType);
+	String contentDisposition = "";
+	void sendData(String fileName, const char * file);
+	void sendHeader(const String res, String contentType);
+	void setContentDisposition(String fileName, int size);
+	bool sendFile(String fileName);
 
 };
 

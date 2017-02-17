@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>(Type a title for your page here)</title>
+
+    <!-- build:css style.css -->
+    <link href="ESP8266.css" rel="stylesheet"/>
+    <!-- endbuild -->
+
+    <!-- build:js script.js -->
+    <script src="webduino.js"></script>
+    <script src="heater.js"></script>
+    <!-- endbuild -->
+
+</head>
+
+<body>
+<!-- The Modal -->
+<div id="modalPopup" class="modal">
+    <!-- Modal content -->
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <div id="modalText">Some text in the Modal..</div>
+        <input type="button" id="okButton" value="Ok">
+        <input type="button" id="cancelButton" value="Annulla">
+    </div>
+</div>
+
+<!--copiare da qui-->
+<h1 id="head">Webduino</h1>
+<ul id="navigation">
+    <li><a href="index.html" class="button hvr-underline-from-center">Home</a></li>
+    <li><a href="settings.html" class="button hvr-underline-from-center">Impostazioni</a></li>
+    <li><span class="active">Riscaldamento</span></li>
+    <li><a href="temperature.html" class="button hvr-underline-from-center">Sensori temperatura</a></li>
+</ul>
+<!--Content--->
+<div id="content" class="container_16 clearfix">
+    <div class="grid_5">
+        <div class="box">
+
+            <h2>Riscaldamento</h2>
+                <p>
+                    <strong>Abilitato : </strong><label class="input-toggle"><input type="checkbox" id="heaterEnabled"
+                                                                                    name="enabled"><span></span></label><br>
+                    <strong>Pin rele : </strong><label id="pinSelectValue" hidden>audi</label>
+                    <select id="pinSelect" name="pin">
+                        <option value="D1">D1</option>
+                        <option value="D2">D2</option>
+                        <option value="D3">D3</option>
+                        <option value="D4">D4</option>
+                        <option value="D5">D5</option>
+                    </select>
+                    <br><br>
+                </p>
+        </div>
+
+        <div class="box">
+
+            <h2>Riscaldamento</h2>
+
+            <form action='/command' method='POST' id='startManualForm'>
+                <p>
+                    Minutesy:<input type='number' name='duration' value='30' min="1" max="30"><BR>
+                    Target:<input type='number' name='target' value='22.0' step='0.10'><BR>
+                    Sensor:<input type='radio' name='sensor' value='0' checked>Local<input type='radio' name='sensor'
+                                                                                           value='1'>Remote<BR>
+                    <input type='hidden' name='command' value='manual'>
+                    <input type='submit' value='start manual'>
+                </p>
+            </form>
+
+            <form action='/command' method='POST' id='manualOffForm'>
+                <p>
+                    Minutesx:<input type='number' name='duration' value='30' min="1" max="30"><BR>
+                    <input type='hidden' name='command' value='manualoff'>
+                    <input type='submit' value='start manual off'>
+                </p>
+            </form>
+
+            <div id='manual'>
+                <form action='/command' method='POST' id='stopManualForm'>
+                    <p>
+                        <input type='hidden' name='command' value='manualend'>
+                        <input type='submit' value='stop manual'>
+                    </p>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!--Footer --->
+<div id="foot">
+    <div class="container_16 clearfix">
+        <div class="grid_16"><a href="#">Contact Me</a></div>
+    </div>
+</div>
+
+<label id="summary">summary</label><br>
+<label id="command">command</label><br>
+<label id="timer">timer</label>
+
+<script type="text/javascript">
+    document.addEventListener("DOMContentLoaded", function() {
+        load();
+    });
+</script>
+</body>
+</html>

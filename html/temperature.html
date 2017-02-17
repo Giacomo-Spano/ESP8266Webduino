@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>(Type a title for your page here)</title>
+
+    <!-- build:css style.css -->
+    <link href="ESP8266.css" rel="stylesheet"/>
+    <!-- endbuild -->
+
+    <!-- build:js script.js -->
+    <script src="webduino.js"></script>
+    <script src="temperature.js"></script>
+    <!-- endbuild -->
+
+</head>
+
+<body>
+<!-- The Modal -->
+<div id="modalPopup" class="modal">
+    <!-- Modal content -->
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <div id="modalText">Some text in the Modal..</div>
+        <input type="button" id="okButton" value="Ok">
+        <input type="button" id="cancelButton" value="Annulla">
+    </div>
+</div>
+
+<!--copiare da qui-->
+<h1 id="head">Webduino</h1>
+<ul id="navigation">
+    <li><a href="index.html" class="button hvr-underline-from-center">Home</a></li>
+    <li><a href="settings.html" class="button hvr-underline-from-center">Impostazioni</a></li>
+    <li><a href="heater.html" class="button hvr-underline-from-center">Riscaldamento</a></li>
+    <li><span class="active">Sensori temperatura</span></li>
+</ul>
+<!--Content--->
+<div id="content" class="container_16 clearfix">
+    <div class="grid_5" id="temperatureSensors">
+        <div class="box">
+
+            <h2>Impostazioni sensori temperatura</h2>
+                <p>
+                    <strong>Abilitato : </strong><label class="input-toggle"><input type="checkbox" id="temperatureSensorsCheckBox"
+                                                                                    name="enabled"><span></span></label><br>
+                    <strong>OneWre pin : </strong><label id="pinSelectValue" hidden>audi</label>
+                    <select id="pinSelect" name="pin">
+                        <option value="D1">D1</option>
+                        <option value="D2">D2</option>
+                        <option value="D3">D3</option>
+                        <option value="D4">D4</option>
+                        <option value="D5">D5</option>
+                    </select>
+                    <br>
+                </p>
+        </div>
+
+        <div class="box" id="temperatureSensor" name='temperatureSensor'>
+            <h2>Sensore</h2>
+            <p>
+                <form action='/command' method='POST' id='nameForm' name='nameForm'>
+                    <strong>nome sensore: </strong><input type='text' name='name'><input type="submit" id="nameButton" value="Salva"><span></span></label>
+                    <input type='hidden' name='command' value='temperaturesensorsettings'>
+                    <input type='hidden' name='addr' value='0'>
+                </form><br>
+                <strong>Temperatura : </strong><label name="temperature"></label><br>
+            </p>
+        </div>
+
+        <div id="temperatureSensorList">
+        </div>
+
+
+    </div>
+</div>
+<!--Footer --->
+<div id="foot">
+    <div class="container_16 clearfix">
+        <div class="grid_16"><a href="#">Contact Me</a></div>
+    </div>
+</div>
+
+<label id="summary">summary</label><br>
+<label id="command">command</label><br>
+<label id="timer">timer</label>
+
+<script type="text/javascript">
+    document.addEventListener("DOMContentLoaded", function() {
+        load();
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>(Type a title for your page here)</title>
+    <!-- build:css style.css -->
+    <link href="ESP8266.css" rel="stylesheet"/>
+    <!-- endbuild -->
+
+    <!-- build:js script.js -->
+    <script src="webduino.js"></script>
+    <script src="index.js"></script>
+    <!-- endbuild -->
+
+</head>
+
+<body>
+<!-- The Modal -->
+<div id="modalPopup" class="modal">
+    <!-- Modal content -->
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <div id="modalText">Some text in the Modal..</div>
+        <input type="button" id="okButton" value="Ok">
+        <input type="button" id="cancelButton" value="Annulla">
+    </div>
+</div>
+
+<!--copiare da qui-->
+<h1 id="head">Webduino</h1>
+<ul id="navigation">
+    <li><span class="active">Home</span></li>
+    <li><a href="settings.html" class="button hvr-underline-from-center">Impostazioni</a></li>
+    <li><a href="heater.html" class="button hvr-underline-from-center">Riscaldamento</a></li>
+    <li><a href="temperature.html" class="button hvr-underline-from-center">Sensori temperatura</a></li>
+</ul>
+<!--Content--->
+<div id="content" class="container_16 clearfix">
+    <div class="grid_5">
+        <div class="box">
+            <h2>Stato scheda</h2>
+            <p>
+                <strong>Date e ora : </strong><label id="datetime"></label><br>
+                <strong>IP Address : </strong><label id="localip"></label><br>
+                <strong>MAC Address : </strong><label id="macaddress"></label><br>
+                <strong>ID scheda: </strong><label id="shieldid"></label><br>
+                <strong>Nome Scheda: </strong><label id="shieldname"></label><br>
+                <strong>Versione software: </strong><label id="swversion"></label><br>
+                <strong>Nome Scheda: </strong><label id="lastrestart"></label><br>
+                <strong>Heap size: </strong><label id="heap"></label><br>
+            </p>
+        </div>
+
+        <div class="box">
+            <h2>Comandi</h2>
+                <p>
+                    <strong>Power : </strong><label class="input-toggle"><input type="checkbox" id="powerCheckBox"><span></span></label><br><br>
+                    <strong>Reset : </strong><input type="button" id="resetButton" value="reset"><span></span></label><br><br>
+                    <strong>Registrazione Shield: </strong><input type="button" id="registerButton" value="Register"><span></span></label><br><br>
+                </p>
+        </div>
+    </div>
+</div>
+<!--Footer --->
+<div id="foot">
+    <div class="container_16 clearfix">
+        <div class="grid_16"><a href="#">Contact Me</a></div>
+    </div>
+</div>
+
+<label id="summary">summary</label><br>
+<label id="command">command</label><br>
+<label id="timer">timer</label>
+
+
+<script type="text/javascript">
+    document.addEventListener("DOMContentLoaded", function() {
+        load();
+    });
+</script>
+</body>
+</html>

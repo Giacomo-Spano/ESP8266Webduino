@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include <string.h>
 #include "Actuator.h"
 #include "Sensor.h"
 #include "List.h"
@@ -15,6 +16,7 @@ class Shield
 public:
 	HeaterActuator hearterActuator;
 
+	static String swVersion;
 	static const int shieldNameLen = 30;
 	static const int serverNameLen = 30;
 	static const char networkSSIDLen = 32;// = "ssid";
@@ -29,6 +31,7 @@ public:
 	static int id;// = 0; // inizializzato a zero perchè viene impostato dalla chiamata a registershield
 	static int ioDevices[maxIoDevices];
 	static bool heaterEnabled;
+	static bool temperatureSensorsEnabled;
 	static uint8_t oneWirePin;
 	static uint8_t heaterPin; // pin rele heater
 	static String powerStatus; // power
@@ -44,6 +47,7 @@ private:
 
 protected:
 	String sendHeaterSettingsCommand(JSON json);
+	String sendTemperatureSensorsSettingsCommand(JSON json);
 	String sendShieldSettingsCommand(JSON jsonStr);
 	String sendPowerCommand(JSON jsonStr);
 	String sendRegisterCommand(JSON jsonStr);
@@ -52,8 +56,8 @@ protected:
 	//SimpleList<Actuator> actuatorList;
 	
 	static int localPort;
-	static String networkSSID;// [32];// = "ssid";
-	static String networkPassword;//[96];// = "password";
+	static String networkSSID;
+	static String networkPassword;
 	static String serverName;//[serverNameLen];
 	static int serverPort;
 	static String shieldName;
@@ -159,6 +163,26 @@ public:
 			return "D7";
 	}
 
+	
+	static String getStrOneWirePin()
+	{
+		if (oneWirePin == D1)
+			return "D1";
+		if (oneWirePin == D2)
+			return "D2";
+		if (oneWirePin == D3)
+			return "D3";
+		if (oneWirePin == D4)
+			return "D4";
+		if (oneWirePin == D5)
+			return "D5";
+		if (oneWirePin == D6)
+			return "D6";
+		if (oneWirePin == D7)
+			return "D7";
+	}
+
+
 	static void setHeaterPin(int pin)
 	{
 		logger.print(tag, "\n\t>>setHeaterPin: " + String(pin));
@@ -177,17 +201,31 @@ public:
 
 	static bool getHeaterEnabled()
 	{
+		logger.print(tag, "\n\t >>getHeaterEnabled: " + String(heaterEnabled));
 		return heaterEnabled;
 	}
 
 	static void setHeaterEnabled(bool enabled)
 	{
-		logger.print(tag, "\n\t>>setHeaterEnabled: " + String(enabled));
+		logger.print(tag, "\n\t >>setHeaterEnabled: " + String(enabled));
 		heaterEnabled = enabled;
-		if (heaterEnabled)
+		/*if (heaterEnabled)
 			logger.print(tag, " true");
 		else
-			logger.print(tag, " false");
+			logger.print(tag, " false");*/
+		
+	}
+
+	static bool getTemperatureSensorsEnabled()
+	{
+		logger.print(tag, "\n\t >>getTemperatureSensorsEnabled: " + String(temperatureSensorsEnabled));
+		return temperatureSensorsEnabled;
+	}
+
+	static void setTemperatureSensorsEnabled(bool enabled)
+	{
+		logger.print(tag, "\n\t >>setTemperatureSensorsEnabled: " + String(enabled));
+		temperatureSensorsEnabled = enabled;
 		
 	}
 	
@@ -210,10 +248,9 @@ public:
 
 	static void setNetworkSSID(String ssid)
 	{
-		logger.print(tag, "\n\t>>setNetworkSSID");
+		//logger.print(tag, "\n\t >>setNetworkSSID: " + ssid);
 		networkSSID = ssid;
-		logger.print(tag, "\n\tnetworkSSID=");
-		logger.print(tag, networkSSID);
+		//logger.print(tag, "\n\t networkSSID="+ networkSSID);
 	}
 
 	static String getNetworkPassword()
@@ -224,10 +261,9 @@ public:
 
 	static void setNetworkPassword(String password)
 	{
-		logger.print(tag, "\n\t>>setNetworkPassword");
+		//logger.print(tag, "\n\t >>setNetworkPassword: " + password);
 		networkPassword = password;
-		logger.print(tag, "\n\tnetworkPassword=");
-		logger.print(tag, networkPassword);
+		//logger.print(tag, "\n\t networkPassword=" + networkPassword);
 	}
 
 	static String getServerName()

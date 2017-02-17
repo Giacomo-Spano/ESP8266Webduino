@@ -20,6 +20,9 @@ public:
 	//static const char* jsonContentType;// = "application/json",
 	static const String jsonContentType;// = "application/json";
 	static const String htmlContentType;// = "application/json";
+	static const String cssContentType;// = "text/css;";
+	static const String icoContentType;// = "image / x - icon;";
+
 		
 
 	ESPWebServer(WiFiClient* pClient);

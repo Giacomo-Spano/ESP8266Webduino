@@ -111,6 +111,9 @@ int Command::registerShield(Shield shield)
 	HttpHelper hplr;
 
 	String result;
+	logger.print(tag, "\n\t serverName=" + Shield::getServerName() + "**");
+	logger.print(tag, "\n\t serverPort=" + String(Shield::getServerPort()));
+
 	boolean res = hplr.post(Shield::getServerName(), Shield::getServerPort(), "/webduino/shield", str, &result);
 	//logger.print(tag, "\n\tanswer = ");
 	//logger.println(tag, result);

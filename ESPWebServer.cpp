@@ -9,7 +9,10 @@ Logger ESPWebServer::logger;
 String ESPWebServer::tag = "ESPWebServer";
 
 const String ESPWebServer::jsonContentType = "application/json";
-const String ESPWebServer::htmlContentType = "text/html;";
+const String ESPWebServer::htmlContentType = "text/html";
+const String ESPWebServer::cssContentType = "text/css";
+const String ESPWebServer::icoContentType = "image / x - icon";
+//const String ESPWebServer::attachmentContentType = "image / x - icon";
 
 //char* ESPWebServer::jsonContentType = "application/json";
 
@@ -70,8 +73,8 @@ HttpRequest ESPWebServer::getHttpRequest()
 
 				if (l = pClient->readBytesUntil(' ', buffer, MAX_PAGE_NAME_LEN))
 				{
-					logger.print(tag, "\n\t l="+String(l));
-					logger.print(tag, "\n\t buffer=" + String(buffer));
+					//logger.print(tag, "\n\t l="+String(l));
+					//logger.print(tag, "\n\t buffer=" + String(buffer));
 					l = findIndex(buffer, "?");
 					int i = 0;
 					if (l != -1) {
