@@ -9,6 +9,7 @@
 #include "JSON.h"
 #include <OneWire.h>
 #include <DallasTemperature.h>
+#include "ESPDisplay.h"
 
 class Shield
 {	
@@ -54,6 +55,8 @@ protected:
 	String sendResetCommand(JSON jsonStr);
 	bool temperatureChanged = false; // indica se la temperatura è cambiata dall'ultima chiamata a flash()
 	//SimpleList<Actuator> actuatorList;
+	void checkActuatorsStatus();
+	void checkSensorsStatus();
 	
 	static int localPort;
 	static String networkSSID;
@@ -62,6 +65,8 @@ protected:
 	static int serverPort;
 	static String shieldName;
 
+	ESPDisplay display;
+
 public:
 
 	List sensorList;
@@ -69,14 +74,13 @@ public:
 
 	Shield();
 	~Shield();
+	void init();
 	String getSensorsStatusJson();
 	String getActuatorsStatusJson();
 	String getHeaterStatusJson();
 	String getSettingsJson();
-	void checkActuatorsStatus();
-	void checkSensorsStatus();
-	String sendCommand(String jsonStr);	
-	
+	void checkStatus();	
+	String sendCommand(String jsonStr);		
 	
 	unsigned char MAC_array[6];
 	char MAC_char[18];
@@ -147,6 +151,8 @@ public:
 
 	static String getStrHeaterPin()
 	{
+		if (heaterPin == D0)
+			return "D0";
 		if (heaterPin == D1)
 			return "D1";
 		if (heaterPin == D2)
@@ -161,11 +167,19 @@ public:
 			return "D6";
 		if (heaterPin == D7)
 			return "D7";
+		if (heaterPin == D8)
+			return "D8";
+		if (heaterPin == D9)
+			return "D9";
+		if (heaterPin == D10)
+			return "D10";
 	}
 
 	
 	static String getStrOneWirePin()
 	{
+		if (oneWirePin == D0)
+			return "D0";
 		if (oneWirePin == D1)
 			return "D1";
 		if (oneWirePin == D2)
@@ -180,6 +194,12 @@ public:
 			return "D6";
 		if (oneWirePin == D7)
 			return "D7";
+		if (oneWirePin == D8)
+			return "D8"; 
+		if (oneWirePin == D9)
+			return "D9"; 
+		if (oneWirePin == D10)
+			return "D10";
 	}
 
 

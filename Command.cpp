@@ -17,7 +17,7 @@ time_t Command::getNtpTime() {
 
 Command::Command()
 {
-	tag = "Command";
+	//tag = "Command";
 }
 
 Command::~Command()

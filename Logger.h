@@ -36,6 +36,8 @@ public:
 	bool send(/*int shieldid, String serverName, int port*/);
 	
 	static String getStrDate();
+	static String getStrDayDate();
+	static String getStrTimeDate();
 	static void init();
 	
 };

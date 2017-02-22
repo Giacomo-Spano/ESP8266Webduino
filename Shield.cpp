@@ -46,6 +46,10 @@ Shield::~Shield()
 {
 }
 
+void Shield::init() {
+	display.init();
+}
+
 String Shield::sendTemperatureSensorsSettingsCommand(JSON json) {
 
 	logger.print(tag, "\n\t >>sendSensorsSettingsCommand");
@@ -54,6 +58,8 @@ String Shield::sendTemperatureSensorsSettingsCommand(JSON json) {
 	if (json.has("temperaturepin")) {
 		String str = json.jsonGetString("temperaturepin");
 		logger.print(tag, "\n\tpin=" + str);
+		if (str.equals("D0"))
+			setOneWirePin(D0);
 		if (str.equals("D1"))
 			setOneWirePin(D1);
 		else if (str.equals("D2"))
@@ -68,6 +74,13 @@ String Shield::sendTemperatureSensorsSettingsCommand(JSON json) {
 			setOneWirePin(D6);
 		else if (str.equals("D7"))
 			setOneWirePin(D7);
+		else if (str.equals("D8"))
+			setOneWirePin(D8);
+		else if (str.equals("D9"))
+			setOneWirePin(D9);
+		else if (str.equals("D10"))
+			setOneWirePin(D10);
+
 		writeChanges = true;
 	}
 	if (json.has("temperaturesensorsenabled")) {
@@ -118,6 +131,8 @@ String Shield::sendHeaterSettingsCommand(JSON json) {
 	if (json.has("heaterpin")) {
 		String str = json.jsonGetString("heaterpin");
 		logger.print(tag, "\n\tpin=" + str);
+		if (str.equals("D0"))
+			setHeaterPin(D0);
 		if (str.equals("D1"))
 			setHeaterPin(D1);
 		else if (str.equals("D2"))
@@ -132,6 +147,12 @@ String Shield::sendHeaterSettingsCommand(JSON json) {
 			setHeaterPin(D6);
 		else if (str.equals("D7"))
 			setHeaterPin(D7);
+		else if (str.equals("D8"))
+			setHeaterPin(D8);
+		else if (str.equals("D9"))
+			setHeaterPin(D9);
+		else if (str.equals("D10"))
+			setHeaterPin(D10);
 	}
 	if (json.has("heaterenabled")) {
 		bool res = json.jsonGetBool("heaterenabled");
@@ -431,6 +452,32 @@ String Shield::getHeaterStatusJson() {
 	return json;
 }
 
+void Shield::checkStatus()
+{
+	display.clear();
+
+	checkActuatorsStatus();
+	checkSensorsStatus();
+
+	uint32_t getVcc = ESP.getVcc() / 1024;
+	logger.println(tag, "VCC = " + String(getVcc));
+	String voltage = "Vcc " + String(getVcc) + "V";
+	//display.drawString(16, 32, "Vcc " + String(getVcc) + "V", ArialMT_Plain_10);
+
+	display.drawString(0, 0, Logger::getStrTimeDate() + " ", ArialMT_Plain_16);
+	display.drawString(20, 16, Logger::getStrDayDate() + " ", ArialMT_Plain_10);
+	display.drawString(0, 26, hearterActuator.getStatusName() + " " + String(hearterActuator.getReleStatus()) + voltage, ArialMT_Plain_10);
+	for (int i = 0; i < sensorList.count; i++) {
+		DS18S20Sensor* pSensor = (DS18S20Sensor*)sensorList.get(i);
+		display.drawString(0, 16 + 10 + 10 + 10*(i), pSensor->sensorname + " " + pSensor->getTemperature(), ArialMT_Plain_10);
+	}
+
+	
+
+	display.update();
+	
+}
+
 void Shield::checkActuatorsStatus()
 {
 	if (heaterEnabled) {
@@ -454,6 +501,8 @@ void Shield::checkSensorsStatus()
 void Shield::addOneWireSensors(String sensorNames) {
 
 	logger.println(tag, ">>addOneWireSensors");
+
+	logger.print(tag, "OneWirepin="+String(oneWirePin));
 
 	oneWirePtr = new OneWire(oneWirePin);
 	pDallasSensors = new DallasTemperature(oneWirePtr);
@@ -536,7 +585,7 @@ void Shield::addActuators() {
 
 void Shield::checkTemperatures() {
 
-	logger.println(tag, "\n");
+	logger.print(tag, "\n");
 	logger.println(tag, ">>checkTemperatures---");
 
 	//sensorList.show();
@@ -581,6 +630,6 @@ void Shield::checkTemperatures() {
 	}
 	
 	logger.println(tag, "<<checkTemperatures\n");
-	logger.println(tag, "\n");
+	logger.print(tag, "\n");
 }
 

@@ -148,6 +148,22 @@ String Logger::getStrDate() {
 	return date;
 }
 
+String Logger::getStrDayDate() {
+
+	char buffer[50];
+	sprintf(buffer, "%02d-%02d-%02d", day(), month(), year());
+	String date = String(buffer);
+	return date;
+}
+
+String Logger::getStrTimeDate() {
+
+	char buffer[50];
+	sprintf(buffer, "%02d:%02d:%02d", hour(), minute(), second());
+	String date = String(buffer);
+	return date;
+}
+
 void Logger::init() {
 
 	Serial.println("\n\n******INIT LOG*******");

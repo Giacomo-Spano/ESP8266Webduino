@@ -1,3 +1,4 @@
+
 #include "HttpResponse.h"
 #include "ESPWebServer.h"
 #include "HttpRequest.h"
@@ -20,11 +21,19 @@
 #include "DS18S20Sensor.h"
 #include <Time.h>
 #include "TimeLib.h"
-//#include "FS.h"
 #include "POSTData.h"
-//#include "html.h"
 
-//#define P(name) static const prog_uchar name[] PROGMEM // declare a static string
+//#include "ESPDisplay.h"
+#ifdef dopop
+// Include the correct display library
+// For a connection via I2C using Wire include
+#include <Wire.h>  // Only needed for Arduino 1.6.5 and earlier
+#include "SSD1306.h" // alias for `#include "SSD1306Wire.h"`
+// Initialize the OLED display using Wire library
+// D7 -> SDA
+// D6 -> SCL
+SSD1306  display(0x3c, D7, D6);
+#endif
 
 //#define Versione 0.92
 int EPROM_Table_Schema_Version = 7;
@@ -40,6 +49,7 @@ const char *ssidAP = "ES8266";
 const char *passwordAP = "thereisnospoon";
 const char* ssid = "xxBUBBLES";
 Shield shield;
+//ESPDisplay display;
 
 const byte EEPROM_ID = 0x99; // used to identify if valid data in EEPROM
 const int ID_ADDR = 0; // the EEPROM address used to store the ID
@@ -84,7 +94,7 @@ unsigned long lastFlash = 0;//-flash_interval;
 unsigned long lastSendLog = 0;
 const int SendLog_interval = 10000;// 10 secondi
 unsigned long lastTimeSync = 0;
-const int timeSync_interval = 60000 * 60 * 12;// 60 secondi * 60 minuti * 12 ore
+const int timeSync_interval = 60000 * 15;// *12;// 60 secondi * 15 minuti
 
 extern int __bss_end;
 extern void *__brkval;
@@ -445,7 +455,10 @@ void setup()
 	Logger::init();
 	logger.print(tag, "\n\n *******************RESTARTING************************");
 	
-	
+	shield.init();
+
+	// Initialising the UI will init the display too.
+
 	String str = "\n\nstarting.... Versione ";
 	str += Shield::swVersion;
 	logger.print(tag, str);
@@ -1010,8 +1023,9 @@ void loop()
 		return;
 	}
 
-	shield.checkActuatorsStatus();
-	shield.checkSensorsStatus();
+	shield.checkStatus();
+	
+
 
 	unsigned long currMillis = millis();
 	unsigned long timeDiff = currMillis - lastFlash;
