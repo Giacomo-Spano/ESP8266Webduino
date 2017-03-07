@@ -1,4 +1,6 @@
 
+
+#include "TFTDisplay.h"
 #include "HttpResponse.h"
 #include "ESPWebServer.h"
 #include "HttpRequest.h"
@@ -6,10 +8,8 @@
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
-//#include <string.h>
 #include <EEPROM.h>
 #include "EEPROMAnything.h"
-//#include "user_interface.h"
 #include "wol.h"
 #include "Logger.h"
 #include "HttpHelper.h"
@@ -22,6 +22,8 @@
 #include <Time.h>
 #include "TimeLib.h"
 #include "POSTData.h"
+
+//#include "Ucglib.h"
 
 //#include "ESPDisplay.h"
 #ifdef dopop
@@ -457,6 +459,8 @@ void setup()
 	
 	shield.init();
 
+	shield.drawString(0, 0, "restarting..", 1, ST7735_WHITE);
+
 	// Initialising the UI will init the display too.
 
 	String str = "\n\nstarting.... Versione ";
@@ -476,10 +480,11 @@ void setup()
 
 	//oneWirePtr = new OneWire(OneWirePin);
 	//pDallasSensors = new DallasTemperature(oneWirePtr);
-
+	shield.drawString(0, 20, "read eprom..", 1, ST7735_WHITE);
 	initEPROM();
 	logger.print(tag, "\n\tSensorNames=" + sensorNames);
 
+	shield.drawString(0, 40, "connecting to WiFi", 1, ST7735_WHITE);
 	// Connect to WiFi network
 	logger.print(tag, "\n\nConnecting to " + Shield::getNetworkSSID() + " " + Shield::getNetworkPassword());
 
@@ -498,11 +503,16 @@ void setup()
 	WiFi.begin(networkSSID, networkPassword);
 	if (testWifi() == 20/*WL_CONNECTED*/) {
 
+		
+
 		checkOTA();
 
+		shield.drawString(0, 50, "connected..Start server", 1, ST7735_WHITE);
 		// Start the server
 		server.begin();
 		logger.print(tag, "Server started");
+		shield.drawString(0, 60, "server started", 1, ST7735_WHITE);
+
 		shield.localIP = WiFi.localIP().toString();
 		// Print the IP address
 		logger.println(tag, shield.localIP);
@@ -510,13 +520,20 @@ void setup()
 		wdt_disable();
 		wdt_enable(WDTO_8S);
 
+		shield.drawString(0, 70, "init heater", 1, ST7735_WHITE);
+
 		shield.hearterActuator.init(String(shield.MAC_char));
+
+		shield.drawString(50, 70, String(shield.MAC_char), 1, ST7735_RED);
 		
+		shield.drawString(0, 80, "init onewire", 1, ST7735_WHITE);
 		shield.addOneWireSensors(sensorNames);
+		shield.drawString(60, 80, "DONE", 1, ST7735_WHITE);
 		shield.addActuators();
 		
 		Command command;
 		shield.id = command.registerShield(shield);
+		shield.drawString(0, 90, "registered" + String(shield.id), 1, ST7735_WHITE);
 
 		if (shield.id != -1) {
 			shieldRegistered = true;
@@ -534,6 +551,7 @@ void setup()
 
 		server.begin();
 		logger.print(tag, "\nLocal server started...192.168.4.1");
+		shield.drawString(0, 60, "not connected. Local server 192.168.4.1", 1, ST7735_WHITE);
 		// Print the IP address
 		wdt_disable();
 		wdt_enable(WDTO_8S);
@@ -547,8 +565,12 @@ void setup()
 		logger.print(tag, "\n\t *lastRestartDate=" + Shield::getLastRestartDate());
 	}
 
+	shield.drawString(0, 80, "restarted", 1, ST7735_WHITE);
+
 	Command commannd;
 	commannd.sendRestartNotification();
+
+	shield.clearScreen();
 }
 
 String softwareReset(HttpRequest request, HttpResponse response) {
@@ -594,7 +616,7 @@ String setRemoteTemperature(HttpRequest request, HttpResponse response) {
 		String str = data.getString("temperature");
 		logger.println(tag, "\n\t temperature=" + str);
 		float temperature = str.toFloat();
-		shield.hearterActuator.setRemoteTemperature(temperature);
+		shield.hearterActuator.setRemote(temperature);
 	}
 	String result = "";
 	result += getJsonStatus(request, response);
@@ -642,7 +664,7 @@ String showRele(HttpRequest request, HttpResponse response) {
 
 	if (posData.has("temperature")) {
 		String str = posData.getString("temperature");
-		shield.hearterActuator.setRemoteTemperature(str.toFloat());
+		shield.hearterActuator.setRemote(str.toFloat());
 		logger.print(tag, "\n\t temperature=" + String(shield.hearterActuator.getRemoteTemperature()));
 	}
 	else {
@@ -706,7 +728,7 @@ String showRele(HttpRequest request, HttpResponse response) {
 	if (posData.has("temperature")) {
 		remoteTemperature = posData.getString("temperature").toFloat();
 		logger.print(tag, "\n\t remoteTemperature =" + String(remoteTemperature));
-		shield.hearterActuator.setRemoteTemperature(remoteTemperature);
+		shield.hearterActuator.setRemote(remoteTemperature);
 	}
 	else {
 		logger.print(tag, F("\n\t remoteTemperature MISSING"));

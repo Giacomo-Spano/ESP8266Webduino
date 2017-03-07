@@ -4,6 +4,7 @@
 #include "HeaterActuator.h"
 #include "Command.h"
 #include "ESP8266Webduino.h"
+#include <Adafruit_ST7735.h>
 
 extern void writeEPROM();
 //uint8_t oneWirePin = D4;
@@ -47,7 +48,45 @@ Shield::~Shield()
 }
 
 void Shield::init() {
-	display.init();
+
+	tftDisplay.init();
+	//display.init();
+}
+
+void Shield::drawString(int x, int y, String txt, int size, int color) {
+
+	//String str = "prova";
+	tftDisplay.drawString(x, y, txt, 1, ST7735_WHITE);
+	//tftDisplay.drawString(int row, int col, String txt, int size, int color);
+}
+
+/*Just as a heads up, to use the "drawXBitmap" function, I also had
+to redefine the array from "static unsigned char" to "static const uint8_t PROGMEM" 
+in my image file.If I just used the original file, then garbage would appear on my 32x32 gird.
+I think the array has to be defined as "PROGMEM" because the "drawXBitmap" function uses the
+"pgm_read_byte" function, which reads a byte from program memory.I also had to include
+the line "#include <avr/pgmspace.h>".After that, everything worked fine for me.*/
+
+//#include <avr/pgmspace.h>
+#define temperature_width 32
+#define temperature_height 32
+static const uint8_t PROGMEM temperature_bits[] = {
+	0x00, 0x80, 0x01, 0x00, 0x00, 0xe0, 0x07, 0x00, 0x00, 0x70, 0x0e, 0x00,
+	0x00, 0x18, 0x18, 0x00, 0x00, 0x08, 0x18, 0x00, 0x00, 0x18, 0x18, 0x00,
+	0x00, 0x18, 0x10, 0x00, 0x00, 0x78, 0x10, 0x00, 0x00, 0x18, 0x10, 0x00,
+	0x00, 0x18, 0x10, 0x00, 0x00, 0x78, 0x10, 0x00, 0x00, 0x18, 0x10, 0x00,
+	0x00, 0x08, 0x10, 0x00, 0x00, 0xc8, 0x13, 0x00, 0x00, 0xc8, 0x13, 0x00,
+	0x00, 0xc8, 0x13, 0x00, 0x00, 0xc8, 0x13, 0x00, 0x00, 0xc8, 0x13, 0x00,
+	0x00, 0xc8, 0x13, 0x00, 0x00, 0xc8, 0x13, 0x00, 0x00, 0xcc, 0x33, 0x00,
+	0x00, 0xc4, 0x23, 0x00, 0x00, 0xe6, 0x67, 0x00, 0x00, 0xe2, 0x67, 0x00,
+	0x00, 0xe6, 0x67, 0x00, 0x00, 0xe6, 0x67, 0x00, 0x00, 0xe6, 0x67, 0x00,
+	0x00, 0xce, 0x71, 0x00, 0x00, 0x0c, 0x30, 0x00, 0x00, 0x3c, 0x3c, 0x00,
+	0x00, 0xf0, 0x0f, 0x00, 0x00, 0xc0, 0x03, 0x00 };
+
+void Shield::clearScreen() {
+	tftDisplay.clear();
+
+	tftDisplay.drawXBitmap(90, 50, temperature_bits, temperature_width, temperature_height, 0xF800/*ST3577_RED*/);
 }
 
 String Shield::sendTemperatureSensorsSettingsCommand(JSON json) {
@@ -454,16 +493,15 @@ String Shield::getHeaterStatusJson() {
 
 void Shield::checkStatus()
 {
-	display.clear();
+	
 
 	checkActuatorsStatus();
 	checkSensorsStatus();
 
-	uint32_t getVcc = ESP.getVcc() / 1024;
-	logger.println(tag, "VCC = " + String(getVcc));
+	/*display.clear();
+	uint32_t getVcc = ESP.getVcc();// / 1024;
 	String voltage = "Vcc " + String(getVcc) + "V";
-	//display.drawString(16, 32, "Vcc " + String(getVcc) + "V", ArialMT_Plain_10);
-
+	
 	display.drawString(0, 0, Logger::getStrTimeDate() + " ", ArialMT_Plain_16);
 	display.drawString(20, 16, Logger::getStrDayDate() + " ", ArialMT_Plain_10);
 	display.drawString(0, 26, hearterActuator.getStatusName() + " " + String(hearterActuator.getReleStatus()) + voltage, ArialMT_Plain_10);
@@ -471,10 +509,36 @@ void Shield::checkStatus()
 		DS18S20Sensor* pSensor = (DS18S20Sensor*)sensorList.get(i);
 		display.drawString(0, 16 + 10 + 10 + 10*(i), pSensor->sensorname + " " + pSensor->getTemperature(), ArialMT_Plain_10);
 	}
+	display.update();*/
 
 	
+	String date = Logger::getStrDate();
+	//logger.println(tag, "dater:" + date);
+	//if (!date.equals(oldDate)) {
+		//tftDisplay.drawString(0, 0, Logger::getStrTimeDate(), 1, ST7735_WHITE);
+		//tftDisplay.drawString(20, 16, Logger::getStrDayDate() + " ", 1, ST7735_WHITE);
+	//}
+	//oldDate = date;
 
-	display.update();
+	//tftDisplay.clear();
+		int textWidth = 5;
+		int textHeight = 8;
+	
+	tftDisplay.drawString(0, 0, Logger::getStrDayDate() + " ", 1, ST7735_WHITE);
+	tftDisplay.drawString(0, textHeight, Logger::getStrTimeDate() + " ", 2, ST7735_WHITE);
+	
+	tftDisplay.drawString(0, textHeight*(2 + 1), hearterActuator.getStatusName(), 2, ST7735_WHITE);
+
+	String releStatus = "spento";
+	if (hearterActuator.getReleStatus() == 1)
+		releStatus = "acceso";
+	tftDisplay.drawString(0, textHeight*(4+1), releStatus, 2, ST7735_WHITE);
+
+	for (int i = 0; i < sensorList.count; i++) {
+		DS18S20Sensor* pSensor = (DS18S20Sensor*)sensorList.get(i);
+		tftDisplay.drawString(0, textHeight * (2+1+2+2) + textHeight * i * 1, pSensor->sensorname + " " + pSensor->getTemperature(), 0, ST7735_WHITE);
+	}
+	//display.update();
 	
 }
 
@@ -576,7 +640,7 @@ void Shield::addActuators() {
 	ActuatorList.init();
 
 	if (heaterEnabled) {
-		hearterActuator.setRelePin(heaterPin);
+		//hearterActuator.setRelePin(heaterPin);
 	}
 	//HeaterActuator* pActuatorNew = new HeaterActuator();
 	//pActuatorNew->sensorname = "riscaldamento";

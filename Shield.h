@@ -10,6 +10,7 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include "ESPDisplay.h"
+#include "TFTDisplay.h"
 
 class Shield
 {	
@@ -37,6 +38,9 @@ public:
 	static uint8_t heaterPin; // pin rele heater
 	static String powerStatus; // power
 	static String lastRestartDate;
+
+	void drawString(int x, int y, String txt, int size, int color);
+	void clearScreen();
 	
 
 private:
@@ -44,6 +48,7 @@ private:
 	static Logger logger;
 	const int checkTemperature_interval = 60000;
 	unsigned long lastCheckTemperature = 0;//-flash_interval;
+	String oldDate;
 	
 
 protected:
@@ -57,6 +62,8 @@ protected:
 	//SimpleList<Actuator> actuatorList;
 	void checkActuatorsStatus();
 	void checkSensorsStatus();
+
+	
 	
 	static int localPort;
 	static String networkSSID;
@@ -66,6 +73,7 @@ protected:
 	static String shieldName;
 
 	ESPDisplay display;
+	TFTDisplay tftDisplay;
 
 public:
 
@@ -207,6 +215,7 @@ public:
 	{
 		logger.print(tag, "\n\t>>setHeaterPin: " + String(pin));
 		heaterPin = pin;
+		//hearterActuator.setRelePin(pin);
 	}
 
 	static uint8_t getOneWirePin()

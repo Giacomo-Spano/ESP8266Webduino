@@ -78,6 +78,7 @@ String HeaterActuator::sendCommand(String jsonStr)
 		logger.print(tag, "\n\ttimerange=" + String(timerange));
 	}
 
+	logger.print(tag, "\n\t changeProgram param=" + String(remoteTemperature));
 	changeProgram(command, duration,
 		!localSensor,
 		remoteTemperature,
@@ -93,8 +94,9 @@ String HeaterActuator::sendCommand(String jsonStr)
 
 void HeaterActuator::init(String MACAddress)
 {
-	ConsumptionStartTime = millis();
-	pinMode(relePin, OUTPUT);
+	logger.print(tag, "\n\t Heater::init MACAddress=" + MACAddress + " pin=" + String(Shield::heaterPin));
+	ConsumptionStartTime = 0;// millis();
+	pinMode(Shield::heaterPin, OUTPUT);
 	setStatus(Program::STATUS_IDLE);
 	subaddress += MACAddress;
 
@@ -135,7 +137,7 @@ void HeaterActuator::checkStatus()
 
 void HeaterActuator::setTargetTemperature(float target)
 {
-	logger.print(tag, "\n\t >>setTargetTemperature " + String(targetTemperature));
+	logger.print(tag, "\n\t >>setTargetTemperature " + String(target));
 	targetTemperature = target;
 }
 
@@ -143,14 +145,12 @@ float HeaterActuator::getTargetTemperature() {
 	return targetTemperature;
 }
 
-void HeaterActuator::setRemoteTemperature(float remote)
+void HeaterActuator::setRemote(float temp)
 {
-	logger.print(tag, "\n\tsetRemoteTemperature" + String(remote));
-
-	remoteTemperature = remote;
+	logger.print(tag, "\n\t remoteTemperature" + String(remoteTemperature));
+	remoteTemperature = temp;
 	last_RemoteSensor = millis();
-	logger.print(tag, F(",last_RemoteSensor="));
-	logger.print(tag, last_RemoteSensor);
+	logger.print(tag, ",last_RemoteSensor=" + String(last_RemoteSensor));
 }
 
 float HeaterActuator::getRemoteTemperature() {
@@ -283,7 +283,7 @@ void HeaterActuator::changeProgram(String command, long duration, bool sensorRem
 
 	logger.print(tag, F("\n\t >>HeaterActuator::changeProgram"));
 
-	logger.print(tag, "\n\t currentStatus=" + String(currentStatus));
+	/*logger.print(tag, "\n\t currentStatus=" + String(currentStatus));
 	logger.print(tag, String("\n\t command=") + command);
 	logger.print(tag, String("\n\t duration=") + String(duration));
 	logger.print(tag, String("\n\t sensorRemote=") + String(sensorRemote));
@@ -291,10 +291,14 @@ void HeaterActuator::changeProgram(String command, long duration, bool sensorRem
 	logger.print(tag, String("\n\t sensorId=") + String(sensorId));
 	logger.print(tag, String("\n\t target=") + String(target));
 	logger.print(tag, String("\n\t program=") + String(program));
-	logger.print(tag, String("\n\t timerange=") + String(timerange));
+	logger.print(tag, String("\n\t timerange=") + String(timerange));*/
+	
 	
 	setSensorRemote(sensorRemote, sensorId);
-	setRemoteTemperature(remoteTemperature);
+	float temp = remotetemperature;
+	logger.print(tag, String("\n\t x1 remotetemperature=") + String(temp));
+	setRemote(temp);
+	logger.print(tag, String("\n\t x2 remotetemperature=") + String(temp));
 	setTargetTemperature(target);
 
 	if (currentStatus == Program::STATUS_DISABLED) {
@@ -468,13 +472,13 @@ int HeaterActuator::getActiveTimeRange()
 	return activeTimerange;
 }
 
-int HeaterActuator::getRelePin() {
+/*int HeaterActuator::getRelePin() {
 	return relePin;
-}
+}*/
 
-void HeaterActuator::setRelePin(int pin) {
+/*void HeaterActuator::setRelePin(int pin) {
 	relePin = pin;
-}
+}*/
 
 void HeaterActuator::enableRele(boolean on) {
 
@@ -487,14 +491,14 @@ void HeaterActuator::enableRele(boolean on) {
 	oldReleStatus = releStatus;
 	if (on) {
 		logger.print(tag, F("\n\t enableRele:: RELE ON"));
-		digitalWrite(relePin, RELE_ON);
+		digitalWrite(Shield::heaterPin, RELE_ON);
 		releStatus = true;
 
 		lastConsumptionEnableTime = millis();
 	}
 	else {
 		logger.print(tag, F("\n\t enableRele:: RELE OFF"));
-		digitalWrite(relePin, RELE_OFF);
+		digitalWrite(Shield::heaterPin, RELE_OFF);
 		releStatus = false;
 	}
 	logger.print(tag, F("\n\t <<enableRele "));

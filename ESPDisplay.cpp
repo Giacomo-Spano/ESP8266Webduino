@@ -15,6 +15,9 @@ Logger ESPDisplay::logger;
 String ESPDisplay::tag = "ESPDisplay";
 //SSD1306 ESPDisplay::display(0x3c, D7, D6);
 SSD1306* ESPDisplay::pdisplay;
+uint8_t ESPDisplay::address = 0x3c;
+uint8_t ESPDisplay::sda = D4;
+uint8_t ESPDisplay::scl = D3;
 
 ESPDisplay::ESPDisplay()
 {
@@ -27,7 +30,8 @@ ESPDisplay::~ESPDisplay()
 
 void ESPDisplay::init()
 {
-	pdisplay = new SSD1306(0x3c, D7, D6);
+	//pdisplay = new SSD1306(0x3c, D7, D6);
+	pdisplay = new SSD1306(address, sda, scl);
 
 	pdisplay->init();
 	pdisplay->flipScreenVertically();

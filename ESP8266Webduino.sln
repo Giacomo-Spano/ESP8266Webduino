@@ -7,8 +7,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ESP8266Webduino", "ESP8266W
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowsFormsApplication1", "..\WindowsFormsApplication1\WindowsFormsApplication1.csproj", "{AFC3944E-ACB1-4120-9980-820515F5CACC}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "releswitch", "..\releswitch\releswitch.vcxproj", "{03772055-743B-495B-9747-83315871D63D}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,16 +37,6 @@ Global
 		{AFC3944E-ACB1-4120-9980-820515F5CACC}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{AFC3944E-ACB1-4120-9980-820515F5CACC}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{AFC3944E-ACB1-4120-9980-820515F5CACC}.Release|Win32.ActiveCfg = Release|Any CPU
-		{03772055-743B-495B-9747-83315871D63D}.Debug|Any CPU.ActiveCfg = Debug|Win32
-		{03772055-743B-495B-9747-83315871D63D}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
-		{03772055-743B-495B-9747-83315871D63D}.Debug|Mixed Platforms.Build.0 = Debug|Win32
-		{03772055-743B-495B-9747-83315871D63D}.Debug|Win32.ActiveCfg = Debug|Win32
-		{03772055-743B-495B-9747-83315871D63D}.Debug|Win32.Build.0 = Debug|Win32
-		{03772055-743B-495B-9747-83315871D63D}.Release|Any CPU.ActiveCfg = Release|Win32
-		{03772055-743B-495B-9747-83315871D63D}.Release|Mixed Platforms.ActiveCfg = Release|Win32
-		{03772055-743B-495B-9747-83315871D63D}.Release|Mixed Platforms.Build.0 = Release|Win32
-		{03772055-743B-495B-9747-83315871D63D}.Release|Win32.ActiveCfg = Release|Win32
-		{03772055-743B-495B-9747-83315871D63D}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

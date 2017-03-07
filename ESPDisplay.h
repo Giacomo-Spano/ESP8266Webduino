@@ -26,6 +26,10 @@ private:
 	//static SSD1306  display;
 	static SSD1306* pdisplay;
 
+	static uint8_t address;
+	static uint8_t sda;
+	static uint8_t scl;
+
 public:
 	ESPDisplay();
 	~ESPDisplay();

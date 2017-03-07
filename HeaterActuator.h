@@ -15,7 +15,7 @@ private:
 	
 	int manualMode;
 	String subaddress = "HeaterActuator-";
-	int relePin = D5; // rel? pin
+	//int relePin = D5; // rel? pin
 	const bool RELE_ON = HIGH;//LOW
 	const bool RELE_OFF = LOW;//LOW
 	static int const sensor_local = 0;
@@ -48,16 +48,16 @@ public:
 	void setReleStatus(int status);
 	int getReleStatus();
 	void enableRele(boolean on);
-	int getRelePin();
-	void setRelePin(int pin);
+	void setRemote(float temp);
+	//int getRelePin();
+	//void setRelePin(int pin);
 	bool statusChanged();
 	bool releStatusChanged();
 	void saveOldReleStatus();
 	void saveOldStatus();
 	void init(String MACAddress);
 	void setTargetTemperature(float target);
-	float getTargetTemperature();
-	void setRemoteTemperature(float remote);
+	float getTargetTemperature();	
 	float getRemoteTemperature();
 	float getLocalTemperature();
 	void setSensorRemote(bool enable, int sensorId);
