@@ -1,5 +1,7 @@
 
 
+#include "JSONArray.h"
+#include "DoorSensor.h"
 #include "TFTDisplay.h"
 #include "HttpResponse.h"
 #include "ESPWebServer.h"
@@ -38,7 +40,7 @@ SSD1306  display(0x3c, D7, D6);
 #endif
 
 //#define Versione 0.92
-int EPROM_Table_Schema_Version = 7;
+int EPROM_Table_Schema_Version = 8;
 //const char SWVERSION[] = "1.01";
 
 Logger logger;
@@ -193,7 +195,7 @@ void writeEPROM() {
 	logger.print(tag, "\n\t port = " + String(port));
 	// board name
 	char shieldNameBuffer[Shield::shieldNameLen];
-	Shield::getServerName().toCharArray(shieldNameBuffer, sizeof(shieldNameBuffer));
+	Shield::getShieldName().toCharArray(shieldNameBuffer, sizeof(shieldNameBuffer));
 	res = EEPROM_writeAnything(addr, shieldNameBuffer);
 	addr += res;
 	logger.print(tag, "\n\t shieldNameBuffer = " + String(shieldNameBuffer));
@@ -209,6 +211,36 @@ void writeEPROM() {
 	str.toCharArray(buffer, sizeof(buffer));
 	res = EEPROM_writeAnything(addr, buffer);
 	addr += res;
+
+	logger.print(tag, "\n\t shield.sensorList.count=" + String(shield.sensorList.count));
+	hiByte = highByte(shield.sensorList.count);
+	loByte = lowByte(shield.sensorList.count);
+	EEPROM.write(addr++, hiByte);
+	EEPROM.write(addr++, loByte);
+	for (int i = 0; i < shield.sensorList.count; i++) {
+		Sensor* sensor = shield.sensorList.get(i);
+		logger.print(tag, "\n\t sensor->sensorname=" + sensor->sensorname);
+		char sensorNameBuffer[Sensor::sensorNameLen];
+		sensor->sensorname.toCharArray(sensorNameBuffer, sizeof(sensorNameBuffer));
+		res = EEPROM_writeAnything(addr, sensorNameBuffer);
+		addr += res;
+		logger.print(tag, "\n\t sensor->sensorTypeBuffer=" + sensor->type);
+		char sensorTypeBuffer[Sensor::sensorTypeLen];
+		sensor->type.toCharArray(sensorTypeBuffer, sizeof(sensorTypeBuffer));
+		res = EEPROM_writeAnything(addr, sensorTypeBuffer);
+		addr += res;
+		logger.print(tag, "\n\t sensor->getSensorAddress()=" + sensor->getSensorAddress());
+		char sensorAddressBuffer[Sensor::sensorAddressLen];
+		sensor->getSensorAddress().toCharArray(sensorAddressBuffer, sizeof(sensorAddressBuffer));
+		res = EEPROM_writeAnything(addr, sensorAddressBuffer);
+		addr += res;
+		logger.print(tag, "\n\t sensor->pin=" + String(sensor->pin));
+		hiByte = highByte(sensor->pin);
+		loByte = lowByte(sensor->pin);
+		EEPROM.write(addr++, hiByte);
+		EEPROM.write(addr++, loByte);
+	}
+
 	EEPROM.commit();
 	logger.println(tag, "\n\t <<write EPROM\n");
 }
@@ -320,7 +352,39 @@ void readEPROM() {
 		sensor->sensorname = String(buffer);
 		addr += res;
 	}*/
-	logger.print(tag, "\n\n\t <<read EPROM\n");
+	
+	if (epromversion >= 8/*EPROM_Table_Schema_Version*/) {
+
+		hiByte = EEPROM.read(addr++);
+		lowByte = EEPROM.read(addr++);
+		int sensorCount = word(hiByte, lowByte);
+		logger.print(tag, "\n\t sensorCount=" + String(sensorCount));
+
+		for (int i = 0; i < sensorCount; i++) {
+
+			char sensorNameBuffer[Sensor::sensorNameLen];
+			res = EEPROM_readAnything(addr, sensorNameBuffer);
+			logger.print(tag, "\n\t sensorNameBuffer =" + String(sensorNameBuffer));
+			addr += res;
+
+			char sensorTypeBuffer[Sensor::sensorTypeLen];
+			res = EEPROM_readAnything(addr, sensorTypeBuffer);
+			logger.print(tag, "\n\t sensorTypeBuffer =" + String(sensorTypeBuffer));
+			addr += res;
+
+			char sensorAddressBuffer[Sensor::sensorAddressLen];
+			res = EEPROM_readAnything(addr, sensorAddressBuffer);
+			logger.print(tag, "\n\t sensorAddressBuffer =" + String(sensorAddressBuffer));
+			addr += res;
+
+			hiByte = EEPROM.read(addr++);
+			lowByte = EEPROM.read(addr++);
+			int sensorPin = word(hiByte, lowByte);
+			logger.print(tag, "\n\t sensorPin=" + String(sensorPin));
+		}
+	}
+
+	logger.print(tag, "\n\n\t <<read EPROM res=\n"+String(res));
 }
 
 void initEPROM()
@@ -344,7 +408,7 @@ void initEPROM()
 int testWifi(void) {
 	int c = 0;
 	logger.println(tag, "Waiting for Wifi to connect");
-	while (c < 40) {
+	while (c < 10) {
 		if (WiFi.status() == WL_CONNECTED) {
 			logger.println(tag, "WiFi connected");
 			return(20);
@@ -484,6 +548,15 @@ void setup()
 	initEPROM();
 	logger.print(tag, "\n\tSensorNames=" + sensorNames);
 
+	shield.drawString(0, 80, "init onewire", 1, ST7735_WHITE);
+	
+	shield.clearAllSensors(); // serve per inizializzare
+	shield.addOneWireSensors(sensorNames);
+
+	DoorSensor* pDoorSensor = new DoorSensor();
+	pDoorSensor->sensorname = "DoorSensor";
+	shield.addDoorSensor(pDoorSensor);
+
 	shield.drawString(0, 40, "connecting to WiFi", 1, ST7735_WHITE);
 	// Connect to WiFi network
 	logger.print(tag, "\n\nConnecting to " + Shield::getNetworkSSID() + " " + Shield::getNetworkPassword());
@@ -526,8 +599,9 @@ void setup()
 
 		shield.drawString(50, 70, String(shield.MAC_char), 1, ST7735_RED);
 		
-		shield.drawString(0, 80, "init onewire", 1, ST7735_WHITE);
-		shield.addOneWireSensors(sensorNames);
+		//shield.drawString(0, 80, "init onewire", 1, ST7735_WHITE);
+		//shield.addOneWireSensors(sensorNames);
+		//shield.addDoorSensor(/*sensorNames*/);
 		shield.drawString(60, 80, "DONE", 1, ST7735_WHITE);
 		shield.addActuators();
 		
@@ -896,10 +970,20 @@ String getJsonTempearatureSensorsStatus(HttpRequest request, HttpResponse respon
 	logger.print(tag, F("\n\t >> getJsonTempearatureSensorsStatus"));
 
 	String data = "";
-	data += shield.getSensorsStatusJson();
-
+	data += shield.getTemperatureSensorsStatusJson();
 
 	logger.print(tag, "\n\t << getJsonTempearatureSensorsStatus " + data + "\n");
+	return data;
+}
+
+String getJsonSensorsStatus(HttpRequest request, HttpResponse response)
+{
+	logger.print(tag, F("\n\t >> getJsonSensorsStatus"));
+
+	String data = "";
+	data += shield.getSensorsStatusJson();
+
+	logger.print(tag, "\n\t << getJsonSensorsStatus " + data + "\n");
 	return data;
 }
 
@@ -1013,6 +1097,9 @@ void loop()
 			}
 			else if (page.equalsIgnoreCase("temperaturesensorstatus")) {
 				response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, getJsonTempearatureSensorsStatus(request, response));
+			}
+			else if (page.equalsIgnoreCase("sensorstatus")) {
+				response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, getJsonSensorsStatus(request, response));
 			}
 			else if (page.equalsIgnoreCase("actuatorsstatus")) {
 				response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, getJsonActuatorsStatus(request, response));

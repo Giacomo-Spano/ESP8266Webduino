@@ -73,17 +73,27 @@ bool List::add(Sensor* elem) {
 	return true;
 }
 
+void List::clearAll() {
+
+	logger.print(tag, "\n\t>> clearAll");
+		
+	Sensor* next = first;
+	Sensor* cur = first;
+	while (cur != nullptr) {
+		next = cur->next;
+		delete cur;
+		cur = next;
+	}
+	init();
+
+	logger.print(tag, "\n\t<< clearAll");
+}
+
 void List::show() {
 
-	logger.print(tag, "\n\t>>show");
-	logger.print(tag, "\n\tcount = ");
+	logger.print(tag, "\n\t>> show");
+	logger.print(tag, "\n\t count = ");
 	logger.print(tag, count);
-
-	/*if (first == nullptr) {
-		logger.print(tag, "\n\tfirst NULL");
-	} 
-	else
-		logger.print(tag, "\n\tfirst NOT NULL");*/
 
 	
 	Sensor* p = first;
@@ -98,7 +108,7 @@ void List::show() {
 		logger.print(tag, p->getSensorAddress());
 		p = p->next;
 	}
-	logger.print(tag, "\n\t<<show");
+	logger.print(tag, "\n\t <<show");
 }
 
 Sensor* List::gestLast() {

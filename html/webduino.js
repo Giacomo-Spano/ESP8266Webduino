@@ -2,6 +2,7 @@ var serverPath = '..';
 
 var heaterStatusPath = serverPath+'/heaterstatus';
 var temperatureSensorsStatusPath = serverPath+'/temperaturesensorstatus';
+var sensorsStatusPath = serverPath+'/sensorstatus';
 var commandPath = serverPath+'/command';
 var settingsPath = serverPath+'/settings';
 

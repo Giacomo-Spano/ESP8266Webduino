@@ -296,9 +296,9 @@ void HeaterActuator::changeProgram(String command, long duration, bool sensorRem
 	
 	setSensorRemote(sensorRemote, sensorId);
 	float temp = remotetemperature;
-	logger.print(tag, String("\n\t x1 remotetemperature=") + String(temp));
+	//logger.print(tag, String("\n\t x1 remotetemperature=") + String(temp));
 	setRemote(temp);
-	logger.print(tag, String("\n\t x2 remotetemperature=") + String(temp));
+	//logger.print(tag, String("\n\t x2 remotetemperature=") + String(temp));
 	setTargetTemperature(target);
 
 	if (currentStatus == Program::STATUS_DISABLED) {

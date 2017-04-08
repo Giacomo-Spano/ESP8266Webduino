@@ -2,17 +2,21 @@
 
 #include "Util.h"
 #include "ESP8266Webduino.h"
+#include "Shield.h"
 
 Logger DS18S20Sensor::logger;
 String DS18S20Sensor::tag = "DS18S20Sensor";
 
 DS18S20Sensor::DS18S20Sensor()
 {
+	type = "temperature";
 }
 
 DS18S20Sensor::~DS18S20Sensor()
 {
 }
+
+
 
 float DS18S20Sensor::getTemperature() {
 	return temperature;
@@ -65,20 +69,15 @@ void DS18S20Sensor::readTemperature(DallasTemperature *pDallasSensors){
 	logger.print(tag, "\n");
 }
 
-String DS18S20Sensor::getJSON() {
+
+String DS18S20Sensor::getJSONFields() {
+	logger.print(tag, "\n\t<<DS18S20Sensor::getJSONFields");
 	String json = "";
-	json += "{";
-	json += "\"temperature\":";
-	//json += Util::floatToString(temperature);
+	json += ",\"temperature\":";
 	json += String(getTemperature());
 	json += ",\"avtemperature\":";
-	//json += Util::floatToString(avTemperature);
 	json += String(getAvTemperature());
-	json += ",\"name\":\"";
-	json += String(sensorname) + "\"";
-	json += ",\"type\":\"temperature\"";
-	json += ",\"addr\":\"";
-	json += String(getSensorAddress()) + "\"}";
+	logger.print(tag, "\n\t<<DS18S20Sensor::getJSONFields json=" + json);
 	return json;
 }
 

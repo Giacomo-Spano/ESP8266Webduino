@@ -12,6 +12,7 @@ public:
 	bool jsonGetBool(String key);
 	long jsonGetLong(String key);
 	String jsonGetString(String key);
+	String jsonGetArrayString(String key);
 	float jsonGetFloat(String key);
 	bool has(String key);
 

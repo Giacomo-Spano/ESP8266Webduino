@@ -1,4 +1,13 @@
-#pragma once
+// DoorSensor.h
+
+#ifndef _DOORSENSOR_h
+#define _DOORSENSOR_h
+
+#if defined(ARDUINO) && ARDUINO >= 100
+	#include "arduino.h"
+#else
+	#include "WProgram.h"
+#endif
 
 #include "Sensor.h"
 #include <Arduino.h>
@@ -6,7 +15,7 @@
 #include <DallasTemperature.h>
 #include "Logger.h"
 
-class DS18S20Sensor :
+class DoorSensor :
 	public Sensor
 {
 private:
@@ -17,21 +26,14 @@ public:
 	static const int avTempsize = 10;
 	static const int sensornamelen = 30;
 
-	DS18S20Sensor();
-	~DS18S20Sensor();
-	//virtual String getJSON();
-	
-	int avTempCounter = 0;
-	float avTemp[avTempsize];	
-
-	void readTemperature(DallasTemperature *pDallasSensors);
+	DoorSensor();
+	~DoorSensor();
 	virtual String getJSONFields();
-	float getTemperature();
-	float getAvTemperature();
+	void readStatus();
+	bool getOpenStatus();
 	
 private:
-	float temperature;
-	float avTemperature;
-	
+	bool openStatus = false;
 };
+#endif
 

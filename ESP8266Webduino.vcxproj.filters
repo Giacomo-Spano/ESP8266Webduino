@@ -16,7 +16,7 @@
     <Filter Include="html">
       <UniqueIdentifier>{25780139-20d3-4098-9edc-b6a2bcc9b4c9}</UniqueIdentifier>
     </Filter>
-    <Filter Include="data">
+    <Filter Include="Header Files\data">
       <UniqueIdentifier>{aa714cc4-e968-4841-ad78-da0440c2a722}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -57,16 +57,16 @@
     <None Include="gulpfile.js" />
     <None Include="package.json" />
     <None Include="data\heater.html">
-      <Filter>data</Filter>
+      <Filter>Header Files\data</Filter>
     </None>
     <None Include="data\index.html">
-      <Filter>data</Filter>
+      <Filter>Header Files\data</Filter>
     </None>
     <None Include="data\settings.html">
-      <Filter>data</Filter>
+      <Filter>Header Files\data</Filter>
     </None>
     <None Include="data\temperature.html">
-      <Filter>data</Filter>
+      <Filter>Header Files\data</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -139,6 +139,12 @@
     <ClInclude Include="TFTDisplay.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="DoorSensor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="JSONArray.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="wol.cpp">
@@ -199,6 +205,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="TFTDisplay.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DoorSensor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="JSONArray.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

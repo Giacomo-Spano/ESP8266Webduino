@@ -11,6 +11,7 @@
 #include <DallasTemperature.h>
 #include "ESPDisplay.h"
 #include "TFTDisplay.h"
+#include "DoorSensor.h"
 
 class Shield
 {	
@@ -54,6 +55,7 @@ private:
 protected:
 	String sendHeaterSettingsCommand(JSON json);
 	String sendTemperatureSensorsSettingsCommand(JSON json);
+	String sendUpdateSensorListCommand(JSON json);
 	String sendShieldSettingsCommand(JSON jsonStr);
 	String sendPowerCommand(JSON jsonStr);
 	String sendRegisterCommand(JSON jsonStr);
@@ -61,9 +63,7 @@ protected:
 	bool temperatureChanged = false; // indica se la temperatura è cambiata dall'ultima chiamata a flash()
 	//SimpleList<Actuator> actuatorList;
 	void checkActuatorsStatus();
-	void checkSensorsStatus();
-
-	
+	void checkSensorsStatus();	
 	
 	static int localPort;
 	static String networkSSID;
@@ -84,10 +84,12 @@ public:
 	~Shield();
 	void init();
 	String getSensorsStatusJson();
+	String getTemperatureSensorsStatusJson();
 	String getActuatorsStatusJson();
 	String getHeaterStatusJson();
 	String getSettingsJson();
 	void checkStatus();	
+	String getOneWireJson();
 	String sendCommand(String jsonStr);		
 	
 	unsigned char MAC_array[6];
@@ -95,6 +97,9 @@ public:
 	String localIP;
 	
 	void addOneWireSensors(String sensorNames);
+	void addDoorSensor(DoorSensor* pDoorSensor);
+	void clearAllSensors();
+
 	void addActuators();
 	void checkTemperatures();
 
@@ -208,6 +213,36 @@ public:
 			return "D9"; 
 		if (oneWirePin == D10)
 			return "D10";
+		else
+			return "";
+	}
+
+	static String getStrPin(uint8_t pin)
+	{
+		if (pin == D0)
+			return "D0";
+		if (pin == D1)
+			return "D1";
+		if (pin == D2)
+			return "D2";
+		if (pin == D3)
+			return "D3";
+		if (pin == D4)
+			return "D4";
+		if (pin == D5)
+			return "D5";
+		if (pin == D6)
+			return "D6";
+		if (pin == D7)
+			return "D7";
+		if (pin == D8)
+			return "D8";
+		if (pin == D9)
+			return "D9";
+		if (pin == D10)
+			return "D10";
+		else
+			return "";
 	}
 
 
@@ -226,6 +261,7 @@ public:
 	static void setOneWirePin(uint8_t pin)
 	{
 		oneWirePin = pin;
+		//DS18S20Sensor::setOneWirePin(pin);
 	}
 
 	static bool getHeaterEnabled()
@@ -255,6 +291,7 @@ public:
 	{
 		logger.print(tag, "\n\t >>setTemperatureSensorsEnabled: " + String(enabled));
 		temperatureSensorsEnabled = enabled;
+		//DS18S20Sensor::setTemperatureSensorsEnabled(enabled);
 		
 	}
 	

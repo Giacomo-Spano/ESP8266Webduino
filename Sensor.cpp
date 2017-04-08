@@ -1,4 +1,9 @@
 #include "Sensor.h"
+#include "Shield.h"
+#include "Logger.h"
+
+Logger Sensor::logger;
+String Sensor::tag = "Sensor";
 
 Sensor::Sensor()
 {
@@ -9,7 +14,36 @@ Sensor::~Sensor()
 }
 
 String Sensor::getJSON() {
-	return "Sensor";
+
+	logger.print(tag, "\n\t>>getJSON");
+
+	String json = "";
+	json += "{";
+
+	// common field
+	json += "\"type\":\""+ type + "\"";
+	json += ",\"name\":\"";
+	json += String(sensorname) + "\"";
+	json += ",\"enabled\":";
+	if (enabled/*Shield::getTemperatureSensorsEnabled()*/ == true)
+		json += "true";
+	else
+		json += "false";
+	json += ",\"pin\":\"" + Shield::getStrPin(pin)/*Shield::getStrOneWirePin()*/ + "\"";
+	json += ",\"addr\":\"";
+	json += String(getSensorAddress()) + "\"";
+	
+	json += getJSONFields();
+	
+	json += "}";
+
+	logger.print(tag, "\n\t<<getJSON json=" + json);
+	return json;
+}
+
+String Sensor::getJSONFields()
+{
+	return String();
 }
 
 String Sensor::getSensorAddress() {
@@ -27,3 +61,5 @@ String Sensor::getSensorAddress() {
 	}
 	return str;
 }
+
+

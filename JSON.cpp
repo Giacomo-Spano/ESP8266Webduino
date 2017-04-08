@@ -43,6 +43,36 @@ String JSON::jsonGetString(String key) {
 	return value;
 }
 
+String JSON::jsonGetArrayString(String key) {
+
+	//logger.print(tag, "\n\t>>jsonGetString : " + key);
+
+	key = "\"" + key + "\"";
+	String json = jsonString;
+
+	int index = json.indexOf(key);
+	if (index < 0) return "";
+
+	json = json.substring(index + key.length());
+	//logger.print(tag, "\n\tjson=" + key);
+
+	index = json.indexOf("[");
+	//logger.print(tag, "\n\tindex=" + String(index));
+	if (index < 0) return "";
+
+	json = json.substring(index + 1);
+	//logger.print(tag, "\n\tjson=" + json);
+
+	int end = json.indexOf("]", index);
+	//logger.print(tag, "\n\tend=" + String(end));
+	if (end < 0) return "";
+
+	String value = json.substring(0, end);
+	//logger.print(tag, "\n\tvalue=" + value);
+	return value;
+}
+
+
 bool JSON::has(String key) {
 
 	String json = jsonString;
