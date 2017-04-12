@@ -14,6 +14,7 @@ int TFTDisplay::rotation = 3;
 
 uint8_t TFTDisplay::_sclk = D1;   // set these to be whatever pins you like!
 uint8_t TFTDisplay::_mosi = D2;   // set these to be whatever pins you like!
+bool TFTDisplay::disabled = true;
 
 TFTDisplay::TFTDisplay()
 {
@@ -25,6 +26,7 @@ TFTDisplay::~TFTDisplay()
 
 void TFTDisplay::init()
 {
+	if (disabled) return;
 
 	pDisplay = new Adafruit_ST7735(_cs, _dc, _rst);
 	pDisplay->initR(INITR_BLACKTAB);   // initialize a ST7735S chip, black tab
@@ -41,6 +43,8 @@ void TFTDisplay::update() {
 
 void TFTDisplay::drawString(int x, int y, String txt, int size, int color) {
 	
+	if (disabled) return;
+
 	pDisplay->setCursor(x, y);	
 	pDisplay->setTextWrap(true);
 	int backgroundcolor = ST7735_BLUE;
@@ -53,11 +57,15 @@ void TFTDisplay::drawString(int x, int y, String txt, int size, int color) {
 void TFTDisplay::drawXBitmap(int16_t x, int16_t y, const uint8_t *bitmap,
 	int16_t w, int16_t h, uint16_t color) {
 
-	
+	if (disabled) return;
+
 	pDisplay->drawXBitmap(x,y,bitmap,w,h,color);
 }
 
 void TFTDisplay::clear() {
+
+	if (disabled) return;
+
 	pDisplay->fillScreen(ST7735_BLUE);
 }
 

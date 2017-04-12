@@ -18,13 +18,16 @@ public:
 	static const int sensorTypeLen = 20;
 
 	virtual String getJSONFields();
-	virtual String getSensorAddress();
+	virtual void init();
+	/*virtual */String getSensorAddress();
 
 	String sensorname = "sensorname";
 	String type = "type";
 	bool enabled = true;
 	uint8_t pin;
-	uint8_t sensorAddr[8]; // indirizzi sensori
+	
+
+	String address = "";
 	
 	Sensor* next = NULL;
 };

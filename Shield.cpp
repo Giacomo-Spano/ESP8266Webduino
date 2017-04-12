@@ -9,40 +9,29 @@
 #include <Adafruit_ST7735.h>
 
 extern void writeEPROM();
-//uint8_t oneWirePin = D4;
-
-OneWire* oneWirePtr;
-DallasTemperature* pDallasSensors;
 
 Logger Shield::logger;
 String Shield::tag = "Shield";
 String Shield::lastRestartDate = "";
 String Shield::swVersion = "1.02";
-
 uint8_t Shield::heaterPin = D5;
 uint8_t Shield::oneWirePin = D4;
 bool Shield::heaterEnabled = true;
 bool Shield::temperatureSensorsEnabled = true;
-
 int Shield::id = 0; //// inizializzato a zero perchè viene impostato dalla chiamata a registershield
-int Shield::serverPort = 8080;
+
+// default shield setting
+String Shield::networkSSID = "TP-LINK-3BD796";
+String Shield::networkPassword = "giacomocasa";
 int Shield::localPort = 80;
-String Shield::networkSSID;
-String Shield::networkPassword;
-String Shield::serverName;//[serverNameLen];
-String Shield::shieldName;
-String Shield::powerStatus = "on";
+String Shield::serverName="192.168.1.3";
+int Shield::serverPort = 8080;
+String Shield::shieldName="shieldName";
 
-
-int Shield::ioDevices[maxIoDevices] = { 0,0,0,0,0,0,0,0,0,0 };
+String Shield::powerStatus = "on"; // da aggiungere
 
 Shield::Shield()
 {
-	serverPort = 8080;
-	//addOneWireSensors();
-
-	//Actuator* pActuator = new Actuator();
-	//actuatorList.push_back(*pActuator);
 }
 
 Shield::~Shield()
@@ -101,141 +90,113 @@ void Shield::clearScreen() {
 String Shield::sendUpdateSensorListCommand(JSON json) {
 
 	logger.print(tag, "\n\t >>sendUpdateSensorListCommand");
-
-	bool writeChanges = false;
-
 	sensorList.clearAll();
 
 	if (json.has("sensors")) {
 
 		String str = json.jsonGetArrayString("sensors");
-		//logger.print(tag, "\n\t str=" + str);
-
 		JSONArray jArray(str);
 		String item = jArray.getFirst();
-		while (!item.equals("")) {
-			logger.print(tag, "\n\n\t sensor=" + item);
-			
-			JSON sensorJson(item);
+		logger.print(tag, "\n\n\t first sensor=" + item);
 
+		while (!item.equals("")) {
+
+			JSON sensorJson(item);
 			if (sensorJson.has("type")) {
 				String type = sensorJson.jsonGetString("type");
 				logger.print(tag, "\n\t type=" + type);
+
+				uint8_t pin = 0;
+				if (sensorJson.has("pin")) {
+					String strPin = sensorJson.jsonGetString("pin");
+					pin = pinFromStr(strPin);
+				}
+				logger.print(tag, "\n\t pin=" + String(pin));
+
+				String name = "--";
+				if (sensorJson.has("name")) {
+					name = sensorJson.jsonGetString("name");
+				}
+				logger.print(tag, "\n\t name=" + name);
+
+				boolean enabled = true;
+				if (sensorJson.has("enabled")) {
+					enabled = sensorJson.jsonGetBool("enabled");
+				}
+				logger.print(tag, "\n\t enabled=" + String(enabled));
+
 				if (type.equals("onewiresensor")) {
-					addOneWireSensors("1;2;3;4");
+
+					if (sensorJson.has("temperaturesensors")) {
+						
+						OnewireSensor* pOnewireSensor = new OnewireSensor();
+						pOnewireSensor->sensorname = name;
+						pOnewireSensor->pin = pin;
+						pOnewireSensor->enabled = enabled;
+						pOnewireSensor->address = String(sensorList.length() +1);
+						pOnewireSensor->init(); // serve ad inizializzare pDallas
+						
+						String names = "";
+						String str = json.jsonGetArrayString("temperaturesensors");
+						logger.print(tag, "\n\t str=" + str);
+						JSONArray jArrayTempSensor(str);
+						String tempSensor = jArrayTempSensor.getFirst();
+						pOnewireSensor->tempSensorNum = 0;
+						while (!tempSensor.equals("") && pOnewireSensor->tempSensorNum < OnewireSensor::maxTempSensors) {
+							logger.print(tag, "\n\t tempSensor=" + tempSensor);
+							tempSensor.replace("\\", "");// questo serve per correggere un baco. Per qualche motivo
+															// dalla pagina jscrit arrivano dei caratteri \ in più
+							logger.print(tag, "\n\t tempSensor=" + tempSensor);
+							JSON jTempSensor(tempSensor);
+							if (jTempSensor.has("name")) {
+								pOnewireSensor->temperatureSensors[pOnewireSensor->tempSensorNum].name = jTempSensor.jsonGetString("name");
+								pOnewireSensor->temperatureSensors[pOnewireSensor->tempSensorNum].id = pOnewireSensor->tempSensorNum +1;
+								pOnewireSensor->tempSensorNum++;
+							}
+							tempSensor = jArrayTempSensor.getNext();
+						}
+						addSensor(pOnewireSensor);
+					}
 				}
 				else if (type.equals("doorsensor")) {
 					DoorSensor* pDoorSensor = new DoorSensor();
-					if (sensorJson.has("name"))
-						pDoorSensor->sensorname = sensorJson.jsonGetString("name");
-					/*if (sensorJson.has("pin"))
-						pDoorSensor->pin = sensorJson.jsonGet("name");*/
-					addDoorSensor(pDoorSensor);
+					pDoorSensor->sensorname = name;
+					pDoorSensor->pin = pin;
+					pDoorSensor->enabled = enabled;
+					pDoorSensor->address = String(sensorList.length() +1);
+					pDoorSensor->init();
+					addSensor(pDoorSensor);
+				}
+				else {
+					logger.print(tag, "\n\t type nor found");
 				}
 			}
-			else {
-				logger.print(tag, "\n\t type nor fount");
-			}
-
 			item = jArray.getNext();
-		}		
-	}
-	
-	// disabilitato temporaneamente writeeprom
-	writeChanges = false;
-	if (writeChanges)
+			logger.print(tag, "\n\n\t next sensor=" + item);
+		}
+
+		// disabilitato temporaneamente writeeprom
+		//writeChanges = false;
+		//if (writeChanges)
+		sensorList.show();
+
 		writeEPROM();
+
+	}
 
 	String result = "";
 	result += "{";
 	result += "\"result\": \"succes\"";
-	result += ",\"temperaturepin\": \"" + getStrHeaterPin() + "\"";
+	/*result += ",\"temperaturepin\": \"" + getStrHeaterPin() + "\"";
 	result += ",\"temperaturesensorsenabled\": ";
 	if (getTemperatureSensorsEnabled() == true)
 		result += "true";
 	else
-		result += "false";
+		result += "false";*/
 
 	result += "}";
 
 	logger.print(tag, "\n\t <<sendUpdateSensorListCommand");
-	return result;
-}
-
-String Shield::sendTemperatureSensorsSettingsCommand(JSON json) {
-
-	logger.print(tag, "\n\t >>sendSensorsSettingsCommand");
-
-	bool writeChanges = false;
-	if (json.has("temperaturepin")) {
-		String str = json.jsonGetString("temperaturepin");
-		logger.print(tag, "\n\tpin=" + str);
-		if (str.equals("D0"))
-			setOneWirePin(D0);
-		if (str.equals("D1"))
-			setOneWirePin(D1);
-		else if (str.equals("D2"))
-			setOneWirePin(D2);
-		else if (str.equals("D3"))
-			setOneWirePin(D3);
-		else if (str.equals("D4"))
-			setOneWirePin(D4);
-		else if (str.equals("D5"))
-			setOneWirePin(D5);
-		else if (str.equals("D6"))
-			setOneWirePin(D6);
-		else if (str.equals("D7"))
-			setOneWirePin(D7);
-		else if (str.equals("D8"))
-			setOneWirePin(D8);
-		else if (str.equals("D9"))
-			setOneWirePin(D9);
-		else if (str.equals("D10"))
-			setOneWirePin(D10);
-
-		writeChanges = true;
-	}
-	if (json.has("temperaturesensorsenabled")) {
-		bool res = json.jsonGetBool("temperaturesensorsenabled");
-		logger.print(tag, "\n\t temperaturesensorsenabled= ");
-		if (res)
-			logger.print(tag, "true");
-		else
-			logger.print(tag, "false");
-		setTemperatureSensorsEnabled(res);
-		writeChanges = true;
-	}
-	if (json.has("addr") && json.has("name")) {
-		String name = json.jsonGetString("name");
-		String addr = json.jsonGetString("addr");
-		logger.print(tag, "\n\t addr=" + addr + "name=" + name);
-
-		for (int i = 0; i < sensorList.count; i++) {
-			if (!sensorList.get(i)->type.equals("temperature"))
-				continue;
-			DS18S20Sensor* pSensor = (DS18S20Sensor*)sensorList.get(i);
-			if (pSensor->getSensorAddress().equals(addr)) {
-				pSensor->sensorname = name;
-				writeChanges = true;
-			}
-		}
-
-	}
-	if (writeChanges)
-		writeEPROM();
-
-	String result = "";
-	result += "{";
-	result += "\"result\": \"succes\"";
-	result += ",\"temperaturepin\": \"" + getStrHeaterPin() + "\"";
-	result += ",\"temperaturesensorsenabled\": ";
-	if (getTemperatureSensorsEnabled() == true)
-		result += "true";
-	else
-		result += "false";
-	result += "}";
-
-	logger.print(tag, "\n\t <<sendSensorsSettingsCommand");
 	return result;
 }
 
@@ -304,12 +265,6 @@ String Shield::sendCommand(String jsonStr) {
 		if (command.equals("heatersettings")) {
 			logger.print(tag, "\n\t ++heatersettings");
 			String result = sendHeaterSettingsCommand(json);
-			logger.print(tag, "\n\t <<sendCommand result=" + String(result));
-			return result;
-		}
-		if (command.equals("temperaturesensorsettings")) {
-			logger.print(tag, "\n\t ++temperaturesensorsettings");
-			String result = sendTemperatureSensorsSettingsCommand(json);
 			logger.print(tag, "\n\t <<sendCommand result=" + String(result));
 			return result;
 		}
@@ -489,43 +444,6 @@ String Shield::sendPowerCommand(JSON json)
 	return result;
 }
 
-String Shield::getTemperatureSensorsStatusJson() {
-
-	logger.print(tag, "\n\t >>getTemperatureSensorsStatusJson");
-
-	String json = "{";
-	json += "\"id\":" + String(id);// shieldid
-
-	json += ",\"temperaturesensorsenabled\":";
-	if (Shield::getTemperatureSensorsEnabled() == true)
-		json += "true";
-	else
-		json += "false";
-	json += ",\"temperaturesensorspin\":\"" + Shield::getStrOneWirePin() + "\"";
-
-
-	json += ",\"sensors\":[";
-
-	//if (getTemperatureSensorsEnabled) {
-	if (Shield::getTemperatureSensorsEnabled() == true) {
-		for (int i = 0; i < sensorList.count; i++) {
-			if (!sensorList.get(i)->type.equals("temperature"))
-				continue;
-			DS18S20Sensor* sensor = (DS18S20Sensor*)sensorList.get(i);
-			if (i != 0)
-				json += ",";
-			json += sensor->getJSON();
-		}
-	}
-	//}
-
-	json += "]";
-	json += "}";
-	logger.print(tag, "\n\t <<getTemperatureSensorsStatusJson" + json);
-
-	return json;
-}
-
 String Shield::getSensorsStatusJson() {
 
 	logger.print(tag, "\n\t >>getSensorsStatusJson");
@@ -533,17 +451,17 @@ String Shield::getSensorsStatusJson() {
 	String json = "{";
 	json += "\"shieldid\":" + String(id);// shieldid
 
-	json += ",\"sensors\":[";	
+	json += ",\"sensors\":[";
 	// onwire sensore
-	String onewire = getOneWireJson();
+	/*String onewire = getOneWireJson();
 	if (!onewire.equals(""))
-		json += onewire;
+		json += onewire;*/
 	// no onewiresensor
 	for (int i = 0; i < sensorList.count; i++) {
 		Sensor* sensor = sensorList.get(i);
-		if (sensor->type.equals("temperature"))
-			continue;
-		if (i != 0 || !onewire.equals(""))
+		/*if (sensor->type.equals("temperature"))
+			continue;*/
+		if (i != 0 /*|| !onewire.equals("")*/)
 			json += ",";
 
 		json += "{";
@@ -554,10 +472,11 @@ String Shield::getSensorsStatusJson() {
 			json += "true";
 		else
 			json += "false";
-		json += ",\"pin\":\"" + getStrPin(sensor->pin) + "\"";		
+		json += ",\"pin\":\"" + getStrPin(sensor->pin) + "\"";
+		json += sensor->getJSONFields();
 		json += "}";
 		//json += sensor->getJSON();
-	}	
+	}
 	json += "]";
 
 	//actuators
@@ -578,7 +497,7 @@ String Shield::getOneWireJson() {
 
 	logger.print(tag, "\n\t >>String Shield::getOneWireJson()");
 
-		
+
 	String json = "{";
 	json += "\"enabled\":" + String(temperatureSensorsEnabled);
 	json += ",\"type\":\"onewiresensor\"";
@@ -591,6 +510,7 @@ String Shield::getOneWireJson() {
 		Sensor* sensor = sensorList.get(i);
 		if (!sensor->type.equals("temperature"))
 			continue;
+		//DS18S20Sensor* tSensor = (DS18S20Sensor*)sensor;
 		noOnewire = false;
 		if (i != 0)
 			json += ",";
@@ -598,13 +518,14 @@ String Shield::getOneWireJson() {
 		json += "{";
 		json += "\"type\":\"" + sensor->type + "\"";
 		json += ",\"name\":\"" + sensor->sensorname + "\"";
+		json += sensor->getJSONFields();
 		json += "}";
 
 
 	}
 	if (noOnewire)
 		return "";
-		
+
 	json += "]";
 	json += "}";
 	logger.print(tag, "\n\t <<getOneWireJson" + json);
@@ -660,8 +581,6 @@ String Shield::getHeaterStatusJson() {
 
 void Shield::checkStatus()
 {
-
-
 	checkActuatorsStatus();
 	checkSensorsStatus();
 
@@ -704,11 +623,10 @@ void Shield::checkStatus()
 	for (int i = 0; i < sensorList.count; i++) {
 		if (!sensorList.get(i)->type.equals("temperature"))
 			continue;
-		DS18S20Sensor* pSensor = (DS18S20Sensor*)sensorList.get(i);
-		tftDisplay.drawString(0, textHeight * (2 + 1 + 2 + 2) + textHeight * i * 1, pSensor->sensorname + " " + pSensor->getTemperature(), 0, ST7735_WHITE);
+		//DS18S20Sensor* pSensor = (DS18S20Sensor*)sensorList.get(i);
+		//tftDisplay.drawString(0, textHeight * (2 + 1 + 2 + 2) + textHeight * i * 1, pSensor->sensorname + " " + pSensor->getTemperature(), 0, ST7735_WHITE);
 	}
 	//display.update();
-
 }
 
 void Shield::checkActuatorsStatus()
@@ -724,107 +642,39 @@ void Shield::checkSensorsStatus()
 	unsigned long currMillis = millis();
 	unsigned long timeDiff = currMillis - lastCheckTemperature;
 	if (timeDiff > checkTemperature_interval) {
-
 		lastCheckTemperature = currMillis;
 		checkTemperatures();
 		return;
 	}
-}
+	for (int i = 0; i < sensorList.count; i++) {
+		Sensor* sensor = sensorList.get(i);
+		if (sensor->type.equals("temperature")) {
+			continue;
+		}
+		else if (sensor->type.equals("doorsensor")) {
+			if (timeDiff > checkDoorStatus_interval) {
+				lastCheckDoorStatus = currMillis;
+				DoorSensor* doorSensor = (DoorSensor*)sensor;
 
-void Shield::addOneWireSensors(String sensorNames) {
-
-	logger.println(tag, ">>addOneWireSensors");
-
-	logger.print(tag, "\n\t OneWirepin=" + String(oneWirePin));
-
-	oneWirePtr = new OneWire(oneWirePin);
-	pDallasSensors = new DallasTemperature(oneWirePtr);
-
-	pDallasSensors->begin();
-	
-	//sensorList.init();
-
-	uint8_t address[8];
-	int count = 0;
-	while (oneWirePtr->search(address)) {
-		logger.print(tag, "\n\tFound \'1-Wire\' device with address:");
-		for (int i = 0; i < 8; i++) {
-			logger.print(tag, "0x");
-			if (address[i] < 16) {
-				logger.print(tag, '0');
-			}
-			logger.print(tag, address[i]);
-			if (i < 7) {
-				logger.print(tag, ", ");
+				bool oldDoorStatus = doorSensor->getOpenStatus();
+				bool doorStatus = doorSensor->checkDoorStatus();
+				if (oldDoorStatus != doorStatus) {
+					Command command;
+					logger.print(tag, "\nt DOOR STATUS CHANGED\n");
+					command.sendSensorsStatus(*this);
+				}
 			}
 		}
-		if (OneWire::crc8(address, 7) != address[7]) {
-			logger.print(tag, "\n\tCRC is not valid!");
-			return;
-		}
-
-		logger.print(tag, "\n\t sensorNames=" + sensorNames);
-
-		int index = sensorNames.indexOf(";");
-		int n = 0;
-		int start = 0;
-		String name = "temp sensor";
-
-		while (index != -1 && n <= count) {
-			name = sensorNames.substring(start, index);
-			start = index+1;
-			index = sensorNames.indexOf(";",start);
-			n++;
-		}
-
-		/*String name = "";
-		int index = sensorNames.indexOf(";");
-		if (index >= 0) {
-			name = sensorNames.substring(0, index);
-			if (index < sensorNames.length() - 1)
-				sensorNames = sensorNames.substring(index + 1);
-			else
-				sensorNames = "";
-		}
-		else {
-			name = "sensor" + String(count);
-		}*/
-
-		DS18S20Sensor* pSensorNew = new DS18S20Sensor();
-		pSensorNew->sensorname = name/* + String(count)*/;
-
-		for (int i = 0; i < 8; i++) {
-			pSensorNew->sensorAddr[i] = address[i];
-		}
-
-		//logger.print(tag, "\n\tpSensorNew->sensorAddr=");
-		//logger.print(tag, pSensorNew->getSensorAddress());
-
-		count++;
-		sensorList.add((Sensor*)pSensorNew);
-		//sensorList.show();
-
-		//String txt = "\n\tADDDED sensor " + String(pSensorNew->sensorname) + "addr ";
-		//logger.print(tag, txt);
-		//logger.print(tag, pSensorNew->getSensorAddress());
-		//logger.print(tag, " end");
 	}
-	oneWirePtr->reset_search();
-	sensorList.show();
-	logger.println(tag, "<<addOneWireSensors");
 }
 
-void Shield::addDoorSensor(DoorSensor* pDoorSensor) {
+void Shield::addSensor(Sensor* pSensor) {
 
-	logger.println(tag, ">>addDoorSensor");
-		
-	/*DoorSensor* pDoorSensor = new DoorSensor();
-	pDoorSensor->sensorname = "DoorSensor";*/
+	logger.print(tag, "\n\t >>addSensor");
 	
-	sensorList.add((Sensor*)pDoorSensor);
-	sensorList.show();
-	
-	logger.println(tag, "<<addDoorSensor");
+	sensorList.add((Sensor*)pSensor);
+	//sensorList.show();
+	logger.print(tag, "\n\t <<addSensor");
 }
 
 void Shield::addActuators() {
@@ -848,27 +698,31 @@ void Shield::checkTemperatures() {
 	//sensorList.show();
 	float oldTemperature;
 	for (int i = 0; i < sensorList.count; i++) {
-		if (!sensorList.get(i)->type.equals("temperature"))
+		if (!sensorList.get(i)->type.equals("onewiresensor"))
 			continue;
+		
+		OnewireSensor* pSensor = (OnewireSensor*)sensorList.get(i);
 
-		DS18S20Sensor* pSensor = (DS18S20Sensor*)sensorList.get(i);
-		oldTemperature = pSensor->getTemperature();
+		for (int k = 0; k < pSensor->tempSensorNum; k++) {
+			
+			oldTemperature = pSensor->getTemperature(k);
 
-		//sensorList.show();
-		pSensor->readTemperature(pDallasSensors);
+			//sensorList.show();
+			bool res = pSensor->readTemperatures();
 
-		if (oldTemperature != pSensor->getTemperature()) {
-			temperatureChanged = true;
-			logger.print(tag, "\ttemperatura cambiata");
-			logger.print(tag, String(oldTemperature));
-			logger.print(tag, "->");
-			logger.print(tag, String(pSensor->getTemperature()));
+			if (res) {
+				temperatureChanged = true;
+				logger.print(tag, "\t temperatura cambiata");
+				/*logger.print(tag, String(oldTemperature));
+				logger.print(tag, "->");
+				logger.print(tag, String(pSensor->getTemperature()));*/
+			}
+
+			// imposta la temperatura locale a quella del primo sensore (DA CAMBIARE)
+			if (i == 0)
+				hearterActuator.setLocalTemperature(pSensor->getTemperature(0));
+			//sensorList.show();
 		}
-
-		// imposta la temperatura locale a quella del primo sensore (DA CAMBIARE)
-		if (i == 0)
-			hearterActuator.setLocalTemperature(pSensor->getTemperature());
-		//sensorList.show();
 	}
 
 	// se il sensore attivo è quello locale aggiorna lo stato

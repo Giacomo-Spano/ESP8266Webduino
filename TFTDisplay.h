@@ -20,6 +20,7 @@ class TFTDisplay
 private:
 	static String tag;
 	static Logger logger;
+	static bool disabled;
 	
 	//static SSD1306* pdisplay;
 	static Adafruit_ST7735* pDisplay;

@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ESP8266Webduino", "ESP8266W
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowsFormsApplication1", "..\WindowsFormsApplication1\WindowsFormsApplication1.csproj", "{AFC3944E-ACB1-4120-9980-820515F5CACC}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "testwifi", "..\testwifi\testwifi.vcxproj", "{279A191C-DC4E-4B2A-BAAB-99214E99104B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -37,6 +39,16 @@ Global
 		{AFC3944E-ACB1-4120-9980-820515F5CACC}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{AFC3944E-ACB1-4120-9980-820515F5CACC}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{AFC3944E-ACB1-4120-9980-820515F5CACC}.Release|Win32.ActiveCfg = Release|Any CPU
+		{279A191C-DC4E-4B2A-BAAB-99214E99104B}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{279A191C-DC4E-4B2A-BAAB-99214E99104B}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{279A191C-DC4E-4B2A-BAAB-99214E99104B}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{279A191C-DC4E-4B2A-BAAB-99214E99104B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{279A191C-DC4E-4B2A-BAAB-99214E99104B}.Debug|Win32.Build.0 = Debug|Win32
+		{279A191C-DC4E-4B2A-BAAB-99214E99104B}.Release|Any CPU.ActiveCfg = Release|Win32
+		{279A191C-DC4E-4B2A-BAAB-99214E99104B}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{279A191C-DC4E-4B2A-BAAB-99214E99104B}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{279A191C-DC4E-4B2A-BAAB-99214E99104B}.Release|Win32.ActiveCfg = Release|Win32
+		{279A191C-DC4E-4B2A-BAAB-99214E99104B}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

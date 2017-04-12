@@ -93,7 +93,7 @@ int Command::registerShield(Shield shield)
 	// sensori
 	str += ",\"sensors\":[";
 	for (int i = 0; i < shield.sensorList.count; i++) {
-		DS18S20Sensor* sensor = (DS18S20Sensor*)shield.sensorList.get(i);
+		Sensor* sensor = (Sensor*)shield.sensorList.get(i);
 		if (i != 0)
 			str += ",";
 		str += sensor->getJSON();

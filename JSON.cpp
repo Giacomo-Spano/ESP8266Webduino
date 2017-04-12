@@ -16,7 +16,7 @@ JSON::~JSON()
 
 String JSON::jsonGetString(String key) {
 
-	//logger.print(tag, "\n\t>>jsonGetString : " + key);
+	logger.print(tag, "\n\t>>jsonGetString : " + key);
 
 	key = "\"" + key + "\"";
 	String json = jsonString;
@@ -25,25 +25,28 @@ String JSON::jsonGetString(String key) {
 	if (index < 0) return "";
 
 	json = json.substring(index + key.length());
-	//logger.print(tag, "\n\tjson=" + key);
+	logger.print(tag, "\n\t json=" + json);
 
 	index = json.indexOf("\"");
-	//logger.print(tag, "\n\tindex=" + String(index));
+	logger.print(tag, "\n\t index=" + String(index));
 	if (index < 0) return "";
 
 	json = json.substring(index + 1);
-	//logger.print(tag, "\n\tjson=" + json);
+	logger.print(tag, "\n\t json=" + json);
+
+	if (json.charAt(0) == '"')
+		return "";
 
 	int end = json.indexOf("\"", index);
-	//logger.print(tag, "\n\tend=" + String(end));
+	logger.print(tag, "\n\t end=" + String(end));
 	if (end < 0) return "";
 
 	String value = json.substring(0, end);
-	//logger.print(tag, "\n\tvalue=" + value);
+	logger.print(tag, "\n\t value=" + value);
 	return value;
 }
 
-String JSON::jsonGetArrayString(String key) {
+/*String JSON::jsonGetArrayString(String key) {
 
 	//logger.print(tag, "\n\t>>jsonGetString : " + key);
 
@@ -70,6 +73,39 @@ String JSON::jsonGetArrayString(String key) {
 	String value = json.substring(0, end);
 	//logger.print(tag, "\n\tvalue=" + value);
 	return value;
+}*/
+
+String JSON::jsonGetArrayString(String key) {
+
+	logger.print(tag, "\n\t>>jsonGetArrayString : " + key);
+	key = "\"" + key + "\"";
+	String json = jsonString;
+	int index = json.indexOf(key);
+	if (index < 0) return "";
+
+	json = json.substring(index + key.length());
+	logger.print(tag, "\n\t keyvalue=" + json);
+
+	int start = json.indexOf('[');
+	if (start == -1)
+		return "";
+	int i = start + 1;
+	int count = 1;
+	while (i < json.length()) {
+		if (json.charAt(i) == 91) { // [
+			count++;
+		}
+		if (json.charAt(i) == 93) {
+			count--;
+			if (count == 0) {
+				json = json.substring(start, i + 1);
+				logger.print(tag, "\n\t json=" + json);
+				return json;
+			}
+		}
+		i++;
+	}
+	return "";
 }
 
 
@@ -80,7 +116,7 @@ bool JSON::has(String key) {
 
 	int index = json.indexOf(key);
 	if (index < 0) {
-		//logger.print(tag, "\n\tjsonString " + jsonString);
+		logger.print(tag, "\n\tjsonString " + jsonString);
 		logger.print(tag, "\n\tkey " + key + "not found");
 		return false;
 	}
@@ -93,7 +129,7 @@ bool JSON::has(String key) {
 	}
 
 	json = json.substring(index + 1);
-	
+
 	/*int end = json.indexOf("\"", index);
 	if (end < 0)
 		end = json.indexOf("}", index);
@@ -165,7 +201,7 @@ String JSON::getNum(String key) {
 			return "";
 		}
 	}
-	
+
 	String value = json.substring(0, end);
 	//logger.print(tag, "\n\tvalue= "+ value);
 	value.trim();
@@ -191,7 +227,7 @@ bool JSON::getBool(String key) {
 			return false;
 		}
 	}
-	
+
 	String value = json.substring(0, end);
 	value.trim();
 
@@ -209,6 +245,9 @@ String JSON::getString(String key) {
 	//logger.print(tag, key);
 
 	String json = getRightOfKey(key);
+	//logger.print(tag, "\n\trightofkey= ");
+	//logger.print(tag, json);
+
 	if (json.equals(""))
 		return "";
 

@@ -32,7 +32,6 @@
     <li><a href="index.html" class="button hvr-underline-from-center">Home</a></li>
     <li><a href="settings.html" class="button hvr-underline-from-center">Impostazioni</a></li>
     <li><a href="heater.html" class="button hvr-underline-from-center">Riscaldamento</a></li>
-    <li><a href="temperature.html" class="button hvr-underline-from-center">Sensori temperatura</a></li>
     <li><span class="active">Sensori</span></li>
 </ul>
 <!--Content--->
@@ -45,7 +44,7 @@
 
             <strong>Abilitato : </strong><label class="input-toggle"><input type="checkbox"
                                                                             id="sensorEnabledCheckBox"
-                                                                            name="enabled"><span></span></label><br>
+                                                                            name="enabled" checked="true"><span></span></label><br>
             <strong>nome sensore: </strong><input type='text' name='name'>
             <br>
             <strong>pin : </strong>
@@ -56,17 +55,24 @@
                 <option value="D3">D3</option>
                 <option value="D4">D4</option>
                 <option value="D5">D5</option>
-                <option value="D5">D6</option>
-                <option value="D5">D7</option>
-                <option value="D5">D8</option>
-                <option value="D5">D9</option>
-                <option value="D5">D10</option>
+                <option value="D6">D6</option>
+                <option value="D7">D7</option>
+                <option value="D8">D8</option>
+                <option value="D9">D9</option>
+                <option value="D10">D10</option>
+                <option value="A0">A0</option>
             </select>
             <br>
             <strong>tipo sensore : </strong>
             <select id="sensorTypeSelect" name="sensortype">
                 <option value="onewiresensor">Sensore OneWire</option>
                 <option value="doorsensor">Sensore porta</option>
+                <option value="currentsensor">Sensore corrente</option>
+                <option value="humiditysensor">Sensore di umidit&agrave;</option>
+                <option value="pressuresensor">Sensore di pressione</option>
+                <option value="pirsensor">Sensore di presenza</option>
+                <option value="heatersensor">Riscaldamento</option>
+                <option value="relesensor">Rel&egrave;</option>
             </select>
             <br>
             <div class="subsensorbox" id="sensorproperties" name='sensorproperties'>
@@ -78,6 +84,9 @@
 
         <br>
         <!-- sensor custom properties - questi sono i template delle proprietà custom dei sensori-->
+        <div id="genericsensor" name='genericsensor'>
+            <strong>no custom properties</strong>
+        </div>
         <div id="onewiresensor" name='onewiresensor'>
             <strong>numero sensori: </strong><input type="number" name="temperatureSensorNumber" min="1" max="10"
                                                     step="1" value="1">
@@ -87,13 +96,12 @@
                     <strong>#: </strong><input type='text' name='name' value="prova"><br>
                 </div>
             </div>
-
-
         </div>
 
         <div id="doorsensor" name='doorsensor'>
             <strong>door: </strong><input type="number" name="subSensorNumber" min="1" max="10" step="1">
         </div>
+
         <!-- sensor custom properties end-->
 
         <div id="sensorList">

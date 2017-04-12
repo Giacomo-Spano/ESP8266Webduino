@@ -85,10 +85,6 @@ void HttpResponse::sendVirtualFile(const String res, String contentType, String 
 		sendHeader(res, contentType);
 		sendData(fileName, heater_html);
 	}
-	else if (fileName.equals("temperature.html")) {
-		sendHeader(res, contentType);
-		sendData(fileName, temperature_html);
-	}
 	else if (fileName.equals("sensors.html")) {
 		sendHeader(res, contentType);
 		sendData(fileName, sensors_html);

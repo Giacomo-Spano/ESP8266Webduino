@@ -12,9 +12,17 @@
 #include "ESPDisplay.h"
 #include "TFTDisplay.h"
 #include "DoorSensor.h"
+#include "OnewireSensor.h"
 
 class Shield
 {	
+protected:
+	static String networkSSID;
+	static String networkPassword;
+	static int localPort;
+	static String serverName;//[serverNameLen];
+	static int serverPort;
+	static String shieldName;
 
 public:
 	HeaterActuator hearterActuator;
@@ -31,7 +39,7 @@ public:
 	static const int ioDevices_Heater = 1;
 	static const int ioDevices_OneWireSensors = 2;
 
-	static int id;// = 0; // inizializzato a zero perchè viene impostato dalla chiamata a registershield
+	static int id;// = 0; // inizializzato a zero perchï¿½ viene impostato dalla chiamata a registershield
 	static int ioDevices[maxIoDevices];
 	static bool heaterEnabled;
 	static bool temperatureSensorsEnabled;
@@ -40,6 +48,8 @@ public:
 	static String powerStatus; // power
 	static String lastRestartDate;
 
+	static const int maxSensorNum = 10;
+
 	void drawString(int x, int y, String txt, int size, int color);
 	void clearScreen();
 	
@@ -47,30 +57,29 @@ public:
 private:
 	static String tag;
 	static Logger logger;
+	
+
 	const int checkTemperature_interval = 60000;
+	const int checkDoorStatus_interval = 1000; // 1 secondo
 	unsigned long lastCheckTemperature = 0;//-flash_interval;
+	unsigned long lastCheckDoorStatus = 0;//-flash_interval;
 	String oldDate;
 	
 
 protected:
 	String sendHeaterSettingsCommand(JSON json);
-	String sendTemperatureSensorsSettingsCommand(JSON json);
 	String sendUpdateSensorListCommand(JSON json);
 	String sendShieldSettingsCommand(JSON jsonStr);
 	String sendPowerCommand(JSON jsonStr);
 	String sendRegisterCommand(JSON jsonStr);
 	String sendResetCommand(JSON jsonStr);
-	bool temperatureChanged = false; // indica se la temperatura è cambiata dall'ultima chiamata a flash()
+	bool temperatureChanged = false; // indica se la temperatura ï¿½ cambiata dall'ultima chiamata a flash()
 	//SimpleList<Actuator> actuatorList;
 	void checkActuatorsStatus();
 	void checkSensorsStatus();	
 	
-	static int localPort;
-	static String networkSSID;
-	static String networkPassword;
-	static String serverName;//[serverNameLen];
-	static int serverPort;
-	static String shieldName;
+	
+	
 
 	ESPDisplay display;
 	TFTDisplay tftDisplay;
@@ -84,7 +93,7 @@ public:
 	~Shield();
 	void init();
 	String getSensorsStatusJson();
-	String getTemperatureSensorsStatusJson();
+	//String getTemperatureSensorsStatusJson();
 	String getActuatorsStatusJson();
 	String getHeaterStatusJson();
 	String getSettingsJson();
@@ -96,8 +105,7 @@ public:
 	char MAC_char[18];
 	String localIP;
 	
-	void addOneWireSensors(String sensorNames);
-	void addDoorSensor(DoorSensor* pDoorSensor);
+	void addSensor(Sensor* pSensor);
 	void clearAllSensors();
 
 	void addActuators();
@@ -140,7 +148,7 @@ public:
 
 	static void setServerPort(int port)
 	{		
-		logger.print(tag, "\n\t>>setServerPort");
+		logger.print(tag, "\n\t >>setServerPort");
 		serverPort = port;
 		logger.print(tag, "\n\t serverPort=" + String(serverPort));
 	}
@@ -245,6 +253,34 @@ public:
 			return "";
 	}
 
+	static uint8_t pinFromStr(String str)
+	{
+		if (str.equals("D0"))
+			return D0;
+		if (str.equals("D1"))
+			return D1;
+		if (str.equals("D2"))
+			return D2;
+		if (str.equals("D3"))
+			return D3;
+		if (str.equals("D4"))
+			return D4;
+		if (str.equals("D5"))
+			return D5;
+		if (str.equals("D6"))
+			return D6;
+		if (str.equals("D7"))
+			return D7;
+		if (str.equals("D8"))
+			return D8;
+		if (str.equals("D9"))
+			return D9;
+		if (str.equals("D10"))
+			return D10;
+		else
+			return 0;
+	}
+
 
 	static void setHeaterPin(int pin)
 	{
@@ -309,6 +345,7 @@ public:
 
 	static String getNetworkSSID()
 	{
+		//return "TP-LINK-3BD796";			
 		return String(networkSSID);
 	}
 
@@ -323,6 +360,7 @@ public:
 	{
 
 		return String(networkPassword);
+		//return "giacomocasa";
 	}
 
 	static void setNetworkPassword(String password)
@@ -339,9 +377,9 @@ public:
 
 	static void setServerName(String name)
 	{
-		logger.print(tag, "\n\t>>setServerName");
+		logger.print(tag, "\n\t >>setServerName");
 		serverName = name;
-		logger.print(tag, "\n\tserverName=");
+		logger.print(tag, "\n\t serverName=");
 		logger.print(tag, serverName);
 	}
 	
@@ -352,9 +390,9 @@ public:
 
 	static void setShieldName(String name)
 	{
-		logger.print(tag, "\n\t>>setShieldName");
+		logger.print(tag, "\n\t >>setShieldName");
 		shieldName = name;
-		logger.print(tag, "\n\tshieldName=");
+		logger.print(tag, "\n\t shieldName=");
 		logger.print(tag, shieldName);
 	}
 

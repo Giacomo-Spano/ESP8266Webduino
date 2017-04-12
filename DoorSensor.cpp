@@ -19,26 +19,43 @@ DoorSensor::~DoorSensor()
 {
 }
 
+void DoorSensor::init()
+{
+	pinMode(pin, INPUT);
+}
+
 bool DoorSensor::getOpenStatus() {
 	return openStatus;
 }
 
-void DoorSensor::readStatus() {
-
-	logger.print(tag, "\n\t>>readStatus: ");
+bool DoorSensor::checkDoorStatus() {
 	
-	
-	logger.print(tag, "\n\tstatus  is: ");
+	//logger.print(tag, "\n\t >>checkDoorStatus: ");
 
-	logger.print(tag, "\n\t<<readStatus: ");
+	if (digitalRead(D3) == LOW) {
+		openStatus = true;
+		//logger.print(tag, "\n\t >>>> DOOR OPEN");
+	}
+	else {
+		openStatus = false;
+		//logger.print(tag, "\n\t >>>> DOOR CLOSED");
+	}
+	return openStatus;
 }
 
 String DoorSensor::getJSONFields() {
 	logger.print(tag, "\n\t>>Door::getJSONFields");
 	String json = "";
+	
 	// specific field
 	json += ",\"open\":";
-	json += String(getOpenStatus());
+	if (openStatus)
+		json += "true";
+	else 
+		json += "false";
+	//json += ",\"addr\":";
+	//json += "\"" + getSensorAddress() + "\"";
+	
 	logger.print(tag, "\n\t<<Door::getJSONFields json=" + json);
 	return json;
 }

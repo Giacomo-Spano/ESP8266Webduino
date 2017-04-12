@@ -1,5 +1,6 @@
 
 
+#include "OnewireSensor.h"
 #include "JSONArray.h"
 #include "DoorSensor.h"
 #include "TFTDisplay.h"
@@ -55,11 +56,19 @@ const char* ssid = "xxBUBBLES";
 Shield shield;
 //ESPDisplay display;
 
-const byte EEPROM_ID = 0x99; // used to identify if valid data in EEPROM
+const char* ssidtest = "TP-LINK_3BD796";
+const char* passwordtest = "giacomocasa";
+
+const byte EEPROM_ID = 0x98; // used to identify if valid data in EEPROM
 const int ID_ADDR = 0; // the EEPROM address used to store the ID
 const int TIMERTIME_ADDR = 1; // the EEPROM address used to store the pin
+
+// EPROM 
+int epromversion = 0;
+int addr = TIMERTIME_ADDR;
 void initEPROM();
 void readEPROM();
+void readSensor();
 extern void writeEPROM();
 
 
@@ -68,7 +77,7 @@ extern void writeEPROM();
 String showMain(HttpRequest request, HttpResponse response);
 String showHeater(HttpRequest request, HttpResponse response);
 String showSettings(HttpRequest request, HttpResponse response);
-String showIODevices(HttpRequest request, HttpResponse response);
+//String showIODevices(HttpRequest request, HttpResponse response);
 
 // POST request
 String receiveCommand(HttpRequest request, HttpResponse httpResponse);
@@ -76,12 +85,12 @@ String setRemoteTemperature(HttpRequest request, HttpResponse httpResponse);
 String showPower(HttpRequest request, HttpResponse response);
 String showRele(HttpRequest request, HttpResponse response);
 String showChangeSettings(HttpRequest request, HttpResponse response);
-String showChangeIODevices(HttpRequest request, HttpResponse response);
+//String showChangeIODevices(HttpRequest request, HttpResponse response);
 String softwareReset(HttpRequest request, HttpResponse response);
 
 // GET request
 String getJsonStatus(HttpRequest request, HttpResponse response);
-String getJsonTempearatureSensorsStatus(HttpRequest request, HttpResponse response);
+//String getJsonTempearatureSensorsStatus(HttpRequest request, HttpResponse response);
 String getJsonActuatorsStatus(HttpRequest request, HttpResponse response);
 String getJsonHeaterStatus(HttpRequest request, HttpResponse response);
 String getJsonSettings(HttpRequest request, HttpResponse response);
@@ -110,16 +119,18 @@ void writeEPROM() {
 
 	logger.print(tag, "\n\n\t >>write EPROM");
 
-	int addr = TIMERTIME_ADDR;
+	
 	EEPROM.write(ID_ADDR, EEPROM_ID); // write the ID to indicate valid data
+
+	//EEPROM.write(ID_ADDR + 1, EEPROM_ID); // write the ID to indicate valid data
 	byte hiByte;
 	byte loByte;
-
+	addr = TIMERTIME_ADDR;
 	// dummy
-	byte dummy;
-	dummy = 3;
-	EEPROM.write(addr++, dummy);
-	logger.print(tag, "\n\t dummy = " + String(dummy));
+	//byte dummy;
+	//dummy = 99;
+	//EEPROM.write(addr++, dummy);
+	//logger.print(tag, "\n\t dummy = " + String(dummy));
 
 	// build version
 	hiByte = highByte(EPROM_Table_Schema_Version);
@@ -127,6 +138,21 @@ void writeEPROM() {
 	EEPROM.write(addr++, hiByte);
 	EEPROM.write(addr++, loByte);
 
+	// ssid
+	char networkSSID[Shield::networkSSIDLen];
+	Shield::getNetworkSSID().toCharArray(networkSSID, sizeof(networkSSID));
+	int res = EEPROM_writeAnything(addr, networkSSID);
+	addr += res;
+	logger.print(tag, "\n\t networkSSID = " + String(networkSSID));
+
+	// password
+	char networkPasswordBuffer[Shield::networkPasswordLen];
+	Shield::getNetworkPassword().toCharArray(networkPasswordBuffer, sizeof(networkPasswordBuffer));
+	res = EEPROM_writeAnything(addr, networkPasswordBuffer);
+	addr += res;
+	logger.print(tag, "\n\t networkPasswordBuffer = " + String(networkPasswordBuffer));
+
+#ifdef ddd
 	// heater pin
 	uint8_t pin = Shield::getHeaterPin();
 	EEPROM.write(addr++, pin);
@@ -152,15 +178,8 @@ void writeEPROM() {
 		logger.print(tag, "\n\t temperatureSensorsEnabled = true");
 	else
 		logger.print(tag, "\n\t temperatureSensorsEnabled = false");
+#endif
 
-	// io devices
-	for (int i = 0; i < 10; i++) {
-		hiByte = highByte(Shield::getIODevice(i));
-		loByte = lowByte(Shield::getIODevice(i));
-		EEPROM.write(addr++, hiByte);
-		EEPROM.write(addr++, loByte);
-		logger.print(tag, "\n\t iodevice = " + String(Shield::getIODevice(i)));
-	}
 	// local port
 	int port = Shield::getLocalPort();
 	hiByte = highByte(port);
@@ -168,18 +187,6 @@ void writeEPROM() {
 	EEPROM.write(addr++, hiByte);
 	EEPROM.write(addr++, loByte);
 	logger.print(tag, "\n\t port = " + String(port));
-	// ssid
-	char networkSSID[Shield::networkSSIDLen];
-	Shield::getNetworkSSID().toCharArray(networkSSID, sizeof(networkSSID));
-	int res = EEPROM_writeAnything(addr, networkSSID);
-	addr += res;
-	logger.print(tag, "\n\t networkSSID = " + String(networkSSID));
-	// password
-	char networkPasswordBuffer[Shield::networkPasswordLen];
-	Shield::getNetworkPassword().toCharArray(networkPasswordBuffer, sizeof(networkPasswordBuffer));
-	res = EEPROM_writeAnything(addr, networkPasswordBuffer);
-	addr += res;
-	logger.print(tag, "\n\t networkPasswordBuffer = " + String(networkPasswordBuffer));
 	// server name
 	char serverNameBuffer[Shield::serverNameLen];
 	Shield::getServerName().toCharArray(serverNameBuffer, sizeof(serverNameBuffer));
@@ -193,32 +200,27 @@ void writeEPROM() {
 	EEPROM.write(addr++, hiByte);
 	EEPROM.write(addr++, loByte);
 	logger.print(tag, "\n\t port = " + String(port));
-	// board name
+	// shieldName name
 	char shieldNameBuffer[Shield::shieldNameLen];
 	Shield::getShieldName().toCharArray(shieldNameBuffer, sizeof(shieldNameBuffer));
 	res = EEPROM_writeAnything(addr, shieldNameBuffer);
 	addr += res;
 	logger.print(tag, "\n\t shieldNameBuffer = " + String(shieldNameBuffer));
-	// sensor names
-	String str = "";
-	for (int i = 0; i < shield.sensorList.count; i++) {
-		DS18S20Sensor* sensor = (DS18S20Sensor*)shield.sensorList.get(i);
-		str += String(sensor->sensorname);
-		str += ";";
-	}
-	logger.print(tag, "\n\t str=" + str);
-	char buffer[100];
-	str.toCharArray(buffer, sizeof(buffer));
-	res = EEPROM_writeAnything(addr, buffer);
-	addr += res;
 
+	// sensor count
 	logger.print(tag, "\n\t shield.sensorList.count=" + String(shield.sensorList.count));
-	hiByte = highByte(shield.sensorList.count);
-	loByte = lowByte(shield.sensorList.count);
+	int count = shield.sensorList.count;
+	hiByte = highByte(count);
+	loByte = lowByte(count);
 	EEPROM.write(addr++, hiByte);
 	EEPROM.write(addr++, loByte);
+
+	//EEPROM.commit();
+
+	bool lastSensorWasTemperature = false;
 	for (int i = 0; i < shield.sensorList.count; i++) {
 		Sensor* sensor = shield.sensorList.get(i);
+
 		logger.print(tag, "\n\t sensor->sensorname=" + sensor->sensorname);
 		char sensorNameBuffer[Sensor::sensorNameLen];
 		sensor->sensorname.toCharArray(sensorNameBuffer, sizeof(sensorNameBuffer));
@@ -239,6 +241,37 @@ void writeEPROM() {
 		loByte = lowByte(sensor->pin);
 		EEPROM.write(addr++, hiByte);
 		EEPROM.write(addr++, loByte);
+		logger.print(tag, "\n\t sensor->enabled=" + String(sensor->enabled));
+		EEPROM.write(addr++, sensor->enabled);
+
+		if (std::is_base_of<OnewireSensor, Sensor>::value) {
+			logger.print(tag, "\n\t onewire sensor");
+			OnewireSensor* onewire = (OnewireSensor*)sensor;
+
+			hiByte = highByte(onewire->tempSensorNum);
+			loByte = lowByte(onewire->tempSensorNum);
+			EEPROM.write(addr++, hiByte);
+			EEPROM.write(addr++, loByte);
+			logger.print(tag, "\n\t onewire->tempSensorNum=" + String(onewire->tempSensorNum));
+			EEPROM.write(addr++, onewire->tempSensorNum);
+
+			for (int k = 0; k < onewire->tempSensorNum; k++) {
+
+				onewire->temperatureSensors[k].id = k+1;
+				/*hiByte = highByte(onewire->temperatureSensors[k].id);
+				loByte = lowByte(onewire->temperatureSensors[k].id);
+				EEPROM.write(addr++, hiByte);
+				EEPROM.write(addr++, loByte);
+				logger.print(tag, "\n\t onewire->temperatureSensors[k].id=" + String(onewire->temperatureSensors[k].id));*/
+				
+				onewire->temperatureSensors[k].name;
+				char sensorNameBuffer[Sensor::sensorNameLen];
+				onewire->temperatureSensors[k].name.toCharArray(sensorNameBuffer, sizeof(sensorNameBuffer));
+				res = EEPROM_writeAnything(addr, sensorNameBuffer);
+				logger.print(tag, "\n\t onewire->temperatureSensors[k].name=" + onewire->temperatureSensors[k].name);
+				addr += res;
+			}
+		}
 	}
 
 	EEPROM.commit();
@@ -251,31 +284,51 @@ void readEPROM() {
 
 	byte hiByte;
 	byte lowByte;
-	int addr = TIMERTIME_ADDR;
+
+	addr = ID_ADDR;
 	// dummy
 	byte dummy = EEPROM.read(addr++);
-
 	logger.print(tag, "\n\t dummy=" + String(dummy));
 
-	logger.print(tag, "\EPROM_Table_Schema_Version=");
-	logger.print(tag, String(EPROM_Table_Schema_Version));
-
-	int epromversion = 0;
+	if (dummy != EEPROM_ID) {
+		logger.print(tag, "\n\t INVALID DATA" + String(dummy));
+		writeEPROM();
+		return;
+	}
+	addr = TIMERTIME_ADDR;
 	// epromversion
 	hiByte = EEPROM.read(addr++);
 	lowByte = EEPROM.read(addr++);
 	epromversion = word(hiByte, lowByte);
 	logger.print(tag, "\n\t epromversion=" + String(epromversion));
 
-	if (epromversion >= 7/*EPROM_Table_Schema_Version*/) {
+	// ssid
+	char networkSSIDBuffer[Shield::networkSSIDLen];
+	int res = EEPROM_readAnything(addr, networkSSIDBuffer);
+	//int res = EEPROM_readAnything(addr, buffer);
+	logger.print(tag, "\n\t networkSSIDBuffer=" + String(networkSSIDBuffer));
+	Shield::setNetworkSSID(String(networkSSIDBuffer)/*"TP-LINK_3BD796"*/);
+	addr += res;
+
+	// password
+	char networkPasswordBuffer[Shield::networkPasswordLen];
+	res = EEPROM_readAnything(addr, networkPasswordBuffer);
+	//res = EEPROM_readAnything(addr, buffer);
+	logger.print(tag, "\n\t networkPasswordBuffer = " + String(networkPasswordBuffer));
+	Shield::setNetworkPassword(String(networkPasswordBuffer)/*"giacomocasa"*/);
+	//Shield::setNetworkPassword("giacomocasa");
+	addr += res;
+
+#ifdef ggg
+	if (epromversion >= 7) {
 		uint8_t pin = EEPROM.read(addr++);
 		Shield::setHeaterPin(pin);
 		bool heaterEnabled = EEPROM.read(addr++);
 		Shield::setHeaterEnabled(heaterEnabled);
 		if (heaterEnabled)
-			logger.println(tag, "\n\t heaterenabled = true");
+			logger.print(tag, "\n\t heaterenabled = true");
 		else
-			logger.println(tag, "\n\t heaterenabled = false");
+			logger.print(tag, "\n\t heaterenabled = false");
 
 		uint8_t oneWirePin = EEPROM.read(addr++);
 		Shield::setOneWirePin(oneWirePin);
@@ -285,19 +338,19 @@ void readEPROM() {
 			logger.println(tag, "\n\t temperatureSensorsEnabled = true");
 		else
 			logger.println(tag, "\n\t temperatureSensorsEnabled = false");
-		
-	}
 
-	if (epromversion >= 7/*EPROM_Table_Schema_Version*/) {
+	}
+	if (epromversion >= 7) {
 		for (int i = 0; i < Shield::getMaxIoDevices(); i++) {
 			hiByte = EEPROM.read(addr++);
 			lowByte = EEPROM.read(addr++);
 			Shield::setIODevice(i, word(hiByte, lowByte));
 
-			logger.print(tag, "\ni=" + String(i));
+			logger.print(tag, "\n\t i=" + String(i));
 			logger.print(tag, ", dev=" + String(Shield::getIODevice(i)));
 		}
 	}
+#endif
 
 	// local port
 	hiByte = EEPROM.read(addr++);
@@ -306,25 +359,11 @@ void readEPROM() {
 	logger.print(tag, "\n\t port = ");
 	logger.print(tag, String(port));
 	Shield::setLocalPort(port);
-	// ssid
-	char networkSSIDBuffer[Shield::networkSSIDLen];
-	int res = EEPROM_readAnything(addr, networkSSIDBuffer);
-	//int res = EEPROM_readAnything(addr, buffer);
-	logger.print(tag, "\n\t networkSSIDBuffer=" + String(networkSSIDBuffer));
-	Shield::setNetworkSSID(String(networkSSIDBuffer)/*"TP-LINK_3BD796"*/);
-	addr += res;
-	// password
-	char networkPasswordBuffer[Shield::networkPasswordLen];
-	res = EEPROM_readAnything(addr, networkPasswordBuffer);
-	//res = EEPROM_readAnything(addr, buffer);
-	logger.print(tag, "\n\t networkPasswordBuffer = " + String(networkPasswordBuffer));
-	Shield::setNetworkPassword(String(networkPasswordBuffer)/*"giacomocasa"*/);
-	//Shield::setNetworkPassword("giacomocasa");
-	addr += res;
+
 	//server name
 	char servernnameBuffer[Shield::serverNameLen];
 	res = EEPROM_readAnything(addr, servernnameBuffer);
-	logger.print(tag, "\n\tservernnameBuffer=" + String(servernnameBuffer));
+	logger.print(tag, "\n\t servernnameBuffer=" + String(servernnameBuffer));
 	Shield::setServerName(String(servernnameBuffer));
 	addr += res;
 	// server port
@@ -339,52 +378,106 @@ void readEPROM() {
 	logger.print(tag, "\n\t shieldNameBuffer =" + String(shieldNameBuffer));
 	Shield::setShieldName(String(shieldNameBuffer));
 	addr += res;
-	// sensor names
-	char buffer[100];
-	res = EEPROM_readAnything(addr, buffer);
-	addr += res;
-	sensorNames = String(buffer);
-	logger.print(tag, "\n\tsensorNames=" + sensorNames);
-	/*char buffer[100];
-	for (int i = 0; i < shield.sensorList.count; i++) {
-		DS18S20Sensor* sensor = (DS18S20Sensor*)shield.sensorList.get(i);
-		res = EEPROM_writeAnything(addr, buffer);
-		sensor->sensorname = String(buffer);
-		addr += res;
-	}*/
+
 	
-	if (epromversion >= 8/*EPROM_Table_Schema_Version*/) {
+	logger.print(tag, "\n\n\t <<read EPROM res=\n" + String(addr));
+}
+void readSensor() {
+
+	logger.print(tag, "\n\n\t >>read Sensor");
+
+	byte hiByte;
+	byte lowByte;
+
+	hiByte = EEPROM.read(addr++);
+	lowByte = EEPROM.read(addr++);
+	int sensorCount = word(hiByte, lowByte);
+	logger.print(tag, "\n\t sensorCount=" + String(sensorCount));
+	if (sensorCount < 0 || sensorCount > Shield::maxSensorNum) {
+		sensorCount = 0;
+	}
+
+	shield.clearAllSensors(); // serve per inizializzare
+	for (int i = 0; i < sensorCount; i++) {
+
+		char sensorNameBuffer[Sensor::sensorNameLen];
+		int res = EEPROM_readAnything(addr, sensorNameBuffer);
+		String name = String(sensorNameBuffer);
+		logger.print(tag, "\n\t sensorNameBuffer =" + name);
+		addr += res;
+
+		char sensorTypeBuffer[Sensor::sensorTypeLen];
+		res = EEPROM_readAnything(addr, sensorTypeBuffer);
+		String type = String(sensorTypeBuffer);
+		logger.print(tag, "\n\t sensorTypeBuffer =" + type);
+		addr += res;
+
+		char sensorAddressBuffer[Sensor::sensorAddressLen];
+		res = EEPROM_readAnything(addr, sensorAddressBuffer);
+		logger.print(tag, "\n\t sensorAddressBuffer =" + String(sensorAddressBuffer));
+		addr += res;
 
 		hiByte = EEPROM.read(addr++);
 		lowByte = EEPROM.read(addr++);
-		int sensorCount = word(hiByte, lowByte);
-		logger.print(tag, "\n\t sensorCount=" + String(sensorCount));
+		int sensorPin = word(hiByte, lowByte);
+		logger.print(tag, "\n\t sensorPin=" + String(sensorPin));
 
-		for (int i = 0; i < sensorCount; i++) {
+		bool sensorEnabled = EEPROM.read(addr++);
+		logger.print(tag, "\n\t sensorEnabled=" + String(sensorEnabled));
 
-			char sensorNameBuffer[Sensor::sensorNameLen];
-			res = EEPROM_readAnything(addr, sensorNameBuffer);
-			logger.print(tag, "\n\t sensorNameBuffer =" + String(sensorNameBuffer));
-			addr += res;
-
-			char sensorTypeBuffer[Sensor::sensorTypeLen];
-			res = EEPROM_readAnything(addr, sensorTypeBuffer);
-			logger.print(tag, "\n\t sensorTypeBuffer =" + String(sensorTypeBuffer));
-			addr += res;
-
-			char sensorAddressBuffer[Sensor::sensorAddressLen];
-			res = EEPROM_readAnything(addr, sensorAddressBuffer);
-			logger.print(tag, "\n\t sensorAddressBuffer =" + String(sensorAddressBuffer));
-			addr += res;
+		if (type == "onewiresensor") {
+			logger.print(tag, "\n\t onewiresensor found");
+			OnewireSensor* pOnewireSensor = new OnewireSensor();
+			pOnewireSensor->sensorname = name;
+			pOnewireSensor->pin = sensorPin;
+			pOnewireSensor->enabled = sensorEnabled;
+			pOnewireSensor->address = String(i + 1);
+			pOnewireSensor->init(); 
 
 			hiByte = EEPROM.read(addr++);
 			lowByte = EEPROM.read(addr++);
-			int sensorPin = word(hiByte, lowByte);
-			logger.print(tag, "\n\t sensorPin=" + String(sensorPin));
+			pOnewireSensor->tempSensorNum = word(hiByte, lowByte);
+			logger.print(tag, "\n\t pOnewireSensor->tempSensorNum=" + String(pOnewireSensor->tempSensorNum));
+			if (pOnewireSensor->tempSensorNum < 0 || pOnewireSensor->tempSensorNum > OnewireSensor::maxTempSensors) {
+				pOnewireSensor->tempSensorNum = 0;
+			}
+
+			for (int k = 0; k < pOnewireSensor->tempSensorNum; k++) {
+				/*hiByte = EEPROM.read(addr++);
+				lowByte = EEPROM.read(addr++);
+				pOnewireSensor->temperatureSensors[k].id = word(hiByte, lowByte);
+				logger.print(tag, "\n\t onewire->temperatureSensors[k].id=" + String(pOnewireSensor->temperatureSensors[k].id));*/
+
+				char sensorNameBuffer[Sensor::sensorNameLen];
+				res = EEPROM_readAnything(addr, sensorNameBuffer);
+				logger.print(tag, "\n\t sensorAddressBuffer =" + String(sensorNameBuffer));
+				addr += res;
+				pOnewireSensor->temperatureSensors[k].name = String(sensorNameBuffer);
+			}
+			shield.addSensor(pOnewireSensor);			
+		}
+		else if (type == "doorsensor") {
+			logger.print(tag, "doorsensor found");
+			DoorSensor* pDoorSensor = new DoorSensor();
+			pDoorSensor->sensorname = name;
+			pDoorSensor->pin = sensorPin;
+			pDoorSensor->enabled = sensorEnabled;
+			pDoorSensor->address = String(i+1);
+			pDoorSensor->init();
+			shield.addSensor(pDoorSensor);
 		}
 	}
 
-	logger.print(tag, "\n\n\t <<read EPROM res=\n"+String(res));
+	/*shield.clearAllSensors(); // serve per inizializzare
+	shield.addOneWireSensors(sensorNames, D2, true);
+
+	DoorSensor* pDoorSensor = new DoorSensor();
+	pDoorSensor->sensorname = "DoorSensor";
+	pDoorSensor->pin = D4;
+	shield.addDoorSensor(pDoorSensor);*/
+
+
+	logger.print(tag, "\n\n\t <<read Sensor Eprom ");
 }
 
 void initEPROM()
@@ -405,21 +498,7 @@ void initEPROM()
 	logger.print(tag, "\n\n\t <<initEPROM");
 }
 
-int testWifi(void) {
-	int c = 0;
-	logger.println(tag, "Waiting for Wifi to connect");
-	while (c < 10) {
-		if (WiFi.status() == WL_CONNECTED) {
-			logger.println(tag, "WiFi connected");
-			return(20);
-		}
-		delay(500);
-		logger.println(tag, WiFi.status());
-		c++;
-	}
-	logger.println(tag, "Connect timed out, opening AP");
-	return(10);
-}
+
 
 void setupAP(void) {
 
@@ -513,16 +592,67 @@ void checkOTA()
 	//ArduinoOTA.handle();  uesta chiamata deve essere messa in loop()
 }
 
+bool testWifi() {
+	Serial.begin(115200);
+	delay(10);
+
+	// We start by connecting to a WiFi network
+
+	Serial.println();
+	Serial.println();
+	Serial.print("Connecting to ");
+	Serial.println(ssidtest);
+
+	/* Explicitly set the ESP8266 to be a WiFi-client, otherwise, it by default,
+	would try to act as both a client and an access-point and could cause
+	network-issues with your other WiFi-devices on your WiFi-network. */
+	WiFi.mode(WIFI_STA);
+	WiFi.begin(ssidtest, passwordtest);
+
+	int count = 0;
+	while (WiFi.status() != WL_CONNECTED) {
+		delay(1000);
+		Serial.print(".");
+		if (count++ > 10) {
+			Serial.println("WiFi connection timeout");
+			return false;
+		}
+	}
+
+	Serial.println("");
+	Serial.println("WiFi connected");
+	Serial.println("IP address: ");
+	Serial.println(WiFi.localIP());
+
+	return true;
+}
+
+int testWifi2(void) {
+	int c = 0;
+	logger.println(tag, "Waiting for Wifi to connect");
+	while (c < 15) {
+		if (WiFi.status() == WL_CONNECTED) {
+			logger.println(tag, "WiFi connected");
+			return(20);
+		}
+		delay(500);
+		logger.println(tag, WiFi.status());
+		c++;
+	}
+	logger.println(tag, "Connect timed out, opening AP");
+	return(10);
+}
+
 void setup()
 {
 	Serial.begin(115200);
 	delay(10);
-	
-	Logger::init();
-	logger.print(tag, "\n\n *******************RESTARTING************************");
-	
-	shield.init();
 
+	Logger::init();
+	logger.print(tag, "\n\t >>setup");
+	logger.print(tag, "\n\n *******************RESTARTING************************");
+
+	shield.init();
 	shield.drawString(0, 0, "restarting..", 1, ST7735_WHITE);
 
 	// Initialising the UI will init the display too.
@@ -542,28 +672,8 @@ void setup()
 	logger.print(tag, shield.MAC_char);
 
 
-	//oneWirePtr = new OneWire(OneWirePin);
-	//pDallasSensors = new DallasTemperature(oneWirePtr);
 	shield.drawString(0, 20, "read eprom..", 1, ST7735_WHITE);
 	initEPROM();
-	logger.print(tag, "\n\tSensorNames=" + sensorNames);
-
-	shield.drawString(0, 80, "init onewire", 1, ST7735_WHITE);
-	
-	shield.clearAllSensors(); // serve per inizializzare
-	shield.addOneWireSensors(sensorNames);
-
-	DoorSensor* pDoorSensor = new DoorSensor();
-	pDoorSensor->sensorname = "DoorSensor";
-	shield.addDoorSensor(pDoorSensor);
-
-	shield.drawString(0, 40, "connecting to WiFi", 1, ST7735_WHITE);
-	// Connect to WiFi network
-	logger.print(tag, "\n\nConnecting to " + Shield::getNetworkSSID() + " " + Shield::getNetworkPassword());
-
-	WiFi.mode(WIFI_STA);//??????
-	//delay(5000);
-
 	char networkSSID[Shield::networkSSIDLen];
 	Shield::getNetworkSSID().toCharArray(networkSSID, sizeof(networkSSID));
 	char networkPassword[Shield::networkPasswordLen];
@@ -573,10 +683,17 @@ void setup()
 	logger.print(tag, "\n\tnetworkPassword=");
 	logger.print(tag, networkPassword);
 
-	WiFi.begin(networkSSID, networkPassword);
-	if (testWifi() == 20/*WL_CONNECTED*/) {
+	//logger.print(tag, "\n\tSensorNames=" + sensorNames);
+	shield.drawString(0, 80, "init onewire", 1, ST7735_WHITE);
+	shield.drawString(0, 40, "connecting to WiFi", 1, ST7735_WHITE);
+	// Connect to WiFi network
+	logger.print(tag, "\n\nConnecting to " + Shield::getNetworkSSID() + " " + Shield::getNetworkPassword());
 
-		
+	WiFi.mode(WIFI_STA);
+	delay(2000);
+
+	WiFi.begin(networkSSID, networkPassword);
+	if (testWifi()/* == 20*/) {
 
 		checkOTA();
 
@@ -593,18 +710,15 @@ void setup()
 		wdt_disable();
 		wdt_enable(WDTO_8S);
 
-		shield.drawString(0, 70, "init heater", 1, ST7735_WHITE);
+		readSensor();
 
+		shield.drawString(0, 70, "init heater", 1, ST7735_WHITE);
 		shield.hearterActuator.init(String(shield.MAC_char));
 
-		shield.drawString(50, 70, String(shield.MAC_char), 1, ST7735_RED);
-		
-		//shield.drawString(0, 80, "init onewire", 1, ST7735_WHITE);
-		//shield.addOneWireSensors(sensorNames);
-		//shield.addDoorSensor(/*sensorNames*/);
-		shield.drawString(60, 80, "DONE", 1, ST7735_WHITE);
+		//shield.drawString(50, 70, String(shield.MAC_char), 1, ST7735_RED);
+		//shield.drawString(60, 80, "DONE", 1, ST7735_WHITE);
 		shield.addActuators();
-		
+
 		Command command;
 		shield.id = command.registerShield(shield);
 		shield.drawString(0, 90, "registered" + String(shield.id), 1, ST7735_WHITE);
@@ -645,6 +759,7 @@ void setup()
 	commannd.sendRestartNotification();
 
 	shield.clearScreen();
+	logger.print(tag, "\n\t <<setup");
 }
 
 String softwareReset(HttpRequest request, HttpResponse response) {
@@ -881,7 +996,7 @@ String showChangeSettings(HttpRequest request, HttpResponse response) {
 		logger.print(tag, "\n\shieldName=" + Shield::getShieldName());
 	}
 	// sensor names
-	for (int i = 0; i < shield.sensorList.count; i++) {
+	/*for (int i = 0; i < shield.sensorList.count; i++) {
 		DS18S20Sensor*  sensor = (DS18S20Sensor*)shield.sensorList.get(i);
 		char buffer[20];
 		String str = "sensor" + String(i + 1);
@@ -893,7 +1008,7 @@ String showChangeSettings(HttpRequest request, HttpResponse response) {
 			logger.print(tag, "\n\t " + String(buffer) + "=" + sensor->sensorname);
 			logger.print(tag, "\n\t sensor->sensorname=" + sensor->sensorname);
 		}
-	}
+	}*/
 	String data = "";
 	data += F("<html><head><meta HTTP-EQUIV='REFRESH' content='0; url=/main'><title>Timer</title></head><body></body></html>");
 	data += F("</body></html>");
@@ -902,33 +1017,6 @@ String showChangeSettings(HttpRequest request, HttpResponse response) {
 
 	logger.println(tag, F("\n\t >>showChangeSettings "));
 	return data;
-}
-
-String showChangeIODevices(HttpRequest request, HttpResponse response) {
-
-	logger.println(tag, "\n\t >>showChangeIODevices ");
-
-	String str = request.body;
-	POSTData posData(str);
-	logger.print(tag, "\n\t posData=" + posData.getDataString());
-
-	for (int i = 0; i < Shield::getMaxIoDevices(); i++) {
-
-		char buffer[20];
-		String str = "iodevice" + String(i + 1);
-		str.toCharArray(buffer, sizeof(buffer));
-
-		if (posData.has(buffer)) {
-			Shield::setIODevice(i, posData.getString(buffer).toInt());
-			logger.print(tag, "\n\t" + String(buffer) + "=" + String(Shield::getIODevice(i)));
-		}
-	}
-	String data;
-	data += "";
-	data += F("<html><head><meta HTTP-EQUIV='REFRESH' content='0; url=/main'><title>Timer</title></head><body></body></html>");
-	data += F("</body></html>");
-	writeEPROM();
-	logger.println(tag, "\n\t <<showChangeIODevices ");
 }
 
 String showwol(HttpRequest request, HttpResponse response) {
@@ -965,7 +1053,7 @@ String getJsonStatus(HttpRequest request, HttpResponse response)
 	return data;
 }
 
-String getJsonTempearatureSensorsStatus(HttpRequest request, HttpResponse response)
+/*String getJsonTempearatureSensorsStatus(HttpRequest request, HttpResponse response)
 {
 	logger.print(tag, F("\n\t >> getJsonTempearatureSensorsStatus"));
 
@@ -974,7 +1062,7 @@ String getJsonTempearatureSensorsStatus(HttpRequest request, HttpResponse respon
 
 	logger.print(tag, "\n\t << getJsonTempearatureSensorsStatus " + data + "\n");
 	return data;
-}
+}*/
 
 String getJsonSensorsStatus(HttpRequest request, HttpResponse response)
 {
@@ -1031,6 +1119,7 @@ void loop()
 
 	wdt_enable(WDTO_8S);
 
+
 	//////////////////
 	String page, param;
 	client = server.available();
@@ -1058,9 +1147,9 @@ void loop()
 			else if (page.equalsIgnoreCase("setting")) {
 				response.send(response.HTTPRESULT_OK, ESPWebServer::htmlContentType, showSettings(request, response));
 			}
-			else if (page.equalsIgnoreCase("iodevices")) {
+			/*else if (page.equalsIgnoreCase("iodevices")) {
 				response.send(response.HTTPRESULT_OK, ESPWebServer::htmlContentType, showIODevices(request, response));
-			}
+			}*/
 
 
 			else if (page.equalsIgnoreCase("command")) {
@@ -1078,9 +1167,6 @@ void loop()
 			else if (page.equalsIgnoreCase("chstt")) {
 				response.send(response.HTTPRESULT_OK, ESPWebServer::htmlContentType, showChangeSettings(request, response));
 			}
-			else if (page.equalsIgnoreCase("chiodevices")) {
-				response.send(response.HTTPRESULT_OK, ESPWebServer::htmlContentType, showChangeIODevices(request, response));
-			}
 			else if (page.equalsIgnoreCase("wol")) {
 				response.send(response.HTTPRESULT_OK, ESPWebServer::htmlContentType, showwol(request, response));
 			}
@@ -1095,9 +1181,9 @@ void loop()
 			else if (page.equalsIgnoreCase("heaterstatus")) {
 				response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, getJsonHeaterStatus(request, response));
 			}
-			else if (page.equalsIgnoreCase("temperaturesensorstatus")) {
+			/*else if (page.equalsIgnoreCase("temperaturesensorstatus")) {
 				response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, getJsonTempearatureSensorsStatus(request, response));
-			}
+			}*/
 			else if (page.equalsIgnoreCase("sensorstatus")) {
 				response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, getJsonSensorsStatus(request, response));
 			}
@@ -1111,7 +1197,7 @@ void loop()
 			}
 			else if (page.endsWith(".html") ||
 				page.endsWith(".css") ||
-				page.endsWith(".js") || 
+				page.endsWith(".js") ||
 				page.endsWith(".txt")) {
 				response.sendVirtualFile(response.HTTPRESULT_OK, ESPWebServer::htmlContentType, request.page);
 			}
@@ -1133,7 +1219,7 @@ void loop()
 	}
 
 	shield.checkStatus();
-	
+
 
 
 	unsigned long currMillis = millis();
@@ -1298,7 +1384,7 @@ String showMain(HttpRequest request, HttpResponse response)
 	}
 	data += F("</td></tr>");
 	// temperature sensor
-	int count = 0;
+	/*int count = 0;
 	DS18S20Sensor* pSensor = (DS18S20Sensor*)shield.sensorList.getFirst();
 	while (pSensor != NULL) {
 
@@ -1314,7 +1400,7 @@ String showMain(HttpRequest request, HttpResponse response)
 			+ "<input type='submit' value='save'/>"
 			+ "</form></td></tr>";
 		pSensor = (DS18S20Sensor*)shield.sensorList.getNext();
-	}
+	}*/
 	// sofware reset
 	data += F("<tr><td>Software reset</td><td><form action='/reset' method='POST'><input type='submit' value='reset'></form></td></tr>");
 
@@ -1554,7 +1640,7 @@ String showSettings(HttpRequest request, HttpResponse response)
 
 }
 
-String showIODevices(HttpRequest request, HttpResponse response)
+/*String showIODevices(HttpRequest request, HttpResponse response)
 {
 	logger.println(tag, F("\n\t >>showIODevices "));
 
@@ -1590,6 +1676,6 @@ String showIODevices(HttpRequest request, HttpResponse response)
 
 	logger.println(tag, F("\n\t >>showIODevices "));
 	return data;
-}
+}*/
 
 

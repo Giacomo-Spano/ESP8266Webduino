@@ -45,15 +45,14 @@ String JSONArray::getNext()
 		if (jsonArrayString.charAt(i) == 125) {
 			end = i;			
 			count--;
-			if (count == 0)
-				break;
+			if (count == 0) {
+				String jsonString = jsonArrayString.substring(start, end + 1);
+				return jsonString;
+			}
 			
 		}
 		i++;
 	}
 
-	String jsonString = jsonArrayString.substring(start, end + 1);
-	//logger.print(tag, "\n\t jsonString=" + jsonString);
-	
-	return jsonString;
+	return "";
 }

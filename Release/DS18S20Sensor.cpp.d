@@ -62,4 +62,5 @@ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_node
  C:\Users\Giacomo\ Spanò\Documents\Arduino\libraries\Adafruit-GFX-Library-master/gfxfont.h \
  C:\Users\Giacomo\ Spanò\Documents\Arduino\libraries\Adafruit_ST7735/Adafruit_ST7735.h \
  C:\Users\Giacomo\ Spanò\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\libraries\SPI/SPI.h \
- C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\DoorSensor.h
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\DoorSensor.h \
+ C:\Users\Giacomo\ Spanò\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\OnewireSensor.h

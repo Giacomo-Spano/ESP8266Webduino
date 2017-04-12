@@ -23,15 +23,13 @@ private:
 	static Logger logger;
 
 public:
-	static const int avTempsize = 10;
-	static const int sensornamelen = 30;
-
 	DoorSensor();
 	~DoorSensor();
 	virtual String getJSONFields();
-	void readStatus();
+	virtual void init();
 	bool getOpenStatus();
-	
+	bool checkDoorStatus();
+		
 private:
 	bool openStatus = false;
 };

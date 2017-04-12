@@ -100,9 +100,6 @@
     <ClInclude Include="Sensor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DS18S20Sensor.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="List.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -145,6 +142,9 @@
     <ClInclude Include="JSONArray.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="OnewireSensor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="wol.cpp">
@@ -172,9 +172,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Sensor.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="DS18S20Sensor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="List.cpp">
@@ -211,6 +208,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="JSONArray.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OnewireSensor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

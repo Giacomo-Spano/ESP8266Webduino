@@ -5,6 +5,7 @@
 Logger Sensor::logger;
 String Sensor::tag = "Sensor";
 
+
 Sensor::Sensor()
 {
 }
@@ -25,14 +26,15 @@ String Sensor::getJSON() {
 	json += ",\"name\":\"";
 	json += String(sensorname) + "\"";
 	json += ",\"enabled\":";
-	if (enabled/*Shield::getTemperatureSensorsEnabled()*/ == true)
+	if (enabled == true)
 		json += "true";
 	else
 		json += "false";
-	json += ",\"pin\":\"" + Shield::getStrPin(pin)/*Shield::getStrOneWirePin()*/ + "\"";
+	json += ",\"pin\":\"" + Shield::getStrPin(pin) + "\"";
 	json += ",\"addr\":\"";
 	json += String(getSensorAddress()) + "\"";
 	
+	// get custom json field
 	json += getJSONFields();
 	
 	json += "}";
@@ -46,9 +48,13 @@ String Sensor::getJSONFields()
 	return String();
 }
 
+void Sensor::init()
+{
+}
+
 String Sensor::getSensorAddress() {
 
-	String str = "";
+	/*String str = "";
 	for (int i = 0; i < 8; i++) {
 
 		char temp[30];
@@ -59,7 +65,8 @@ String Sensor::getSensorAddress() {
 			str += ":";
 		}
 	}
-	return str;
+	return str;*/
+	return address;
 }
 
 

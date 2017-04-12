@@ -20,6 +20,7 @@ List::~List()
 }
 
 void List::init() {
+	logger.print(tag, "\n\t >>List::init");
 	count = 0;
 	first = nullptr;
 	current = nullptr;
@@ -75,7 +76,7 @@ bool List::add(Sensor* elem) {
 
 void List::clearAll() {
 
-	logger.print(tag, "\n\t>> clearAll");
+	logger.print(tag, "\n\t >>List::clearAll");
 		
 	Sensor* next = first;
 	Sensor* cur = first;
@@ -86,7 +87,7 @@ void List::clearAll() {
 	}
 	init();
 
-	logger.print(tag, "\n\t<< clearAll");
+	logger.print(tag, "\n\t <<List::clearAll");
 }
 
 void List::show() {
