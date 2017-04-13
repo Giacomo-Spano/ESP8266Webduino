@@ -14,6 +14,7 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include "Logger.h"
+#include "JSON.h"
 
 class TemperatureSensor {
 
@@ -54,6 +55,9 @@ private:
 public:
 	static const int avTempsize = 10;
 
+	const int checkTemperature_interval = 60000; // 60 seconds
+	unsigned long lastCheckTemperature = 0;//-flash_interval;
+
 	OnewireSensor();
 	~OnewireSensor();
 
@@ -69,9 +73,7 @@ public:
 	virtual void init();
 	float getTemperature(int index);
 	float getAvTemperature(int index);
-	
-	/*uint8_t search(uint8_t *address);
-	void reset_search();*/
+	void addTemperatureSensorsFromJson(JSON sensorJson);
 };
 
 #endif

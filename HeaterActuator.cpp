@@ -2,15 +2,14 @@
 #include "Logger.h"
 #include "Command.h"
 
-//Logger Actuator::logger;
-//String Actuator::tag = "HeaterActuator";
+Logger HeaterActuator::logger;
+String HeaterActuator::tag = "HeaterActuator";
 
-//extern const char* statusStr[];
 char* HeaterActuator::statusStr[] = { "unused", "idle", "program", "manual", "disabled", "restarted", "manualoff" };
 
 HeaterActuator::HeaterActuator()
 {
-	tag = "HeaterActuator";
+	type = "heatersensor";
 }
 
 HeaterActuator::~HeaterActuator()
@@ -92,13 +91,13 @@ String HeaterActuator::sendCommand(String jsonStr)
 	return jsonResult;
 }
 
-void HeaterActuator::init(String MACAddress)
+void HeaterActuator::init(/*String MACAddress*/)
 {
-	logger.print(tag, "\n\t Heater::init MACAddress=" + MACAddress + " pin=" + String(Shield::heaterPin));
+	logger.print(tag, "\n\t Heater::init ");
 	ConsumptionStartTime = 0;// millis();
-	pinMode(Shield::heaterPin, OUTPUT);
+	pinMode(pin, OUTPUT);
 	setStatus(Program::STATUS_IDLE);
-	subaddress += MACAddress;
+	//subaddress += MACAddress;
 
 	sensorname = "Riscaldamento";
 }
@@ -368,7 +367,21 @@ void HeaterActuator::changeProgram(String command, long duration, bool sensorRem
 
 String HeaterActuator::getSensorAddress()
 {
-	return subaddress;
+	return address;
+}
+
+String HeaterActuator::getJSONFields() {
+
+	logger.print(tag, "\n\t >>HeaterActuator::getJSONFields");
+
+	String json = "";
+	
+	json += ",\"temperaturesensors\":";
+
+	json += "\"value\"";
+	
+	logger.print(tag, "\n\t <<HeaterActuator::getJSONFields json=" + json);
+	return json;
 }
 
 String HeaterActuator::getJSON() {
@@ -382,7 +395,7 @@ String HeaterActuator::getJSON() {
 		json += "false,";
 	json += "\"heaterpin\":\"" + Shield::getStrHeaterPin() + "\",";
 	json += "\"remotetemperature\":" + String(getRemoteTemperature()) + ",";
-	json += "\"addr\":\"" + subaddress + "\",";
+	json += "\"addr\":\"" + address + "\",";
 	json += "\"status\":\"" + String(statusStr[getStatus()]) + "\",";
 	json += "\"type\":\"heater\",";
 	json += "\"name\":\"" + sensorname + "\",";

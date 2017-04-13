@@ -1,7 +1,7 @@
 #include "Command.h"
 #include "Program.h"
 #include "Util.h"
-#include "DS18S20Sensor.h"
+
 
 //extern const char* statusStr[];
 time_t serverTime = 11111111;

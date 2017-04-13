@@ -1,5 +1,4 @@
 #include "Shield.h"
-#include "DS18S20Sensor.h"
 #include "DoorSensor.h"
 #include "Logger.h"
 #include "HeaterActuator.h"
@@ -24,9 +23,9 @@ int Shield::id = 0; //// inizializzato a zero perchè viene impostato dalla chiam
 String Shield::networkSSID = "TP-LINK-3BD796";
 String Shield::networkPassword = "giacomocasa";
 int Shield::localPort = 80;
-String Shield::serverName="192.168.1.3";
+String Shield::serverName = "192.168.1.3";
 int Shield::serverPort = 8080;
-String Shield::shieldName="shieldName";
+String Shield::shieldName = "shieldName";
 
 String Shield::powerStatus = "on"; // da aggiungere
 
@@ -87,6 +86,8 @@ void Shield::clearScreen() {
 }
 
 
+
+
 String Shield::sendUpdateSensorListCommand(JSON json) {
 
 	logger.print(tag, "\n\t >>sendUpdateSensorListCommand");
@@ -125,50 +126,32 @@ String Shield::sendUpdateSensorListCommand(JSON json) {
 				}
 				logger.print(tag, "\n\t enabled=" + String(enabled));
 
+				Sensor* pSensor = nullptr;
 				if (type.equals("onewiresensor")) {
-
-					if (sensorJson.has("temperaturesensors")) {
-						
-						OnewireSensor* pOnewireSensor = new OnewireSensor();
-						pOnewireSensor->sensorname = name;
-						pOnewireSensor->pin = pin;
-						pOnewireSensor->enabled = enabled;
-						pOnewireSensor->address = String(sensorList.length() +1);
-						pOnewireSensor->init(); // serve ad inizializzare pDallas
-						
-						String names = "";
-						String str = json.jsonGetArrayString("temperaturesensors");
-						logger.print(tag, "\n\t str=" + str);
-						JSONArray jArrayTempSensor(str);
-						String tempSensor = jArrayTempSensor.getFirst();
-						pOnewireSensor->tempSensorNum = 0;
-						while (!tempSensor.equals("") && pOnewireSensor->tempSensorNum < OnewireSensor::maxTempSensors) {
-							logger.print(tag, "\n\t tempSensor=" + tempSensor);
-							tempSensor.replace("\\", "");// questo serve per correggere un baco. Per qualche motivo
-															// dalla pagina jscrit arrivano dei caratteri \ in più
-							logger.print(tag, "\n\t tempSensor=" + tempSensor);
-							JSON jTempSensor(tempSensor);
-							if (jTempSensor.has("name")) {
-								pOnewireSensor->temperatureSensors[pOnewireSensor->tempSensorNum].name = jTempSensor.jsonGetString("name");
-								pOnewireSensor->temperatureSensors[pOnewireSensor->tempSensorNum].id = pOnewireSensor->tempSensorNum +1;
-								pOnewireSensor->tempSensorNum++;
-							}
-							tempSensor = jArrayTempSensor.getNext();
-						}
-						addSensor(pOnewireSensor);
-					}
+					pSensor = new OnewireSensor();
 				}
 				else if (type.equals("doorsensor")) {
-					DoorSensor* pDoorSensor = new DoorSensor();
-					pDoorSensor->sensorname = name;
-					pDoorSensor->pin = pin;
-					pDoorSensor->enabled = enabled;
-					pDoorSensor->address = String(sensorList.length() +1);
-					pDoorSensor->init();
-					addSensor(pDoorSensor);
+					pSensor = new DoorSensor();
+				}
+				else if (type.equals("heatersensor")) {
+					pSensor = new HeaterActuator();
+				}
+				
+				if (pSensor != nullptr) {
+					pSensor->sensorname = name;
+					pSensor->pin = pin;
+					pSensor->enabled = enabled;
+					pSensor->address = String(sensorList.length() + 1);
+					pSensor->init();
+
+					if (std::is_base_of<OnewireSensor, Sensor>::value) {
+						OnewireSensor* pOnewireSensor = (OnewireSensor*)pSensor;
+						pOnewireSensor->addTemperatureSensorsFromJson(sensorJson);
+					}
+					addSensor(pSensor);
 				}
 				else {
-					logger.print(tag, "\n\t type nor found");
+					logger.print(tag, "\n\t sensor type nor found");
 				}
 			}
 			item = jArray.getNext();
@@ -456,7 +439,7 @@ String Shield::getSensorsStatusJson() {
 	/*String onewire = getOneWireJson();
 	if (!onewire.equals(""))
 		json += onewire;*/
-	// no onewiresensor
+		// no onewiresensor
 	for (int i = 0; i < sensorList.count; i++) {
 		Sensor* sensor = sensorList.get(i);
 		/*if (sensor->type.equals("temperature"))
@@ -581,7 +564,7 @@ String Shield::getHeaterStatusJson() {
 
 void Shield::checkStatus()
 {
-	checkActuatorsStatus();
+	//checkActuatorsStatus();
 	checkSensorsStatus();
 
 	/*display.clear();
@@ -639,22 +622,28 @@ void Shield::checkActuatorsStatus()
 void Shield::checkSensorsStatus()
 {
 	//logger.println(tag, F(">>checkSensorsStatus"));
+	
 	unsigned long currMillis = millis();
-	unsigned long timeDiff = currMillis - lastCheckTemperature;
-	if (timeDiff > checkTemperature_interval) {
-		lastCheckTemperature = currMillis;
-		checkTemperatures();
-		return;
-	}
+	
 	for (int i = 0; i < sensorList.count; i++) {
 		Sensor* sensor = sensorList.get(i);
-		if (sensor->type.equals("temperature")) {
-			continue;
+		if (std::is_base_of<OnewireSensor, Sensor>::value) {
+			OnewireSensor* onewireSensor = (OnewireSensor*)sensor;
+			unsigned long timeDiff = currMillis - onewireSensor->lastCheckTemperature;
+			if (timeDiff > onewireSensor->checkTemperature_interval) {
+				onewireSensor->lastCheckTemperature = currMillis;
+				checkTemperatures();
+			}
 		}
-		else if (sensor->type.equals("doorsensor")) {
-			if (timeDiff > checkDoorStatus_interval) {
-				lastCheckDoorStatus = currMillis;
-				DoorSensor* doorSensor = (DoorSensor*)sensor;
+		else if (std::is_base_of<HeaterActuator, Sensor>::value) {
+			hearterActuator.checkStatus();
+		}
+		else if (std::is_base_of<DoorSensor, Sensor>::value) {
+			DoorSensor* doorSensor = (DoorSensor*)sensor;
+			unsigned long timeDiff = currMillis - doorSensor->lastCheckDoorStatus;
+			if (timeDiff > doorSensor->checkDoorStatus_interval) {
+				doorSensor->lastCheckDoorStatus = currMillis;
+				
 
 				bool oldDoorStatus = doorSensor->getOpenStatus();
 				bool doorStatus = doorSensor->checkDoorStatus();
@@ -670,23 +659,11 @@ void Shield::checkSensorsStatus()
 
 void Shield::addSensor(Sensor* pSensor) {
 
-	logger.print(tag, "\n\t >>addSensor");
-	
+	logger.print(tag, "\n\t >>addSensor" + pSensor->sensorname);
+
 	sensorList.add((Sensor*)pSensor);
 	//sensorList.show();
 	logger.print(tag, "\n\t <<addSensor");
-}
-
-void Shield::addActuators() {
-
-	logger.println(tag, "addActuator...\n\r");
-	ActuatorList.init();
-
-	if (heaterEnabled) {
-		//hearterActuator.setRelePin(heaterPin);
-	}
-	//HeaterActuator* pActuatorNew = new HeaterActuator();
-	//pActuatorNew->sensorname = "riscaldamento";
 }
 
 
@@ -700,11 +677,11 @@ void Shield::checkTemperatures() {
 	for (int i = 0; i < sensorList.count; i++) {
 		if (!sensorList.get(i)->type.equals("onewiresensor"))
 			continue;
-		
+
 		OnewireSensor* pSensor = (OnewireSensor*)sensorList.get(i);
 
 		for (int k = 0; k < pSensor->tempSensorNum; k++) {
-			
+
 			oldTemperature = pSensor->getTemperature(k);
 
 			//sensorList.show();

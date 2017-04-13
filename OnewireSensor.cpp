@@ -6,6 +6,7 @@
 #include "Util.h"
 #include "ESP8266Webduino.h"
 #include "Shield.h"
+#include "JSONArray.h"
 
 Logger OnewireSensor::logger;
 String OnewireSensor::tag = "OnewireSensor";
@@ -171,4 +172,29 @@ String OnewireSensor::getJSONFields() {
 	
 	logger.print(tag, "\n\t <<OnewireSensor::getJSONFields json=" + json);
 	return json;
+}
+
+void OnewireSensor::addTemperatureSensorsFromJson(JSON sensorJson) {
+
+	if (sensorJson.has("temperaturesensors")) {
+		String names = "";
+		String str = sensorJson.jsonGetArrayString("temperaturesensors");
+		logger.print(tag, "\n\t str=" + str);
+		JSONArray jArrayTempSensor(str);
+		String tempSensor = jArrayTempSensor.getFirst();
+		tempSensorNum = 0;
+		while (!tempSensor.equals("") && /*pOnewireSensor->*/tempSensorNum < OnewireSensor::maxTempSensors) {
+			logger.print(tag, "\n\t tempSensor=" + tempSensor);
+			tempSensor.replace("\\", "");// questo serve per correggere un baco. Per qualche motivo
+										 // dalla pagina jscrit arrivano dei caratteri \ in più
+			logger.print(tag, "\n\t tempSensor=" + tempSensor);
+			JSON jTempSensor(tempSensor);
+			if (jTempSensor.has("name")) {
+				temperatureSensors[tempSensorNum].name = jTempSensor.jsonGetString("name");
+				temperatureSensors[tempSensorNum].id = tempSensorNum + 1;
+				tempSensorNum++;
+			}
+			tempSensor = jArrayTempSensor.getNext();
+		}
+	}
 }

@@ -29,7 +29,10 @@ public:
 	virtual void init();
 	bool getOpenStatus();
 	bool checkDoorStatus();
-		
+	
+	const int checkDoorStatus_interval = 1000; // 1 secondo
+	unsigned long lastCheckDoorStatus = 0;//-flash_interval;
+
 private:
 	bool openStatus = false;
 };

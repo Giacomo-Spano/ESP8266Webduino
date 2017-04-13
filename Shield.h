@@ -59,10 +59,8 @@ private:
 	static Logger logger;
 	
 
-	const int checkTemperature_interval = 60000;
-	const int checkDoorStatus_interval = 1000; // 1 secondo
-	unsigned long lastCheckTemperature = 0;//-flash_interval;
-	unsigned long lastCheckDoorStatus = 0;//-flash_interval;
+
+	
 	String oldDate;
 	
 
@@ -77,8 +75,6 @@ protected:
 	//SimpleList<Actuator> actuatorList;
 	void checkActuatorsStatus();
 	void checkSensorsStatus();	
-	
-	
 	
 
 	ESPDisplay display;
@@ -108,13 +104,11 @@ public:
 	void addSensor(Sensor* pSensor);
 	void clearAllSensors();
 
-	void addActuators();
+	//void addActuators();
 	void checkTemperatures();
 
 	static int getShieldId() { return id; } // static member function
-
 	static String getLastRestartDate() { return lastRestartDate; }
-
 	static void setLastRestartDate(String date) { lastRestartDate = date; }
 
 	static String getIoDevicesTypeName(int type)
@@ -345,8 +339,9 @@ public:
 
 	static String getNetworkSSID()
 	{
-		//return "TP-LINK-3BD796";			
-		return String(networkSSID);
+		return "TP-LINK-3BD796";			
+		//return String(networkSSID);
+		//return "Connectify-me";
 	}
 
 	static void setNetworkSSID(String ssid)
@@ -359,8 +354,9 @@ public:
 	static String getNetworkPassword()
 	{
 
-		return String(networkPassword);
-		//return "giacomocasa";
+		//return String(networkPassword);
+		return "giacomocasa";
+		//return "giacomo00";
 	}
 
 	static void setNetworkPassword(String password)

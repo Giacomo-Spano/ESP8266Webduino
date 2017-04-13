@@ -6,16 +6,18 @@ class HeaterActuator :
 	public Actuator
 {
 public:
-	//static Logger logger;
-	//String tag;
-	
+	static String tag;
+	static Logger logger;
+
+	virtual void init();
+	virtual String getJSONFields();
+
+
 private:
 	static char* statusStr[];// = { "unused", "idle", "program", "manual", "disabled", "restarted", "manualoff" };
-
-	
+		
 	int manualMode;
-	String subaddress = "HeaterActuator-";
-	//int relePin = D5; // rel? pin
+	//String subaddress = "HeaterActuator-";
 	const bool RELE_ON = HIGH;//LOW
 	const bool RELE_OFF = LOW;//LOW
 	static int const sensor_local = 0;
@@ -49,13 +51,10 @@ public:
 	int getReleStatus();
 	void enableRele(boolean on);
 	void setRemote(float temp);
-	//int getRelePin();
-	//void setRelePin(int pin);
 	bool statusChanged();
 	bool releStatusChanged();
 	void saveOldReleStatus();
 	void saveOldStatus();
-	void init(String MACAddress);
 	void setTargetTemperature(float target);
 	float getTargetTemperature();	
 	float getRemoteTemperature();
