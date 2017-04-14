@@ -101,12 +101,16 @@ void List::show() {
 	int i = 0;
 	while (p != nullptr) {
 		i++;
-		logger.print(tag, "\n\tElem ");
+		logger.print(tag, "\n\t Elem=");
 		logger.print(tag, i);
-		logger.print(tag, " name=");
+		logger.print(tag, "\n\t name=");
 		logger.print(tag, p->sensorname);
-		logger.print(tag, " addr= ");
-		logger.print(tag, p->getSensorAddress());
+		logger.print(tag, "\n\t addr= ");
+		logger.print(tag, p->address);
+		logger.print(tag, "\n\t enabled= ");
+		logger.print(tag, String(p->enabled));
+		logger.print(tag, "\n\t pin= ");
+		logger.print(tag, String(p->pin));
 		p = p->next;
 	}
 	logger.print(tag, "\n\t <<show");

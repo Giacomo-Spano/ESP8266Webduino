@@ -5,10 +5,20 @@
 Logger Sensor::logger;
 String Sensor::tag = "Sensor";
 
-
-Sensor::Sensor()
+Sensor::Sensor(uint8_t pin, bool enabled, String address, String name)
 {
+	this->pin = pin;
+	this->enabled = enabled;
+	this->address = address;
+	this->sensorname = name;
+
+	checkStatus_interval = 10000;//60000; // 60 seconds
+	lastCheckStatus = 0;// = 0;//-flash_interval;
 }
+
+/*Sensor::Sensor()
+{
+}*/
 
 Sensor::~Sensor()
 {
@@ -32,7 +42,7 @@ String Sensor::getJSON() {
 		json += "false";
 	json += ",\"pin\":\"" + Shield::getStrPin(pin) + "\"";
 	json += ",\"addr\":\"";
-	json += String(getSensorAddress()) + "\"";
+	json += address + "\"";
 	
 	// get custom json field
 	json += getJSONFields();
@@ -52,21 +62,13 @@ void Sensor::init()
 {
 }
 
-String Sensor::getSensorAddress() {
-
-	/*String str = "";
-	for (int i = 0; i < 8; i++) {
-
-		char temp[30];
-		sprintf(temp, "%02X", sensorAddr[i]);
-		str += String(temp);
-
-		if (i < 7) {
-			str += ":";
-		}
-	}
-	return str;*/
-	return address;
+bool Sensor::checkStatusChange()
+{
 }
+
+/*String Sensor::getSensorAddress() {
+
+	return address;
+}*/
 
 

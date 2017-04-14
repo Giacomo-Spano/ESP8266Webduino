@@ -1,7 +1,3 @@
-// 
-// 
-// 
-
 #include "DoorSensor.h"
 #include "Util.h"
 #include "ESP8266Webduino.h"
@@ -10,9 +6,12 @@
 Logger DoorSensor::logger;
 String DoorSensor::tag = "DoorSensor";
 
-DoorSensor::DoorSensor()
+DoorSensor::DoorSensor(uint8_t pin, bool enabled, String address, String name) : Sensor(pin, enabled, address, name)
 {
 	type = "doorsensor";
+
+	checkStatus_interval = 1000;
+	lastCheckStatus = 0;
 }
 
 DoorSensor::~DoorSensor()
@@ -21,26 +20,45 @@ DoorSensor::~DoorSensor()
 
 void DoorSensor::init()
 {
+	logger.print(tag, "\n\t >>init DoorSensor");
 	pinMode(pin, INPUT);
+	logger.print(tag, "\n\t <<init DoorSensor");
 }
 
 bool DoorSensor::getOpenStatus() {
 	return openStatus;
 }
 
-bool DoorSensor::checkDoorStatus() {
+bool DoorSensor::checkStatusChange() {
 	
 	//logger.print(tag, "\n\t >>checkDoorStatus: ");
+	unsigned long currMillis = millis();
+	unsigned long timeDiff = currMillis - lastCheckStatus;
+	if (timeDiff > checkStatus_interval) {
+		lastCheckStatus = currMillis;
 
-	if (digitalRead(D3) == LOW) {
-		openStatus = true;
-		//logger.print(tag, "\n\t >>>> DOOR OPEN");
+		bool oldStatus = openStatus;
+
+		if (digitalRead(pin) == LOW) {
+			openStatus = true;
+			//logger.print(tag, "\n\t >>>> DOOR OPEN");
+		}
+		else {
+			openStatus = false;
+			//logger.print(tag, "\n\t >>>> DOOR CLOSED");
+		}
+		if (oldStatus != openStatus) {
+			if (openStatus) 
+				logger.print(tag, "\n\t >>>> DOOR OPEN");
+			else
+				logger.print(tag, "\n\t >>>> DOOR CLOSED");
+			return true;
+		}
+		else {
+			return false;
+		}
 	}
-	else {
-		openStatus = false;
-		//logger.print(tag, "\n\t >>>> DOOR CLOSED");
-	}
-	return openStatus;
+	return false;
 }
 
 String DoorSensor::getJSONFields() {
@@ -53,8 +71,6 @@ String DoorSensor::getJSONFields() {
 		json += "true";
 	else 
 		json += "false";
-	//json += ",\"addr\":";
-	//json += "\"" + getSensorAddress() + "\"";
 	
 	logger.print(tag, "\n\t<<Door::getJSONFields json=" + json);
 	return json;

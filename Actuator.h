@@ -9,7 +9,7 @@ public:
 	static String tag;
 	static Logger logger;
 
-	Actuator();
+	Actuator(uint8_t pin, bool enabled, String address, String name);
 	~Actuator();
 	virtual void checkStatus();
 

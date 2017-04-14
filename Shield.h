@@ -25,7 +25,7 @@ protected:
 	static String shieldName;
 
 public:
-	HeaterActuator hearterActuator;
+	HeaterActuator* phearterActuator;
 
 	static String swVersion;
 	static const int shieldNameLen = 30;
@@ -71,6 +71,9 @@ protected:
 	String sendPowerCommand(JSON jsonStr);
 	String sendRegisterCommand(JSON jsonStr);
 	String sendResetCommand(JSON jsonStr);
+	String sendRebootCommand(JSON json);
+	String sendUpdateSensorStatusCommand(JSON json);
+
 	bool temperatureChanged = false; // indica se la temperatura � cambiata dall'ultima chiamata a flash()
 	//SimpleList<Actuator> actuatorList;
 	void checkActuatorsStatus();

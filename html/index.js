@@ -5,6 +5,20 @@ var onResetFunction = function onReset() {
     sendCommand(json, refreshFunction);
 }
 
+var onRebootFunction = function onReset() {
+
+    var jsonString = '{"command" : "reboot"}';
+    var json =  JSON.parse(jsonString);
+    sendCommand(json, refreshFunction);
+}
+
+var onUpdateSensorStatusFunction = function onReset() {
+
+    var jsonString = '{"command" : "updatesensorstatus"}';
+    var json =  JSON.parse(jsonString);
+    sendCommand(json, refreshFunction);
+}
+
 var onRegisterFunction = function onRegister() {
 
     var jsonString;
@@ -21,6 +35,8 @@ function load() {
 
     var powerCheckBox = document.getElementById('powerCheckBox').onclick = onClickPowerCheckBoxFunction;
     var resetButton = document.getElementById('resetButton').onclick = onResetFunction;
+    var rebootButton = document.getElementById('rebootButton').onclick = onRebootFunction;
+    var updateStatusButton = document.getElementById('updateStatusButton').onclick = onUpdateSensorStatusFunction;
     var registerButton = document.getElementById('registerButton').onclick = onRegisterFunction;
 
     getJson(settingsPath, refreshFunction);

@@ -23,6 +23,7 @@ public:
 	int id = 0;
 	float temperature;
 	float avTemperature;
+
 	uint8_t sensorAddr[8]; // indirizzi fisico sensore
 
 	String getPhisicalAddress() {
@@ -55,11 +56,15 @@ private:
 public:
 	static const int avTempsize = 10;
 
-	const int checkTemperature_interval = 60000; // 60 seconds
-	unsigned long lastCheckTemperature = 0;//-flash_interval;
+	//const int checkTemperature_interval = 10000;//60000; // 60 seconds
+	//unsigned long lastCheckTemperature = 0;//-flash_interval;
 
-	OnewireSensor();
+	//OnewireSensor();
+	OnewireSensor(uint8_t pin, bool enabled, String address, String name);
 	~OnewireSensor();
+	virtual bool checkStatusChange();
+
+	void beginTemperatureSensors();
 
 	static const int maxTempSensors = 10; // max num sensori onewire sullo stesso pin
 	TemperatureSensor temperatureSensors[maxTempSensors];

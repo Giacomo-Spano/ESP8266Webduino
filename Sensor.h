@@ -9,8 +9,18 @@ private:
 	static Logger logger;
 
 public:
-	Sensor();
-	~Sensor();
+	Sensor(uint8_t pin, bool enabled, String address, String name);
+	//Sensor();
+	~Sensor(); 
+
+	String sensorname;
+	String type;
+	bool enabled;
+	uint8_t pin;
+	String address;
+
+	int checkStatus_interval;// = 10000;//60000; // 60 seconds
+	unsigned long lastCheckStatus;// = 0;//-flash_interval;
 
 	String getJSON();
 	static const int sensorNameLen = 20;
@@ -19,16 +29,9 @@ public:
 
 	virtual String getJSONFields();
 	virtual void init();
-	/*virtual */String getSensorAddress();
-
-	String sensorname = "sensorname";
-	String type = "type";
-	bool enabled = true;
-	uint8_t pin;
-	
-
-	String address = "";
-	
+	virtual bool checkStatusChange();
+	//String getSensorAddress();
+		
 	Sensor* next = NULL;
 };
 

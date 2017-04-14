@@ -11,8 +11,6 @@
 
 #include "Sensor.h"
 #include <Arduino.h>
-#include <OneWire.h>
-#include <DallasTemperature.h>
 #include "Logger.h"
 
 class DoorSensor :
@@ -23,15 +21,13 @@ private:
 	static Logger logger;
 
 public:
-	DoorSensor();
+	DoorSensor(uint8_t pin, bool enabled, String address, String name);
 	~DoorSensor();
 	virtual String getJSONFields();
-	virtual void init();
+	virtual void init();	
+	virtual bool checkStatusChange();
+
 	bool getOpenStatus();
-	bool checkDoorStatus();
-	
-	const int checkDoorStatus_interval = 1000; // 1 secondo
-	unsigned long lastCheckDoorStatus = 0;//-flash_interval;
 
 private:
 	bool openStatus = false;

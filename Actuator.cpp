@@ -3,8 +3,10 @@
 Logger Actuator::logger;
 String Actuator::tag = "Command";
 
-Actuator::Actuator()
+Actuator::Actuator(uint8_t pin, bool enabled, String address, String name) : Sensor(pin, enabled, address, name)
 {
+	//Sensor(pin, enabled, address, name);
+	type = "actuator";
 }
 
 

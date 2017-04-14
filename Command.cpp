@@ -102,7 +102,7 @@ int Command::registerShield(Shield shield)
 
 	// attuatori
 	str += ",\"actuators\":[";
-	str += shield.hearterActuator.getJSON();
+	str += shield.phearterActuator->getJSON();
 	str += "]";
 	str += "}";
 	

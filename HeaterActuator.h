@@ -11,6 +11,7 @@ public:
 
 	virtual void init();
 	virtual String getJSONFields();
+	virtual bool checkStatusChange();
 
 
 private:
@@ -38,11 +39,11 @@ public:
 	static const int MANUALMODE_OFF = 2; // sempre spento
 	static const int MANUALMODE_END = 3; // sempre spento
 
-	HeaterActuator();
+	HeaterActuator(uint8_t pin, bool enabled, String address, String name);
+	//HeaterActuator();
 	~HeaterActuator();
 	void updateReleStatus();
 	virtual String getJSON() override;
-	virtual void checkStatus() override;
 	virtual String sendCommand(String json) override;
 	void setStatus(int status);
 	int getStatus();
