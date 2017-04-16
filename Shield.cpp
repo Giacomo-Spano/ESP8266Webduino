@@ -465,7 +465,7 @@ String Shield::getSensorsStatusJson() {
 
 	json += ",\"sensors\":[";
 	for (int i = 0; i < sensorList.count; i++) {
-		Sensor* sensor = sensorList.get(i);
+		Sensor* sensor = (Sensor*)sensorList.get(i);
 		if (i != 0)
 			json += ",";
 		json += "{";
@@ -511,7 +511,7 @@ String Shield::getOneWireJson() {
 
 	bool noOnewire = true;
 	for (int i = 0; i < sensorList.count; i++) {
-		Sensor* sensor = sensorList.get(i);
+		Sensor* sensor = (Sensor*)sensorList.get(i);
 		if (!sensor->type.equals("temperature"))
 			continue;
 		//DS18S20Sensor* tSensor = (DS18S20Sensor*)sensor;
@@ -625,7 +625,8 @@ void Shield::checkStatus()
 	tftDisplay.drawString(0, textHeight*(4 + 1), releStatus, 2, ST7735_WHITE);
 
 	for (int i = 0; i < sensorList.count; i++) {
-		if (!sensorList.get(i)->type.equals("temperature"))
+		Sensor* sensor = (Sensor*)sensorList.get(i);
+		if (!sensor->type.equals("temperature"))
 			continue;
 		//DS18S20Sensor* pSensor = (DS18S20Sensor*)sensorList.get(i);
 		//tftDisplay.drawString(0, textHeight * (2 + 1 + 2 + 2) + textHeight * i * 1, pSensor->sensorname + " " + pSensor->getTemperature(), 0, ST7735_WHITE);
@@ -648,7 +649,7 @@ void Shield::checkSensorsStatus()
 
 	for (int i = 0; i < sensorList.count; i++) {
 		
-		Sensor* sensor = sensorList.get(i);
+		Sensor* sensor = (Sensor*)sensorList.get(i);
 		if (!sensor->enabled)
 			continue;
 		//logger.print(tag, "\n\t sensor->name: " + String(sensor->sensorname));
@@ -702,8 +703,10 @@ void Shield::checkTemperatures() {
 
 	//sensorList.show();
 	float oldTemperature;
+	
 	for (int i = 0; i < sensorList.count; i++) {
-		if (!sensorList.get(i)->type.equals("onewiresensor"))
+		Sensor* sensor = (Sensor*)sensorList.get(i);
+		if (!sensor->type.equals("onewiresensor"))
 			continue;
 
 		OnewireSensor* pSensor = (OnewireSensor*)sensorList.get(i);

@@ -1,8 +1,9 @@
 #pragma once
 #include "Arduino.h"
 #include "Logger.h"
+#include "ObjectClass.h"
 
-class Sensor
+class Sensor : public ObjectClass
 {
 private:
 	static String tag;
@@ -11,7 +12,7 @@ private:
 public:
 	Sensor(uint8_t pin, bool enabled, String address, String name);
 	//Sensor();
-	~Sensor(); 
+	~Sensor();
 
 	String sensorname;
 	String type;
@@ -27,11 +28,12 @@ public:
 	static const int sensorAddressLen = 20;
 	static const int sensorTypeLen = 20;
 
+	virtual void show();
 	virtual String getJSONFields();
 	virtual void init();
 	virtual bool checkStatusChange();
 	//String getSensorAddress();
 		
-	Sensor* next = NULL;
+	
 };
 

@@ -24,6 +24,18 @@ Sensor::~Sensor()
 {
 }
 
+void Sensor::show() {
+
+		logger.print(tag, "\n\t name=");
+		logger.print(tag,sensorname);
+		logger.print(tag, "\n\t addr= ");
+		logger.print(tag, address);
+		logger.print(tag, "\n\t enabled= ");
+		logger.print(tag, String(enabled));
+		logger.print(tag, "\n\t pin= ");
+		logger.print(tag, String(pin));
+}
+
 String Sensor::getJSON() {
 
 	logger.print(tag, "\n\t>>getJSON");

@@ -1,0 +1,52 @@
+{
+  "configurations": [
+    {
+      "name": "Visual Micro",
+      "intelliSenseMode": "msvc-x64",
+      "includePath": [
+        "${projectRoot}..\\..\\..\\Documents\\Arduino\\libraries\\Time",
+        "${projectRoot}..\\..\\..\\Documents\\Arduino\\libraries\\OneWire",
+        "${projectRoot}..\\..\\..\\Documents\\Arduino\\libraries\\DallasTemperature",
+        "${projectRoot}..\\..\\..\\Documents\\Arduino\\libraries\\Adafruit-GFX-Library-master",
+        "${projectRoot}..\\..\\..\\Documents\\Arduino\\libraries\\Adafruit_ST7735",
+        "${projectRoot}..\\..\\..\\AppData\\Local\\arduino15\\packages\\esp8266\\hardware\\esp8266\\2.3.0\\libraries\\SPI",
+        "${projectRoot}..\\..\\..\\AppData\\Local\\arduino15\\packages\\esp8266\\hardware\\esp8266\\2.3.0\\libraries\\ESP8266WiFi\\src",
+        "${projectRoot}..\\..\\..\\AppData\\Local\\arduino15\\packages\\esp8266\\hardware\\esp8266\\2.3.0\\libraries\\ArduinoOTA",
+        "${projectRoot}..\\..\\..\\AppData\\Local\\arduino15\\packages\\esp8266\\hardware\\esp8266\\2.3.0\\libraries\\EEPROM",
+        "${projectRoot}..\\..\\..\\AppData\\Local\\arduino15\\packages\\esp8266\\hardware\\esp8266\\2.3.0\\libraries\\Ethernet\\src",
+        "${projectRoot}..\\..\\..\\AppData\\Local\\arduino15\\packages\\esp8266\\hardware\\esp8266\\2.3.0\\libraries\\Wire",
+        "${projectRoot}..\\..\\..\\Documents\\Arduino\\libraries\\esp8266-oled-ssd1306",
+        "${projectRoot}..\\..\\..\\AppData\\Local\\arduino15\\packages\\esp8266\\hardware\\esp8266\\2.3.0\\libraries\\ESP8266mDNS",
+        "${projectRoot}..\\..\\..\\..\\..\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\Common7\\IDE\\Extensions\\bjgs31r1.33a\\Micro Platforms\\visualmicro\\ide\\libraries",
+        "${projectRoot}..\\..\\..\\AppData\\Local\\arduino15\\packages\\esp8266\\hardware\\esp8266\\2.3.0\\libraries",
+        "${projectRoot}..\\..\\..\\Documents\\Arduino\\libraries",
+        "${projectRoot}..\\..\\..\\AppData\\Local\\arduino15\\packages\\esp8266\\hardware\\esp8266\\2.3.0\\cores\\esp8266",
+        "${projectRoot}..\\..\\..\\AppData\\Local\\arduino15\\packages\\esp8266\\hardware\\esp8266\\2.3.0\\cores\\esp8266\\libb64",
+        "${projectRoot}..\\..\\..\\AppData\\Local\\arduino15\\packages\\esp8266\\hardware\\esp8266\\2.3.0\\cores\\esp8266\\spiffs",
+        "${projectRoot}..\\..\\..\\AppData\\Local\\arduino15\\packages\\esp8266\\hardware\\esp8266\\2.3.0\\cores\\esp8266\\umm_malloc",
+        "${projectRoot}..\\..\\..\\AppData\\Local\\arduino15\\packages\\esp8266\\hardware\\esp8266\\2.3.0\\variants\\nodemcu",
+        "${projectRoot}..\\ESP8266Webduino",
+        "${projectRoot}..\\..\\..\\AppData\\Local\\arduino15\\packages\\esp8266\\hardware\\esp8266\\2.3.0\\tools\\sdk\\include",
+        "${projectRoot}..\\..\\..\\AppData\\Local\\arduino15\\packages\\esp8266\\hardware\\esp8266\\2.3.0\\tools\\sdk\\lwip\\include",
+        "${projectRoot}..\\..\\..\\AppData\\Local\\arduino15\\packages\\esp8266\\tools\\xtensa-lx106-elf-gcc\\1.20.0-26-gb404fb9-2\\xtensa-lx106-elf\\include\\c++\\4.8.2",
+        "${projectRoot}..\\..\\..\\AppData\\Local\\arduino15\\packages\\esp8266\\tools\\xtensa-lx106-elf-gcc\\1.20.0-26-gb404fb9-2\\xtensa-lx106-elf\\include\\c++\\4.8.2\\xtensa-lx106-elf",
+        "${projectRoot}..\\..\\..\\AppData\\Local\\arduino15\\packages\\esp8266\\tools\\xtensa-lx106-elf-gcc\\1.20.0-26-gb404fb9-2\\xtensa-lx106-elf\\include",
+        "${projectRoot}..\\..\\..\\AppData\\Local\\arduino15\\packages\\esp8266\\tools\\xtensa-lx106-elf-gcc\\1.20.0-26-gb404fb9-2\\lib\\gcc\\xtensa-lx106-elf\\4.8.2\\include",
+        "${projectRoot}..\\..\\..\\AppData\\Local\\arduino15\\packages\\esp8266\\hardware\\esp8266\\2.3.0\\tools\\sdk\\include"
+      ],
+      "defines": [
+        "__ESP8266_ESp8266__",
+        "__ESP8266_ESP8266__",
+        "__ets__",
+        "ICACHE_FLASH",
+        "F_CPU=80000000L",
+        "LWIP_OPEN_SRC",
+        "ARDUINO=10801",
+        "ARDUINO_ESP8266_NODEMCU",
+        "ARDUINO_ARCH_ESP8266",
+        "ESP8266",
+        "__cplusplus=201103L"
+      ]
+    }
+  ]
+}

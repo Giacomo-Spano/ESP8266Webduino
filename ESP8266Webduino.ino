@@ -1,5 +1,6 @@
 
 
+#include "ObjectClass.h"
 #include "OnewireSensor.h"
 #include "JSONArray.h"
 #include "DoorSensor.h"
@@ -54,8 +55,8 @@ const char *passwordAP = "thereisnospoon";
 const char* ssid = "xxBUBBLES";
 Shield shield;
 
-/*const*/ char* ssidtest = "TP-LINK_3BD796";
-/*const*/ char* passwordtest = "giacomocasa";
+/*const*/ char* ssidtest = "Vodafone-34230543";// "TP-LINK_3BD796";
+/*const*/ char* passwordtest = "52iw4mmkdmw4ftt";// "giacomocasa";
 
 // EPROM
 const byte EEPROM_ID = 0x98; // used to identify if valid data in EEPROM
@@ -188,7 +189,7 @@ void writeEPROM() {
 
 	bool lastSensorWasTemperature = false;
 	for (int i = 0; i < shield.sensorList.count; i++) {
-		Sensor* sensor = shield.sensorList.get(i);
+		Sensor* sensor = (Sensor*)shield.sensorList.get(i);
 
 		logger.print(tag, "\n\n\t sensor->sensorname=" + sensor->sensorname);
 		char sensorNameBuffer[Sensor::sensorNameLen];

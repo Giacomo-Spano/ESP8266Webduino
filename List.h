@@ -1,26 +1,28 @@
 #pragma once
 #include "Sensor.h"
+#include "ObjectClass.h"
+
 class List
 {
 private:
-	String tag;
+	static String tag;
+	static Logger logger;
 public:
 	List();
 	~List();
-	bool add(Sensor* elem);
+	bool add(ObjectClass* elem);
 	void clearAll();
-	//bool prova(Sensor* elem);
 	void init();
 	int length();
-	Sensor* getNext();
+	ObjectClass* getNext();
 	bool hasNext();
-	Sensor* getFirst();
-	Sensor* gestLast();
-	Sensor* get(int n);
+	ObjectClass* getFirst();
+	ObjectClass* gestLast();
+	ObjectClass* get(int n);
 	void show();
 
-	Sensor* first;
-	Sensor* current;
+	ObjectClass* first;
+	ObjectClass* current;
 	int count = 0;
 };
 
