@@ -33,6 +33,7 @@ C:\Users\gs163400\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\
  C:\Users\gs163400\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/debug.h \
  C:\Users\gs163400\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\variants\nodemcu/pins_arduino.h \
  C:\Users\gs163400\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\variants\nodemcu/../generic/common.h \
+ C:\Users\gs163400\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Debug\stdafx.h \
  C:\Users\gs163400\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Debug\ObjectClass.h \
  C:\Users\gs163400\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Debug\OnewireSensor.h \
  C:\Users\gs163400\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Debug\Sensor.h \

@@ -1,5 +1,6 @@
 
 
+#include "stdafx.h"
 #include "ObjectClass.h"
 #include "OnewireSensor.h"
 #include "JSONArray.h"
@@ -543,12 +544,12 @@ bool testWifi() {
 	for (i = 0; i < Shield::getNetworkSSID().length(); i++) {
 		networkSSID[i] = Shield::getNetworkSSID().charAt(i);
 	}
-	networkSSID[i] = '\0';
+	//networkSSID[i] = '\0';
 
 	for (i = 0; i < Shield::getNetworkPassword().length(); i++) {
 		networkPassword[i] = Shield::getNetworkPassword().charAt(i);
 	}
-	networkPassword[i] = '\0';
+	//networkPassword[i] = '\0';
 
 	
 	logger.print(tag, "\n\t networkSSID=");
@@ -575,9 +576,33 @@ bool testWifi() {
 	//char networkPasswordBuffer[Shield::networkPasswordLen];
 	//Shield::getNetworkPassword().toCharArray(networkPasswordBuffer, sizeof(networkPasswordBuffer));
 
+	Serial.println("\n\n-------DEBUG----------------\n->");
+	Serial.println(ssidtest);
+	for (int i = 0; i < strlen(ssidtest); ++i) {
+		Serial.printf("%02x ", ssidtest[i]);
+	}
+	Serial.println("\n->");
+	Serial.println(networkSSID);
+	for (int i = 0; i < strlen(networkSSID); ++i) {
+		Serial.printf("%02x ", networkSSID[i]);
+	}
+	Serial.println("\n->");
+	Serial.println(passwordtest);
+	for (int i = 0; i < strlen(passwordtest); ++i) {
+		Serial.printf("%02x ", passwordtest[i]);
+	}
+	Serial.println("\n->");
+	Serial.println(networkPassword);
+	for (int i = 0; i < strlen(networkPassword); ++i) {
+		Serial.printf("%02x ", networkPassword[i]);
+	}
+	Serial.println("\n->");
 
-	//WiFi.begin(networkSSID, networkPassword);
-	WiFi.begin(ssidtest, passwordtest);
+	Serial.println("\n\n-------DEBUG----------------");
+	//WiFi.begin((const char*) networkSSID, (const char*) networkPassword);
+	WiFi.begin(networkSSID, networkPassword);
+	//WiFi.begin(ssidtest, passwordtest);
+	
 	//Serial.println(Shield::getNetworkSSID());
 
 	/* Explicitly set the ESP8266 to be a WiFi-client, otherwise, it by default,

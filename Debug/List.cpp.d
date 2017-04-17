@@ -1,8 +1,7 @@
 C:\Users\gs163400\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Debug\List.cpp.o: \
  C:\Users\gs163400\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Debug\List.cpp \
- C:\Users\gs163400\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Debug\List.h \
- C:\Users\gs163400\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Debug\Sensor.h \
- C:\Users\gs163400\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/Arduino.h \
+ C:\Users\gs163400\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Debug\stdafx.h \
+ C:\Users\gs163400\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/arduino.h \
  C:\Users\gs163400\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/stdlib_noniso.h \
  C:\Users\gs163400\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/binary.h \
  C:\Users\gs163400\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/esp8266_peri.h \
@@ -25,6 +24,7 @@ C:\Users\gs163400\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\
  C:\Users\gs163400\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/Printable.h \
  C:\Users\gs163400\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/uart.h \
  C:\Users\gs163400\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/Esp.h \
+ C:\Users\gs163400\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/Arduino.h \
  C:\Users\gs163400\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/Updater.h \
  C:\Users\gs163400\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/flash_utils.h \
  C:\Users\gs163400\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/MD5Builder.h \
@@ -34,10 +34,10 @@ C:\Users\gs163400\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\
  C:\Users\gs163400\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/debug.h \
  C:\Users\gs163400\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\variants\nodemcu/pins_arduino.h \
  C:\Users\gs163400\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\variants\nodemcu/../generic/common.h \
+ C:\Users\gs163400\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Debug\List.h \
+ C:\Users\gs163400\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Debug\ObjectClass.h \
  C:\Users\gs163400\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Debug\Logger.h \
  C:\Users\gs163400\Documents\Arduino\libraries\Time/Time.h \
  C:\Users\gs163400\Documents\Arduino\libraries\Time/TimeLib.h \
  C:\Users\gs163400\Documents\Arduino\libraries\Time/TimeLib.h \
- C:\Users\gs163400\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/FS.h \
- C:\Users\gs163400\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Debug\ObjectClass.h \
- C:\Users\gs163400\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/arduino.h
+ C:\Users\gs163400\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/FS.h

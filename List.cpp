@@ -1,14 +1,12 @@
+#include "stdafx.h"
 #include "List.h"
-#include "Logger.h"
 
-Logger List::logger;
-String List::tag = "List";
+#define String(x) (x)
+
 
 List::List()
 {
-	count = 0;
-	first = nullptr;
-	current = nullptr;
+	init();
 }
 
 List::~List()
@@ -16,33 +14,34 @@ List::~List()
 }
 
 void List::init() {
-	logger.print(tag, "\n\t >>List::init");
+	//logger.print(tag, "\n\t >>List::init");
 	count = 0;
 	first = nullptr;
 	current = nullptr;
 }
 
 bool List::add(ObjectClass* elem) {
-	
+
 	if (first == nullptr) {
 		first = elem;
 		current = first;
-		
-	} else {
-				
+
+	}
+	else {
+
 		current->next = elem;
 		current = elem;
 	}
 	current->next = nullptr;
 	count++;
-	
+
 	return true;
 }
 
 void List::clearAll() {
 
-	logger.print(tag, "\n\t >>List::clearAll");
-		
+	//logger.print(tag, "\n\t >>List::clearAll");
+
 	ObjectClass* next = first;
 	ObjectClass* cur = first;
 	while (cur != nullptr) {
@@ -52,25 +51,25 @@ void List::clearAll() {
 	}
 	init();
 
-	logger.print(tag, "\n\t <<List::clearAll");
+	//logger.print(tag, "\n\t <<List::clearAll");
 }
 
 void List::show() {
 
-	logger.print(tag, "\n\t>> show");
-	logger.print(tag, "\n\t count = " + String(count));
+	//logger.print(tag, "\n\t>> show");
+	//logger.print(tag, "\n\t count = " + String(count));
 
-	
+
 	ObjectClass* p = first;
 	int i = 0;
 	while (p != nullptr) {
 		i++;
-		logger.print(tag, "\n\t Elem=");
-		logger.print(tag, i);
+		//logger.print(tag, "\n\t Elem=");
+		//logger.print(tag, i);
 		p->show();
 		p = p->next;
 	}
-	logger.print(tag, "\n\t <<show");
+	//logger.print(tag, "\n\t <<show");
 }
 
 ObjectClass* List::gestLast() {
@@ -108,7 +107,7 @@ bool List::hasNext() {
 }
 
 ObjectClass* List::getNext() {
-		
+
 	if (current->next != nullptr) {
 		current = current->next;
 		return current;

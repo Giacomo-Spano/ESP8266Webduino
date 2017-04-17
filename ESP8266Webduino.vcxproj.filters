@@ -148,6 +148,39 @@
     <ClInclude Include="ObjectClass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="JSONArrayObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="JSONArrayValue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="JSONBoolValue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="JSONFloatValue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="JSONIntegerValue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="JSONObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="JSONStringValue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="JSONValue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Tokener.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Emulator\ESPEmulator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="wol.cpp">
@@ -217,6 +250,33 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ObjectClass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="JSONArrayObject.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="JSONArrayValue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="JSONBoolValue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="JSONFloatValue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="JSONIntegerValue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="JSONObject.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="JSONStringValue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="JSONValue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Tokener.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1,12 +1,20 @@
 #pragma once
-#include "Sensor.h"
+
+#ifdef ESP_DEBUG
+#include "Emulator\ESPEmulator.h"
+#endif
+
 #include "ObjectClass.h"
+#include "Logger.h"
+
 
 class List
 {
 private:
+
 	static String tag;
 	static Logger logger;
+
 public:
 	List();
 	~List();
@@ -25,4 +33,3 @@ public:
 	ObjectClass* current;
 	int count = 0;
 };
-

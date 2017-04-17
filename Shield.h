@@ -342,8 +342,9 @@ public:
 
 	static String getNetworkSSID()
 	{
-		return "TP-LINK-3BD796";			
-		//return String(networkSSID);
+		//return "TP-LINK-3BD796";
+		//return "Vodafone-34230543";
+		return networkSSID;
 		//return "Connectify-me";
 	}
 
@@ -357,9 +358,10 @@ public:
 	static String getNetworkPassword()
 	{
 
-		//return String(networkPassword);
-		return "giacomocasa";
+		return networkPassword;
+		//return "giacomocasa";
 		//return "giacomo00";
+		//return "52iw4mmkdmw4ftt";
 	}
 
 	static void setNetworkPassword(String password)
