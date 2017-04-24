@@ -25,7 +25,7 @@ public:
 	void sendRestartNotification();
 	boolean sendSensorsStatus(Shield shield);
 	bool sendLog(String log/*, int shieldid/*, String serverName, int port*/);
-	boolean sendActuatorStatus(HeaterActuator actuator);
+	//boolean sendActuatorStatus(HeaterActuator actuator);
 	boolean download(String filename, Shield shield);
 
 	static int timeSync();

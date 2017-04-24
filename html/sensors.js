@@ -96,9 +96,9 @@ function addSubTemperatureSensor(div,sensor) {
     var numsensors = 1;
 
     if (sensor != null) {
-        for (i = 0; i < sensor.temperaturesensors.length; i++) {
+        for (i = 0; i < sensor.childsensors.length; i++) {
             newsubdiv = subSensorDiv.cloneNode(true);
-            newsubdiv.getElementsByTagName('input')['name'].value = sensor.temperaturesensors[i].name;
+            newsubdiv.getElementsByTagName('input')['name'].value = sensor.childsensors[i].name;
             subSensorDiv.style.display = 'block';
             subSensorList.appendChild(newsubdiv);
         }
@@ -165,7 +165,7 @@ function save() {
 
                 //str += JSON.stringify(temperaturesensor);
             }
-            properties ['temperaturesensors'] = '[' + str + ']';
+            properties ['childsensors'] = '[' + str + ']';
 
         } else if (type == 'doorsensor') {
 
@@ -175,8 +175,6 @@ function save() {
         {
 
         }
-
-        //str = poperties.temperaturesensors.replace('\','');
 
         sensorsJson.sensors.push({
             'name': name,

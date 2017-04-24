@@ -58,9 +58,6 @@ private:
 	static String tag;
 	static Logger logger;
 	
-
-
-	
 	String oldDate;
 	
 
@@ -98,7 +95,7 @@ public:
 	String getSettingsJson();
 	void checkStatus();	
 	String getOneWireJson();
-	String sendCommand(String jsonStr);		
+	String receiveCommand(String jsonStr);		
 	
 	unsigned char MAC_array[6];
 	char MAC_char[18];
@@ -106,6 +103,7 @@ public:
 	
 	void addSensor(Sensor* pSensor);
 	void clearAllSensors();
+	Sensor* getSensorFromAddress(String addr);
 
 	//void addActuators();
 	void checkTemperatures();

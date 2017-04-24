@@ -108,6 +108,8 @@ void HeaterActuator::init()
 
 bool HeaterActuator::checkStatusChange()
 {
+	//logger.print(tag, "\n\n\t >>HeaterActuator::checkStatusChange");
+
 	bool sendStatus = false;
 
 	// controlla se il programma attivo è finito.
@@ -132,10 +134,14 @@ bool HeaterActuator::checkStatusChange()
 		sendStatus = true;
 	}
 		
-	if (sendStatus) {
+	/*if (sendStatus) {
 		Command command;
-		command.sendActuatorStatus(*this);
-	}
+		command.sendSensorsStatus(get);
+	}*/
+
+	//logger.print(tag, "\n\n\t <<HeaterActuator::checkStatusChange sendstatus=" + String(sendStatus));
+
+	return sendStatus;
 }
 
 void HeaterActuator::setTargetTemperature(float target)
@@ -378,17 +384,48 @@ String HeaterActuator::getJSONFields() {
 
 	logger.print(tag, "\n\t >>HeaterActuator::getJSONFields");
 
-	String json = "";
+	String json = "";		
+	json += ",\"remotetemperature\":" + String(getRemoteTemperature());
+	json += ",\"status\":\"" + String(statusStr[getStatus()]) +"\"";
+	json += ",\"relestatus\":" + String((getReleStatus()) ? "true" : "false");
 	
-	json += ",\"temperaturesensors\":";
+	if (getStatus() == Program::STATUS_PROGRAMACTIVE
+		|| getStatus() == Program::STATUS_MANUAL_AUTO
+		|| getStatus() == Program::STATUS_MANUAL_OFF) {
 
-	json += "\"value\"";
+		json += ",\"duration\":";
+		json += String(programDuration / 1000);
+
+		int remainingTime = programDuration - (millis() - programStartTime);
+		json += ",\"remaining\":";
+		json += String(remainingTime / 1000);
+
+		json += ",\"localsensor\":";
+		if (!sensorIsRemote())
+			json += "true";
+		else
+			json += "false";
+
+		if (getStatus() == Program::STATUS_MANUAL_AUTO || getStatus() == Program::STATUS_PROGRAMACTIVE) {
+			json += ",\"target\":";
+			json += String(getTargetTemperature());
+		}
+
+		if (getStatus() == Program::STATUS_PROGRAMACTIVE) {
+			json += ",\"program\":";
+			json += String(getActiveProgram());
+
+			json += ",\"timerange\":";
+			json += String(getActiveTimeRange());
+		}
+
+	}
 	
 	logger.print(tag, "\n\t <<HeaterActuator::getJSONFields json=" + json);
 	return json;
 }
 
-String HeaterActuator::getJSON() {
+String HeaterActuator::getJSON() {// DA ELIMINARE
 	String json = "";
 	json += "{";
 	json += "\"shieldid\":" + String(Shield::id) + ",";
@@ -398,6 +435,8 @@ String HeaterActuator::getJSON() {
 	else
 		json += "false,";
 	json += "\"heaterpin\":\"" + Shield::getStrHeaterPin() + "\",";
+
+
 	json += "\"remotetemperature\":" + String(getRemoteTemperature()) + ",";
 	json += "\"addr\":\"" + address + "\",";
 	json += "\"status\":\"" + String(statusStr[getStatus()]) + "\",";
@@ -488,14 +527,6 @@ int HeaterActuator::getActiveTimeRange()
 {
 	return activeTimerange;
 }
-
-/*int HeaterActuator::getRelePin() {
-	return relePin;
-}*/
-
-/*void HeaterActuator::setRelePin(int pin) {
-	relePin = pin;
-}*/
 
 void HeaterActuator::enableRele(boolean on) {
 

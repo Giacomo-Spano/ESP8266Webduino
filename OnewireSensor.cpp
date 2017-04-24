@@ -183,14 +183,14 @@ String OnewireSensor::getJSONFields() {
 	//json += ",\"addr\":";
 	//json += "\"" + getSensorAddress() + "\"";
 
-	json += ",\"temperaturesensors\":[";
+	json += ",\"childsensors\":[";
 
 	for (int i = 0; i < tempSensorNum; i++) {
 		if (i > 0)
 			json += ",";
 		json += "{";
 		json += "\"id\":";
-		json += "\"" + String(temperatureSensors[i].id) + "\"";
+		json += String(temperatureSensors[i].id);
 		json += ",\"name\":";
 		json += "\"" + temperatureSensors[i].name + "\"";
 		json += ",\"addr\":";
@@ -212,9 +212,9 @@ String OnewireSensor::getJSONFields() {
 
 void OnewireSensor::addTemperatureSensorsFromJson(JSON sensorJson) {
 
-	if (sensorJson.has("temperaturesensors")) {
+	if (sensorJson.has("childsensors")) {
 		String names = "";
-		String str = sensorJson.jsonGetArrayString("temperaturesensors");
+		String str = sensorJson.jsonGetArrayString("childsensors");
 		logger.print(tag, "\n\t str=" + str);
 		JSONArray jArrayTempSensor(str);
 		String tempSensor = jArrayTempSensor.getFirst();

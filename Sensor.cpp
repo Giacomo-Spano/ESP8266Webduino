@@ -78,6 +78,11 @@ bool Sensor::checkStatusChange()
 {
 }
 
+String Sensor::sendCommand(String json)
+{
+	return String();
+}
+
 /*String Sensor::getSensorAddress() {
 
 	return address;

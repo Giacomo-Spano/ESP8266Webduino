@@ -172,7 +172,7 @@ int Command::timeSync()
 	return 0;
 }
 
-boolean Command::sendActuatorStatus(HeaterActuator actuator)
+/*boolean Command::sendActuatorStatus(HeaterActuator actuator)
 {
 	logger.println(tag, F(">>sendActuatorStatus\n"));
 
@@ -196,7 +196,7 @@ boolean Command::sendActuatorStatus(HeaterActuator actuator)
 
 	logger.println(tag, F("<<sendActuatorStatus\n"));
 	return true;
-}
+}*/
 
 boolean Command::sendSensorsStatus(Shield shield)
 {

@@ -9,6 +9,8 @@
 
 extern void writeEPROM();
 extern void resetEPROM();
+extern String siid;
+extern String pass;
 
 Logger Shield::logger;
 String Shield::tag = "Shield";
@@ -50,6 +52,15 @@ void Shield::clearAllSensors() {
 	sensorList.clearAll();
 }
 
+Sensor* Shield::getSensorFromAddress(String addr) {
+	for (int i = 0; i < sensorList.count; i++) {
+		Sensor* sensor = (Sensor*)sensorList.get(i);
+		if (sensor->address == addr)
+			return sensor;
+	}
+	return nullptr;
+}
+
 
 void Shield::drawString(int x, int y, String txt, int size, int color) {
 
@@ -86,9 +97,6 @@ void Shield::clearScreen() {
 
 	tftDisplay.drawXBitmap(90, 50, temperature_bits, temperature_width, temperature_height, 0xF800/*ST3577_RED*/);
 }
-
-
-
 
 String Shield::sendUpdateSensorListCommand(JSON json) {
 
@@ -233,9 +241,9 @@ String Shield::sendHeaterSettingsCommand(JSON json) {
 	return result;
 }
 
-String Shield::sendCommand(String jsonStr) {
+String Shield::receiveCommand(String jsonStr) {
 
-	logger.print(tag, "\n\t >>sendCommand\njson=" + jsonStr);
+	logger.print(tag, "\n\t >>Shield::receiveCommand\njson=" + jsonStr);
 
 	JSON json(jsonStr);
 	if (json.has("command")) {
@@ -291,6 +299,16 @@ String Shield::sendCommand(String jsonStr) {
 			logger.print(tag, "\n\t <<sendCommand result=" + String(result));
 			return result;
 		}
+		else if (json.has("addr")) {
+			logger.print(tag, "\n\t ++sensor command");
+			String addr = json.jsonGetString("addr");
+			Sensor* sensor = getSensorFromAddress(addr);
+			logger.print(tag, "\n\t ++sensorname=" + sensor->sensorname);
+			logger.print(tag, "\n\t ++addr=" + String(sensor->address));
+			String result = sensor->sendCommand(jsonStr);
+			logger.print(tag, "\n\t<<Shield::receiveCommand result=" + String(result));
+			return result;
+		}
 		else if (heaterEnabled /*&& json.has("actuatorid")*/) { // se arriva direttamente dalla scheda non c'è actuatorid
 			/*int actuatorId = json.jsonGetInt("actuatorid");
 			logger.print(tag, F("\n\tactuatorid="));
@@ -298,7 +316,7 @@ String Shield::sendCommand(String jsonStr) {
 			logger.print(tag, "\n\t ++heater command");
 
 			String result = phearterActuator->sendCommand(jsonStr);
-			logger.print(tag, "\n\t<<sendCommand result=" + String(result));
+			logger.print(tag, "\n\t<<Shield::receiveCommand result=" + String(result));
 			return result;
 		}
 	}
@@ -318,32 +336,52 @@ String Shield::sendShieldSettingsCommand(JSON json)
 
 	if (json.has("localport")) {
 		int localPortr = json.jsonGetInt("localport");
-		logger.print(tag, "\n\tlocalport=" + localPort);
+		logger.print(tag, "\n\t localport=" + localPort);
 		setLocalPort(localPort);
 	}
 	if (json.has("shieldname")) {
 		String name = json.jsonGetString("shieldname");
-		logger.print(tag, "\n\tshieldname=" + name);
+		logger.print(tag, "\n\t shieldname=" + name);
 		setShieldName(name);
 	}
 	if (json.has("ssid")) {
 		String name = json.jsonGetString("ssid");
-		logger.print(tag, "\n\tssid=" + name);
+		logger.print(tag, "\n\t ssid=" + name);
 		setNetworkSSID(name);
+
+		//char* buffer = "TP-LINK-3BD796";
+		/*int i;
+		for (i = 0; i < name.length(); i++) {
+			buffer[i] = name.charAt(i);
+		}
+		buffer[i] = 0;
+
+		name = "TP-LINK-3BD796";*/
+
+		siid = name;
+
+		/*for (int i = 0; i < name.length; i++) {
+			siis = 
+		}*/
+		
+		//siid = String(buffer);
+		
 	}
 	if (json.has("password")) {
-		String name = json.jsonGetString("password");
-		logger.print(tag, "\n\tshieldname=" + name);
-		setNetworkPassword(name);
+		String password = json.jsonGetString("password");
+		logger.print(tag, "\n\t password=" + password);
+		setNetworkPassword(password);
+		pass = password;
+		//pass = "giacomocasa";
 	}
 	if (json.has("servername")) {
 		String name = json.jsonGetString("servername");
-		logger.print(tag, "\n\tshieldname=" + name);
+		logger.print(tag, "\n\t servername=" + name);
 		setServerName(name);
 	}
 	if (json.has("serverport")) {
 		int serverPort = json.jsonGetInt("serverport");
-		logger.print(tag, "\n\tserverPort=" + serverPort);
+		logger.print(tag, "\n\t serverport=" + serverPort);
 		setServerPort(serverPort);
 	}
 	writeEPROM();
@@ -415,7 +453,7 @@ String Shield::sendUpdateSensorStatusCommand(JSON json)
 String Shield::sendResetCommand(JSON json)
 {
 	logger.print(tag, "\n\t>> sendResetCommand");
-
+	resetEPROM(); // scrive 0 nel primo settore della EPROM per azzerare tutto
 
 	return "";
 }

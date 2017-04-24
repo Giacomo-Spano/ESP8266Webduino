@@ -33,6 +33,8 @@ public:
 	virtual void init();
 	virtual bool checkStatusChange();
 	//String getSensorAddress();
+
+	virtual String sendCommand(String json);
 		
 	
 };

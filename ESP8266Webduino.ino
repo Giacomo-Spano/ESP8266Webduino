@@ -53,14 +53,22 @@ String sensorNames = "";
 String tag = "Webduino";
 const char *ssidAP = "ES8266";
 const char *passwordAP = "thereisnospoon";
-const char* ssid = "xxBUBBLES";
+//const char* ssid = "xxBUBBLES";
 Shield shield;
 
-/*const*/ char* ssidtest = "Vodafone-34230543";// "TP-LINK_3BD796";
-/*const*/ char* passwordtest = "52iw4mmkdmw4ftt";// "giacomocasa";
+/*const*/ char* ssidtest =/*"Vodafone-34230543";*/ "TP-LINK_3BD796";
+/*const*/ char* passwordtest = /*"52iw4mmkdmw4ftt";*/ "giacomocasa";
+
+String siid = ""; //= "TP-LINK_3BD796";
+String pass = ""; //= "giacomocasa";
+
+//char networkSSID[100/*Shield::networkSSIDLen*/];
+//char networkPassword[100/*Shield::networkPasswordLen*/];
+//char* networkSSID = "                                    ";
+//char* networkPassword = "                                 ";
 
 // EPROM
-const byte EEPROM_ID = 0x98; // used to identify if valid data in EEPROM
+const byte EEPROM_ID = 0x94; // used to identify if valid data in EEPROM
 const int ID_ADDR = 0; // the EEPROM address used to store the ID
 const int TIMERTIME_ADDR = 1; // the EEPROM address used to store the pin
 int epromversion = 0;
@@ -110,7 +118,8 @@ int sendRestartNotification = 0;
 bool shieldRegistered = false; // la shield si registra all'inizio e tutte le volte che va offline
 
 void resetEPROM() {
-
+	// scrive zero nel primo settore della EPROM
+	// così al riavvio successivo saranno ripristinati i valori di default
 	logger.print(tag, "\n\n\t >>resetEPROM");
 
 	byte hiByte;
@@ -137,19 +146,48 @@ void writeEPROM() {
 	EEPROM.write(addr++, loByte);
 
 	// ssid
-	char networkSSID[Shield::networkSSIDLen];
+	int i = 0;
+
+	//String prova = String("TP-LINK_3BD796");
+	String prova = Shield::getNetworkSSID();
+	siid = prova;
+
+	logger.print(tag, "\n\t siid.length = " + String(siid.length()));
+	logger.print(tag, "\n\t ");
+	for (i = 0; i < siid.length(); ++i)
+	{
+		logger.print(tag, "|" + String(i));
+		logger.print(tag, ":" + String(siid[i]));
+		EEPROM.write(i + addr, siid[i]);
+	}
+	EEPROM.write(i + addr, 0);
+	addr += Shield::networkSSIDLen;
+	logger.print(tag, "\n\t networkSSID = " + siid);
+	/*char networkSSID[Shield::networkSSIDLen];
 	Shield::getNetworkSSID().toCharArray(networkSSID, sizeof(networkSSID));
 	int res = EEPROM_writeAnything(addr, networkSSID);
-	addr += res;
-	logger.print(tag, "\n\t networkSSID = " + String(networkSSID));
+	addr += res;*/
+	
 
 	// password
+	i = 0;
+	logger.print(tag, "\n\t pass.length() = " + String(pass.length()));
+	logger.print(tag, "\n\t ");
+	for (i = 0; i < pass.length(); ++i)
+	{
+		logger.print(tag, "|" + String(i));
+		logger.print(tag, ":" + String(pass[i]));
+		EEPROM.write(i + addr, pass[i]);
+	}
+	EEPROM.write(i + addr, 0);
+	addr += Shield::networkPasswordLen;
+	logger.print(tag, "\n\t networkPassword = " + pass);
+	/*addr += Shield::networkSSIDLen;
 	char networkPasswordBuffer[Shield::networkPasswordLen];
 	Shield::getNetworkPassword().toCharArray(networkPasswordBuffer, sizeof(networkPasswordBuffer));
 	res = EEPROM_writeAnything(addr, networkPasswordBuffer);
-	addr += res;
-	logger.print(tag, "\n\t networkPasswordBuffer = " + String(networkPasswordBuffer));
-
+	addr += res;*/
+	
 	// local port
 	int port = Shield::getLocalPort();
 	hiByte = highByte(port);
@@ -161,7 +199,7 @@ void writeEPROM() {
 	// server name
 	char serverNameBuffer[Shield::serverNameLen];
 	Shield::getServerName().toCharArray(serverNameBuffer, sizeof(serverNameBuffer));
-	res = EEPROM_writeAnything(addr, serverNameBuffer);
+	int res = EEPROM_writeAnything(addr, serverNameBuffer);
 	addr += res;
 	logger.print(tag, "\n\t serverNameBuffer = " + String(serverNameBuffer));
 
@@ -276,18 +314,39 @@ void readEPROM() {
 	logger.print(tag, "\n\t epromversion=" + String(epromversion));
 
 	// ssid
-	char networkSSIDBuffer[Shield::networkSSIDLen];
+	siid = "";
+	int i;
+	for (int i = 0; i < Shield::networkSSIDLen; ++i)
+	{
+		siid += char(EEPROM.read(i + addr));
+	}
+	//siid += "";
+	addr += Shield::networkSSIDLen;
+	logger.print(tag, "\n\t networkSSID=" + siid);
+
+
+	/* char networkSSIDBuffer[Shield::networkSSIDLen];
 	int res = EEPROM_readAnything(addr, networkSSIDBuffer);
 	logger.print(tag, "\n\t networkSSIDBuffer=" + String(networkSSIDBuffer));
-	Shield::setNetworkSSID(String(networkSSIDBuffer)/*"TP-LINK_3BD796"*/);
-	addr += res;
+	Shield::setNetworkSSID(String(networkSSIDBuffer));
+	siid = String(networkSSIDBuffer);
+	addr += res;*/
 
 	// password
-	char networkPasswordBuffer[Shield::networkPasswordLen];
+	pass = "";
+	for (int i = 0; i < Shield::networkPasswordLen; ++i)
+	{
+		pass += char(EEPROM.read(i + addr));
+	}
+	//pass += "";
+	addr += Shield::networkPasswordLen;
+	logger.print(tag, "\n\t networkPassword=" + pass);
+	/*char networkPasswordBuffer[Shield::networkPasswordLen];
 	res = EEPROM_readAnything(addr, networkPasswordBuffer);
 	logger.print(tag, "\n\t networkPasswordBuffer = " + String(networkPasswordBuffer));
-	Shield::setNetworkPassword(String(networkPasswordBuffer)/*"giacomocasa"*/);
-	addr += res;
+	Shield::setNetworkPassword(String(networkPasswordBuffer));
+	pass = String(networkPasswordBuffer);
+	addr += res;*/
 
 	// local port
 	hiByte = EEPROM.read(addr++);
@@ -299,7 +358,7 @@ void readEPROM() {
 
 	//server name
 	char servernnameBuffer[Shield::serverNameLen];
-	res = EEPROM_readAnything(addr, servernnameBuffer);
+	int res = EEPROM_readAnything(addr, servernnameBuffer);
 	logger.print(tag, "\n\t servernnameBuffer=" + String(servernnameBuffer));
 	Shield::setServerName(String(servernnameBuffer));
 	addr += res;
@@ -370,7 +429,7 @@ void readSensor() {
 		// init sensor
 		Sensor* pSensor = nullptr;
 		if (type == "onewiresensor") {
-			//logger.print(tag, "\n\t onewiresensor found");
+			logger.print(tag, "\n\t onewiresensor found");
 			pSensor = new OnewireSensor(sensorPin,sensorEnabled, address, name);
 
 			OnewireSensor* pOnewireSensor = (OnewireSensor*)pSensor;
@@ -397,7 +456,7 @@ void readSensor() {
 			}
 		}
 		else if (type == "doorsensor") {
-			//logger.print(tag, "doorsensor found");
+			logger.print(tag, "doorsensor found");
 			pSensor = new DoorSensor(sensorPin, sensorEnabled, address, name);
 		}
 		else if (type == "heatersensor") {
@@ -428,9 +487,35 @@ void initEPROM()
 	if (id == EEPROM_ID)
 	{
 		readEPROM();
+
+		/*siid = "TP-LINK_3BD796";
+		pass = "giacomocasa";*/
+
+		siid = "TP-LINK_3D88";
+		pass = "giacomobox";
+
+		/*Serial.println("--");
+		
+		String prova = Shield::getNetworkSSID();
+		Serial.println(siid);
+		
+		Serial.println("--");
+		siid = "";
+		for (int i = 0; i < 14; i++) {
+			siid += prova.charAt(i);
+			Serial.print(siid[i],DEC);
+		}
+		siid += '\0';
+
+		//siid = String("TP-LINK_3BD796");
+		Serial.println(siid);
+		
+		pass = "giacomocasa";
+		Serial.println(pass);*/
+
 	}
 	else
-	{
+	{		
 		writeEPROM();
 	}
 	logger.print(tag, "\n\n\t <<initEPROM");
@@ -528,40 +613,53 @@ void checkOTA()
 	//ArduinoOTA.handle();  uesta chiamata deve essere messa in loop()
 }
 
-char networkSSID[100/*Shield::networkSSIDLen*/];
-char networkPassword[100/*Shield::networkPasswordLen*/];
+
 
 
 bool testWifi() {
-	Serial.begin(115200);
-	delay(10);
-
+	
 	// We start by connecting to a WiFi network
+	/*char networkSSID[Shield::networkSSIDLen];
+	char networkPassword[Shield::networkPasswordLen];
 
-	//Shield::getNetworkSSID().toCharArray(networkSSID,sizeof(networkSSID));
-	//Shield::getNetworkPassword().toCharArray(networkPassword, sizeof(networkPassword));
+	memset(networkSSID, 0, sizeof(networkSSID));
+	memset(networkPassword, 0, sizeof(networkPassword));
+
 	int i;
 	for (i = 0; i < Shield::getNetworkSSID().length(); i++) {
-		networkSSID[i] = Shield::getNetworkSSID().charAt(i);
+		if (i < Shield::getNetworkSSID().length())
+			networkSSID[i] = Shield::getNetworkSSID().charAt(i);
 	}
-	//networkSSID[i] = '\0';
-
 	for (i = 0; i < Shield::getNetworkPassword().length(); i++) {
-		networkPassword[i] = Shield::getNetworkPassword().charAt(i);
+		if (i < Shield::getNetworkPassword().length())
+			networkPassword[i] = Shield::getNetworkPassword().charAt(i);
+	}*/
+
+
+	/*Serial.println("WiFi connection timeout");
+
+	Serial.println("\n\n-------DEBUG----------------\n->");
+	Serial.println(ssidtest);
+	for (int i = 0; i < sizeof(networkSSID); ++i) {
+		Serial.printf("%02x:%02x ", ssidtest[i], networkSSID[i]);
 	}
-	//networkPassword[i] = '\0';
-
-	
-	logger.print(tag, "\n\t networkSSID=");
-	logger.print(tag, networkSSID);
-	logger.print(tag, "\n\t networkPassword=");
-	logger.print(tag, networkPassword);
-
-
-	logger.print(tag, "\n\t ssidtest=");
-	logger.print(tag, networkSSID);
-	logger.print(tag, "\n\t passwordtest=");
-	logger.print(tag, passwordtest);
+	Serial.println("\n->");
+	Serial.println(passwordtest);
+	for (int i = 0; i < sizeof(networkPassword); ++i) {
+		Serial.printf("%02x:%02x ", passwordtest[i], networkPassword[i]);
+	}
+	Serial.println("\n->");
+	/*Serial.println(passwordtest);
+	for (int i = 0; i < sizeof(passwordtest); ++i) {
+		Serial.printf("%02x ", passwordtest[i]);
+	}
+	Serial.println("\n->");
+	Serial.println(networkPassword);
+	for (int i = 0; i < sizeof(networkPassword); ++i) {
+		Serial.printf("%02x ", networkPassword[i]);
+	}
+	Serial.println("\n->");*/
+	Serial.println("\n\n-------DEBUG----------------");
 
 
 	Serial.println();
@@ -569,38 +667,34 @@ bool testWifi() {
 	Serial.print("Connecting");
 
 	WiFi.mode(WIFI_STA);
-	delay(2000);
+	//delay(2000);
+	//WiFi.begin(networkSSID, networkPassword);
 
-	//char networkSSIDBuffer[Shield::networkSSIDLen];
-	//Shield::getNetworkPassword().toCharArray(networkSSIDBuffer, sizeof(networkSSIDBuffer));
-	//char networkPasswordBuffer[Shield::networkPasswordLen];
-	//Shield::getNetworkPassword().toCharArray(networkPasswordBuffer, sizeof(networkPasswordBuffer));
+	
 
-	Serial.println("\n\n-------DEBUG----------------\n->");
-	Serial.println(ssidtest);
-	for (int i = 0; i < strlen(ssidtest); ++i) {
-		Serial.printf("%02x ", ssidtest[i]);
-	}
-	Serial.println("\n->");
-	Serial.println(networkSSID);
-	for (int i = 0; i < strlen(networkSSID); ++i) {
-		Serial.printf("%02x ", networkSSID[i]);
-	}
-	Serial.println("\n->");
-	Serial.println(passwordtest);
-	for (int i = 0; i < strlen(passwordtest); ++i) {
-		Serial.printf("%02x ", passwordtest[i]);
-	}
-	Serial.println("\n->");
-	Serial.println(networkPassword);
-	for (int i = 0; i < strlen(networkPassword); ++i) {
-		Serial.printf("%02x ", networkPassword[i]);
-	}
-	Serial.println("\n->");
+	/*String pass = Shield::getNetworkSSID();
+	String siid = Shield::getNetworkSSID();*/
+	WiFi.begin(siid.c_str(), pass.c_str());
+	//WiFi.begin(ssidtest, passwordtest);
 
-	Serial.println("\n\n-------DEBUG----------------");
+
+	int count = 0;
+	while (WiFi.status() != WL_CONNECTED) {
+		delay(1000);
+		Serial.print(".");
+		if (count++ > 15) {
+			
+
+			return false;
+		}
+	}
+
+
+
+	
+
 	//WiFi.begin((const char*) networkSSID, (const char*) networkPassword);
-	WiFi.begin(networkSSID, networkPassword);
+	
 	//WiFi.begin(ssidtest, passwordtest);
 	
 	//Serial.println(Shield::getNetworkSSID());
@@ -608,19 +702,7 @@ bool testWifi() {
 	/* Explicitly set the ESP8266 to be a WiFi-client, otherwise, it by default,
 	would try to act as both a client and an access-point and could cause
 	network-issues with your other WiFi-devices on your WiFi-network. */
-	WiFi.mode(WIFI_STA);
-	WiFi.begin();
-
-	int count = 0;
-	while (WiFi.status() != WL_CONNECTED) {
-		delay(1000);
-		Serial.print(".");
-		if (count++ > 10) {
-			Serial.println("WiFi connection timeout");
-			return false;
-		}
-	}
-
+	
 	Serial.println("");
 	Serial.println("WiFi connected");
 	Serial.println("IP address: ");
@@ -654,6 +736,34 @@ void setup()
 	logger.print(tag, "\n\t >>setup");
 	logger.print(tag, "\n\n *******************RESTARTING************************");
 
+	char inData[20]; // Allocate some space for the string
+	char inChar; // Where to store the character read
+	byte index = 0; // Index into array; where to store the character
+
+	
+	/*while (true) // Don't read unless
+								   // there you know there is data
+	{
+		if (Serial.available() > 0) // One less than the size of the array
+		{
+			inChar = Serial.read(); // Read a character
+			inData[index] = inChar; // Store it
+			index++; // Increment where to write next
+			if (inChar == 13) {
+				inData[index] = '\0'; // Null terminate the string
+				break;
+			}
+			
+			
+		}
+	}
+	logger.print(tag, "\n\t >>inData=" + String(inData));
+	String prova = inData;
+	logger.print(tag, "\n\t >>prova=" + prova);
+	String prova2 = String(inData);
+	logger.print(tag, "\n\t >>prova2=" + prova2);*/
+
+
 	shield.init();
 	shield.drawString(0, 0, "restarting..", 1, ST7735_WHITE);
 
@@ -682,7 +792,7 @@ void setup()
 	shield.drawString(0, 80, "init onewire", 1, ST7735_WHITE);
 	shield.drawString(0, 40, "connecting to WiFi", 1, ST7735_WHITE);
 	// Connect to WiFi network
-	logger.print(tag, "\n\nConnecting to " + Shield::getNetworkSSID() + " " + Shield::getNetworkPassword());
+	//logger.print(tag, "\n\nConnecting to " + Shield::getNetworkSSID() + " " + Shield::getNetworkPassword());
 
 	
 	if (testWifi()/* == 20*/) {
@@ -780,7 +890,7 @@ String receiveCommand(HttpRequest request, HttpResponse response) {
 	logger.println(tag, F("\n\n\t >>receiveCommand "));
 
 	String str = request.body;
-	String jsonResult = shield.sendCommand(str);
+	String jsonResult = shield.receiveCommand(str);
 
 	logger.println(tag, "\n\t <<receiveCommand " + jsonResult);
 	return jsonResult;
@@ -968,7 +1078,7 @@ void loop()
 			else if (page.equalsIgnoreCase("sensorstatus")) {
 				response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, getJsonSensorsStatus(request, response));
 			}
-			else if (page.equalsIgnoreCase("actuatorsstatus")) {
+			else if (page.equalsIgnoreCase("actuatorsstatus")) { // DA ELIMINARE
 				response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, getJsonActuatorsStatus(request, response));
 			}
 			else if (page.equalsIgnoreCase("reset")) {
