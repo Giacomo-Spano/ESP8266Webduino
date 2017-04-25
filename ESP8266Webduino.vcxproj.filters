@@ -181,6 +181,9 @@
     <ClInclude Include="Emulator\ESPEmulator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MQTTClientClass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="wol.cpp">
@@ -277,6 +280,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Tokener.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MQTTClientClass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -2,6 +2,7 @@
 #include "Program.h"
 #include "Util.h"
 
+extern void mqtt_publish(String topic, String message);
 
 //extern const char* statusStr[];
 time_t serverTime = 11111111;
@@ -76,7 +77,7 @@ void Command::sendRestartNotification()
 	logger.println(tag, F("<< sendRestartNotification\n"));	
 }
 
-int Command::registerShield(Shield shield)
+void Command::registerShield(Shield shield)
 {
 	logger.println(tag, F(">> registerShield\n"));
 	
@@ -99,46 +100,44 @@ int Command::registerShield(Shield shield)
 		str += sensor->getJSON();
 	}
 	str += "]";
-
-	// attuatori
-	str += ",\"actuators\":[";
-	str += shield.phearterActuator->getJSON();
-	str += "]";
+	str += "}";
 	str += "}";
 	
-	str += "}";
-
-	HttpHelper hplr;
-
-	String result;
-	logger.print(tag, "\n\t serverName=" + Shield::getServerName() + "**");
-	logger.print(tag, "\n\t serverPort=" + String(Shield::getServerPort()));
-
-	boolean res = hplr.post(Shield::getServerName(), Shield::getServerPort(), "/webduino/shield", str, &result);
-	//logger.print(tag, "\n\tanswer = ");
-	//logger.println(tag, result);
-
-	JSON json(result);
-	String resultvalue = json.jsonGetString("result");
-	logger.print(tag, "\tresult = ");
-	logger.print(tag, resultvalue);
-
-	int id = 0;
-	if (resultvalue.equalsIgnoreCase("success")) {
-
-		id = json.jsonGetInt("id");
-		
-		serverTime = json.jsonGetLong("timesec");
-		//getTimeObject = this;
-		//setSyncInterval(60);
-		setSyncProvider(getNtpTime);
+	if (Shield::getMQTTmode() == true) {
+		String topic = "toServer/register";
+		mqtt_publish(topic, String(str));
+		return;
 	}
+	else {
 
-	logger.print(tag, "\n\tid = ");
-	logger.print(tag, String(id));
+		HttpHelper hplr;
 
-	logger.println(tag, F("<< registerShield\n"));
-	return id;
+		String result;
+		logger.print(tag, "\n\t serverName=" + Shield::getServerName() + "**");
+		logger.print(tag, "\n\t serverPort=" + String(Shield::getServerPort()));
+
+		boolean res = hplr.post(Shield::getServerName(), Shield::getServerPort(), "/webduino/shield", str, &result);
+		
+		JSON json(result);
+		String resultvalue = json.jsonGetString("result");
+		logger.print(tag, "\tresult = ");
+		logger.print(tag, resultvalue);
+
+		int id = 0;
+		if (resultvalue.equalsIgnoreCase("success")) {
+
+			id = json.jsonGetInt("id");
+
+			serverTime = json.jsonGetLong("timesec");
+			setSyncProvider(getNtpTime);
+		}
+
+		logger.print(tag, "\n\tid = ");
+		logger.print(tag, String(id));
+
+		logger.println(tag, F("<< registerShield\n"));
+		Shield::setShieldId(id);
+	}
 	
 }
 
@@ -207,16 +206,24 @@ boolean Command::sendSensorsStatus(Shield shield)
 		return false;
 	}
 
-	String str = shield.getSensorsStatusJson();
+	String json = shield.getSensorsStatusJson();
 	
 	logger.print(tag, F("\n\tjson="));
-	logger.print(tag, str);
+	logger.print(tag, json);
 
-	String result;
-	HttpHelper hplr;
-	bool res = hplr.post(Shield::getServerName(), Shield::getServerPort(), "/webduino/sensor", str, &result);
-	logger.print(tag, "\n\tanswer = ");
-	logger.print(tag, result);
+	bool res = false;
+	if (Shield::getMQTTmode() == true) {
+		String topic = "toServer/shield/" + String(Shield::getShieldId()) + String("/update");
+		mqtt_publish(topic, String(json));
+		return true;
+	}
+	else {
+		String result;
+		HttpHelper hplr;
+		res = hplr.post(Shield::getServerName(), Shield::getServerPort(), "/webduino/sensor", json, &result);
+		logger.print(tag, "\n\tanswer = ");
+		logger.print(tag, result);
+	}
 
 	logger.println(tag, F("<<sendSensorsStatus\n"));
 	return res;

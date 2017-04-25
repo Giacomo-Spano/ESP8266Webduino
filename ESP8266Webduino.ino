@@ -1,6 +1,8 @@
 
 
+#include <PubSubClient.h>
 #include "stdafx.h"
+
 #include "ObjectClass.h"
 #include "OnewireSensor.h"
 #include "JSONArray.h"
@@ -11,6 +13,9 @@
 #include "HttpRequest.h"
 #include "ESP8266Webduino.h"
 #include <ESP8266WiFi.h>
+
+#include "MQTTClientClass.h"
+
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 #include <EEPROM.h>
@@ -26,6 +31,10 @@
 #include <Time.h>
 #include "TimeLib.h"
 #include "POSTData.h"
+
+
+
+
 
 //#include "Ucglib.h"
 
@@ -95,14 +104,20 @@ String softwareReset(HttpRequest request, HttpResponse response);
 
 // GET request
 String getJsonStatus(HttpRequest request, HttpResponse response);
-String getJsonActuatorsStatus(HttpRequest request, HttpResponse response);
-String getJsonHeaterStatus(HttpRequest request, HttpResponse response);
+//String getJsonActuatorsStatus(HttpRequest request, HttpResponse response);
+//String getJsonHeaterStatus(HttpRequest request, HttpResponse response);
 String getJsonSettings(HttpRequest request, HttpResponse response);
 
 // Create an instance of the server
 // specify the port to listen on as an argument
 WiFiServer server(80);
 WiFiClient client;
+
+extern void mqtt_publish(String topic, String message);
+MQTTClientClass mqttclient;
+long lastMsg = 0;
+int messagenumber = 0;
+//String topic = "sendtopic";
 
 const int flash_interval = 30000;
 unsigned long lastFlash = 0;//-flash_interval;
@@ -133,7 +148,7 @@ void resetEPROM() {
 void writeEPROM() {
 
 	logger.print(tag, "\n\n\t >>write EPROM");
-		
+
 	byte hiByte;
 	byte loByte;
 	addr = TIMERTIME_ADDR;
@@ -167,7 +182,7 @@ void writeEPROM() {
 	Shield::getNetworkSSID().toCharArray(networkSSID, sizeof(networkSSID));
 	int res = EEPROM_writeAnything(addr, networkSSID);
 	addr += res;*/
-	
+
 
 	// password
 	i = 0;
@@ -187,7 +202,7 @@ void writeEPROM() {
 	Shield::getNetworkPassword().toCharArray(networkPasswordBuffer, sizeof(networkPasswordBuffer));
 	res = EEPROM_writeAnything(addr, networkPasswordBuffer);
 	addr += res;*/
-	
+
 	// local port
 	int port = Shield::getLocalPort();
 	hiByte = highByte(port);
@@ -266,7 +281,7 @@ void writeEPROM() {
 			EEPROM.write(addr++, hiByte);
 			EEPROM.write(addr++, loByte);
 			logger.print(tag, "\n\t onewire->tempSensorNum=" + String(onewire->tempSensorNum));
-			
+
 			for (int k = 0; k < onewire->tempSensorNum; k++) {
 
 				hiByte = highByte(onewire->temperatureSensors[k].id);
@@ -362,21 +377,21 @@ void readEPROM() {
 	logger.print(tag, "\n\t servernnameBuffer=" + String(servernnameBuffer));
 	Shield::setServerName(String(servernnameBuffer));
 	addr += res;
-	
+
 	// server port
 	hiByte = EEPROM.read(addr++);
 	lowByte = EEPROM.read(addr++);
 	port = word(hiByte, lowByte);
 	logger.print(tag, "\n\t port=" + String(port));
 	Shield::setServerPort(port);
-	
+
 	// shield name
 	char shieldNameBuffer[Shield::shieldNameLen];
 	res = EEPROM_readAnything(addr, shieldNameBuffer);
 	logger.print(tag, "\n\t shieldNameBuffer =" + String(shieldNameBuffer));
 	Shield::setShieldName(String(shieldNameBuffer));
 	addr += res;
-	
+
 	logger.print(tag, "\n\n\t <<read EPROM res=\n" + String(addr));
 }
 
@@ -410,7 +425,7 @@ void readSensor() {
 		res = EEPROM_readAnything(addr, sensorTypeBuffer);
 		String type = String(sensorTypeBuffer);
 		logger.print(tag, "\n\t sensorTypeBuffer =" + type);
-		addr += res;		
+		addr += res;
 
 		char sensorAddressBuffer[Sensor::sensorAddressLen];
 		res = EEPROM_readAnything(addr, sensorAddressBuffer);
@@ -430,7 +445,7 @@ void readSensor() {
 		Sensor* pSensor = nullptr;
 		if (type == "onewiresensor") {
 			logger.print(tag, "\n\t onewiresensor found");
-			pSensor = new OnewireSensor(sensorPin,sensorEnabled, address, name);
+			pSensor = new OnewireSensor(sensorPin, sensorEnabled, address, name);
 
 			OnewireSensor* pOnewireSensor = (OnewireSensor*)pSensor;
 			hiByte = EEPROM.read(addr++);
@@ -467,7 +482,7 @@ void readSensor() {
 			logger.print(tag, "\n\t sensor type nor found");
 			continue;
 		}
-	
+
 		pSensor->init();
 		shield.addSensor(pSensor);
 	}
@@ -495,10 +510,10 @@ void initEPROM()
 		pass = "giacomobox";
 
 		/*Serial.println("--");
-		
+
 		String prova = Shield::getNetworkSSID();
 		Serial.println(siid);
-		
+
 		Serial.println("--");
 		siid = "";
 		for (int i = 0; i < 14; i++) {
@@ -509,13 +524,13 @@ void initEPROM()
 
 		//siid = String("TP-LINK_3BD796");
 		Serial.println(siid);
-		
+
 		pass = "giacomocasa";
 		Serial.println(pass);*/
 
 	}
 	else
-	{		
+	{
 		writeEPROM();
 	}
 	logger.print(tag, "\n\n\t <<initEPROM");
@@ -617,7 +632,7 @@ void checkOTA()
 
 
 bool testWifi() {
-	
+
 	// We start by connecting to a WiFi network
 	/*char networkSSID[Shield::networkSSIDLen];
 	char networkPassword[Shield::networkPasswordLen];
@@ -670,7 +685,7 @@ bool testWifi() {
 	//delay(2000);
 	//WiFi.begin(networkSSID, networkPassword);
 
-	
+
 
 	/*String pass = Shield::getNetworkSSID();
 	String siid = Shield::getNetworkSSID();*/
@@ -683,7 +698,7 @@ bool testWifi() {
 		delay(1000);
 		Serial.print(".");
 		if (count++ > 15) {
-			
+
 
 			return false;
 		}
@@ -691,18 +706,18 @@ bool testWifi() {
 
 
 
-	
+
 
 	//WiFi.begin((const char*) networkSSID, (const char*) networkPassword);
-	
+
 	//WiFi.begin(ssidtest, passwordtest);
-	
+
 	//Serial.println(Shield::getNetworkSSID());
 
 	/* Explicitly set the ESP8266 to be a WiFi-client, otherwise, it by default,
 	would try to act as both a client and an access-point and could cause
 	network-issues with your other WiFi-devices on your WiFi-network. */
-	
+
 	Serial.println("");
 	Serial.println("WiFi connected");
 	Serial.println("IP address: ");
@@ -727,6 +742,72 @@ int testWifi2(void) {
 	return(10);
 }
 
+
+void callback(char* topic, byte* payload, unsigned int length) {
+	
+	logger.print(tag, "\n\t >>callback");
+	logger.print(tag, "\n\t Message received");
+	logger.print(tag, "\n\t topic=" + String(topic));
+	
+	String message = "";
+	for (int i = 0; i < length; i++) {
+		message += char(payload[i]);
+	}
+	logger.print(tag, "\n\t message=" + message);
+	parseMessageReceived(String(topic), message);
+	logger.print(tag, "\n\t <<CALLBACK");
+}
+
+void parseMessageReceived(String topic, String message) {
+
+	if (topic.equals(String("fromServer/shield/") + Shield::getMACAddress() + String("/registerresponse")))
+	{
+		int id = message.toInt();
+		logger.print(tag, "\n\t received registerresponse id=" + id);
+		if (id > 0) {
+			Shield::setShieldId(id);
+			logger.println(tag, "\n\t Shieldid=" + String(Shield::getShieldId()));
+		}
+		return;
+
+	} else if (message.equals("start")) {
+		logger.print(tag, "\n\t START!!!!!!!!!!!!!!!!");
+		Shield::setMQTTMode(true);
+	}
+	else if (message.equals("stop")) {
+		logger.print(tag, "\n\t STOP!!!!!!!!!!!!!!!!");
+		Shield::setMQTTMode(false);
+		mqttclient.disconnect();
+	}
+	else {
+		logger.print(tag, "\n\t PARSE NOT FOUND");
+	}
+
+}
+
+void reconnect() {
+	// Loop until we're reconnected
+	while (!mqttclient.connected()) {
+		Serial.print("Attempting MQTT connection...");
+		// Attempt to connect
+		if (mqttclient.connect("ESP8266Client")) {
+			Serial.println("connected");
+			// Once connected, publish an announcement...
+			//mqttclient.publish("send"/*topic.c_str()*/, "hello world");
+			// ... and resubscribe
+			mqttclient.subscribe("fromServer/#"/*"inTopic"*//*topic.c_str()*/);
+		}
+		else {
+			Serial.print("failed, rc=");
+			Serial.print(mqttclient.state());
+			Serial.println(" try again in 5 seconds");
+			// Wait 5 seconds before retrying
+			delay(5000);
+		}
+	}
+}
+//#endif
+
 void setup()
 {
 	Serial.begin(115200);
@@ -735,35 +816,7 @@ void setup()
 	Logger::init();
 	logger.print(tag, "\n\t >>setup");
 	logger.print(tag, "\n\n *******************RESTARTING************************");
-
-	char inData[20]; // Allocate some space for the string
-	char inChar; // Where to store the character read
-	byte index = 0; // Index into array; where to store the character
-
 	
-	/*while (true) // Don't read unless
-								   // there you know there is data
-	{
-		if (Serial.available() > 0) // One less than the size of the array
-		{
-			inChar = Serial.read(); // Read a character
-			inData[index] = inChar; // Store it
-			index++; // Increment where to write next
-			if (inChar == 13) {
-				inData[index] = '\0'; // Null terminate the string
-				break;
-			}
-			
-			
-		}
-	}
-	logger.print(tag, "\n\t >>inData=" + String(inData));
-	String prova = inData;
-	logger.print(tag, "\n\t >>prova=" + prova);
-	String prova2 = String(inData);
-	logger.print(tag, "\n\t >>prova2=" + prova2);*/
-
-
 	shield.init();
 	shield.drawString(0, 0, "restarting..", 1, ST7735_WHITE);
 
@@ -787,15 +840,13 @@ void setup()
 	shield.drawString(0, 20, "read eprom..", 1, ST7735_WHITE);
 	initEPROM();
 	
-
 	//logger.print(tag, "\n\tSensorNames=" + sensorNames);
 	shield.drawString(0, 80, "init onewire", 1, ST7735_WHITE);
 	shield.drawString(0, 40, "connecting to WiFi", 1, ST7735_WHITE);
 	// Connect to WiFi network
 	//logger.print(tag, "\n\nConnecting to " + Shield::getNetworkSSID() + " " + Shield::getNetworkPassword());
-
 	
-	if (testWifi()/* == 20*/) {
+	if (testWifi()) {
 
 		checkOTA();
 
@@ -821,19 +872,16 @@ void setup()
 		//shield.drawString(60, 80, "DONE", 1, ST7735_WHITE);
 		//shield.addActuators();
 
+		mqttclient.init(&client);
+		//mqttclient.setServer("192.168.1.3", 1883);
+		mqttclient.setServer("79.24.3.210", 1883);
+		mqttclient.setCallback(callback);
+		reconnect();
+
+
 		Command command;
-		shield.id = command.registerShield(shield);
-		shield.drawString(0, 90, "registered" + String(shield.id), 1, ST7735_WHITE);
-
-		if (shield.id != -1) {
-			shieldRegistered = true;
-
-			logger.print(tag, "\n\n\tSHIELD REGISTERED " + String(shield.id) + "\n");
-		}
-		else {
-			shieldRegistered = false;
-			logger.print(tag, "\n\n\tSHIELD NOT REGISTERED\n");
-		}
+		command.registerShield(shield);
+		
 	}
 	else {
 		logger.println(tag, "\n\n\tIMPOSSIBILE COLLEGARSI ALLA RETE\n");
@@ -991,34 +1039,6 @@ String getJsonSensorsStatus(HttpRequest request, HttpResponse response)
 	return data;
 }
 
-String getJsonActuatorsStatus(HttpRequest request, HttpResponse response)
-{
-	logger.print(tag, F("\n\t >> getJsonActuatorsStatus"));
-
-	String data = "";
-	//data += "HTTP/1.0 200 OK\r\nCont + ent-Type: application/json; ";
-	//data += "\r\nPragma: no-cache\r\n\r\n";
-
-	String json = shield.getActuatorsStatusJson();
-	logger.println(tag, json);
-
-	data += json;
-	logger.print(tag, "\n\t << getJsonActuatorsStatus" + data + "\n");
-	return data;
-}
-
-// DA ELIMINARE
-String getJsonHeaterStatus(HttpRequest request, HttpResponse response)
-{
-	logger.print(tag, F("\n\t >> getJsonHeaterStatus"));
-
-	String data = "";
-	data += shield.getHeaterStatusJson();
-
-	logger.print(tag, "\n\t <<getJsonActuatorsStatus" + data + "\n");
-	return data;
-}
-
 // chiamata da jscript settings.html
 String getJsonSettings(HttpRequest request, HttpResponse response) {
 	logger.print(tag, F("\n\t >> getJsonSettings"));
@@ -1031,12 +1051,9 @@ String getJsonSettings(HttpRequest request, HttpResponse response) {
 	return data;
 }
 
-void loop()
-{
-	ArduinoOTA.handle();  // questa chiamata deve essere messa in loop()
 
-	wdt_enable(WDTO_8S);
-	
+void processNextPage() {
+
 	String page, param;
 	client = server.available();
 	HttpHelper http;
@@ -1072,18 +1089,17 @@ void loop()
 			else if (page.equalsIgnoreCase("settings")) {
 				response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, getJsonSettings(request, response));
 			}
-			else if (page.equalsIgnoreCase("heaterstatus")) { // DA ELIMINARE
-				response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, getJsonHeaterStatus(request, response));
-			}
 			else if (page.equalsIgnoreCase("sensorstatus")) {
 				response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, getJsonSensorsStatus(request, response));
-			}
-			else if (page.equalsIgnoreCase("actuatorsstatus")) { // DA ELIMINARE
-				response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, getJsonActuatorsStatus(request, response));
 			}
 			else if (page.equalsIgnoreCase("reset")) {
 				// la chiamara a  send è dentro software reset perchè il metodo non torna mai
 				softwareReset(request, response);
+			}
+			else if (page.equalsIgnoreCase("startmqtt")) {
+				// la chiamara a  send è dentro software reset perchè il metodo non torna mai
+				Shield::setMQTTMode(true);
+				reconnect();
 			}
 			else if (page.endsWith(".html") ||
 				page.endsWith(".css") ||
@@ -1108,31 +1124,167 @@ void loop()
 		return;
 	}
 
-	shield.checkStatus();
+}
 
-	unsigned long currMillis = millis();
-	unsigned long timeDiff = currMillis - lastFlash;
-	if (timeDiff > flash_interval) {
+void mqtt_publish(String topic, String message) {
 
-		lastFlash = currMillis;
-		if (shield.id <= 0) {
-			Command command;
-			logger.println(tag, F("ID NON VALIDO\n"));
-			shield.id = command.registerShield(shield);
+	logger.print(tag, "\n\n\t >>mqtt_publish");
+	logger.print(tag, "\n\n\t MQTT_MAX_PACKET_SIZE=" + String(MQTT_MAX_PACKET_SIZE));
+
+	String prova = message;
+	/*if (message.length() > MQTT_MAX_PACKET_SIZE)
+		prova = message.substring(0, 128);*/
+
+	logger.print(tag, "\n\n\t Publish message: [" + topic + String("] ") + prova);
+	bool res = mqttclient.publish(topic.c_str(), prova.c_str());
+
+
+	logger.println(tag, "\n\n\t res=" + String(res));
+}
+
+char msg[50];  //// DA ELIMINARE
+
+void loop()
+{
+	ArduinoOTA.handle();  // questa chiamata deve essere messa in loop()
+
+	wdt_enable(WDTO_8S);
+
+	if (Shield::getMQTTmode()) {
+		long now = millis();
+		if (!mqttclient.connected()) {
+			logger.println(tag, String("state=") + mqttclient.state());
+			reconnect();
 		}
-		return;
+		mqttclient.loop();
+		if (now - lastMsg > 5000) {
+
+			lastMsg = now;
+			++messagenumber;
+			snprintf(msg, 50, "hello world #%ld", messagenumber);
+			/*Serial.print("Publish message: ");
+			Serial.println(msg);
+			mqttclient.publish(topic.c_str(), msg);*/
+			mqtt_publish("toServer", String(msg));
+
+			//processNextPage();		
+		}
 	}
 
-	if (currMillis - lastTimeSync > timeSync_interval) {
-		Command command;
-		lastTimeSync = currMillis;
-		command.timeSync();
-		return;
-	}
+	if (!Shield::getMQTTmode()) {
 
-	if (currMillis - lastSendLog > SendLog_interval) {
-		lastSendLog = currMillis;
-		//logger.send();
-		return;
+		processNextPage();
+#ifdef dopo
+		String page, param;
+		client = server.available();
+		HttpHelper http;
+
+		ESPWebServer espWebServer(&client);
+		if (client) {
+			HttpRequest request = espWebServer.getHttpRequest();
+			HttpRequest::HttpRequestMethod method = request.method;
+			page = request.page;
+			param = request.param;
+			HttpResponse response = espWebServer.getHttpResponse();
+
+			if (request.method != HttpRequest::HTTP_NULL) {
+
+				logger.print(tag, "\n");
+				logger.println(tag, ">>next HTTP request " + page);
+
+				if (page.equalsIgnoreCase("command")) {
+					response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, receiveCommand(request, response));
+				}
+				else if (page.equalsIgnoreCase("temp")) {
+					response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, setRemoteTemperature(request, response));
+				}
+				else if (page.equalsIgnoreCase("power")) {
+					response.send(response.HTTPRESULT_OK, ESPWebServer::htmlContentType, showPower(request, response));
+				}
+				else if (page.equalsIgnoreCase("wol")) {
+					response.send(response.HTTPRESULT_OK, ESPWebServer::htmlContentType, showwol(request, response));
+				}
+				else if (page.equalsIgnoreCase("status")) {
+					response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, getJsonStatus(request, response));
+				}
+				else if (page.equalsIgnoreCase("settings")) {
+					response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, getJsonSettings(request, response));
+				}
+				else if (page.equalsIgnoreCase("heaterstatus")) { // DA ELIMINARE
+					response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, getJsonHeaterStatus(request, response));
+				}
+				else if (page.equalsIgnoreCase("sensorstatus")) {
+					response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, getJsonSensorsStatus(request, response));
+				}
+				else if (page.equalsIgnoreCase("actuatorsstatus")) { // DA ELIMINARE
+					response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, getJsonActuatorsStatus(request, response));
+				}
+				else if (page.equalsIgnoreCase("reset")) {
+					// la chiamara a  send è dentro software reset perchè il metodo non torna mai
+					softwareReset(request, response);
+				}
+				else if (page.equalsIgnoreCase("startmqtt")) {
+					// la chiamara a  send è dentro software reset perchè il metodo non torna mai
+					Shield::setMQTTMode(true);
+				}
+				else if (page.endsWith(".html") ||
+					page.endsWith(".css") ||
+					page.endsWith(".js") ||
+					page.endsWith(".txt")) {
+					response.sendVirtualFile(response.HTTPRESULT_OK, ESPWebServer::htmlContentType, request.page);
+				}
+			}
+
+			logger.println(tag, "<<next request " + page + "\n");
+			logger.print(tag, "\n");
+
+			return;
+		}
+
+		if (shield.id >= 0 && !WiFi.localIP().toString().equals(shield.localIP)) {
+
+			Command command;
+			logger.println(tag, "IP ADDRESS ERROR - re-register shield\n");
+			command.registerShield(shield);
+			shield.localIP = WiFi.localIP().toString();
+			return;
+		}
+
+#endif;
+
 	}
+	//#endif
+
+
+	shield.checkStatus();
+//#ifdef dopo
+	if (Shield::getMQTTmode()) {
+		//#ifdef dopo
+		unsigned long currMillis = millis();
+		unsigned long timeDiff = currMillis - lastFlash;
+		if (timeDiff > flash_interval) {
+
+			lastFlash = currMillis;
+			if (shield.id <= 0) {
+				Command command;
+				logger.println(tag, F("ID NON VALIDO\n"));
+				command.registerShield(shield);
+			}
+			return;
+		}
+
+		if (currMillis - lastTimeSync > timeSync_interval) {
+			Command command;
+			lastTimeSync = currMillis;
+			command.timeSync();
+			return;
+		}
+
+		if (currMillis - lastSendLog > SendLog_interval) {
+			lastSendLog = currMillis;
+			//logger.send();
+			return;
+		}
+	}
+//#endif
 }

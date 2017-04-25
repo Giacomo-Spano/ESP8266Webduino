@@ -21,7 +21,7 @@ public:
 
 	Command();
 	~Command();
-	int registerShield(Shield shield);
+	void registerShield(Shield shield);
 	void sendRestartNotification();
 	boolean sendSensorsStatus(Shield shield);
 	bool sendLog(String log/*, int shieldid/*, String serverName, int port*/);

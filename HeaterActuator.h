@@ -43,7 +43,7 @@ public:
 	//HeaterActuator();
 	~HeaterActuator();
 	void updateReleStatus();
-	virtual String getJSON() override;
+	//virtual String getJSON() override;
 	virtual String sendCommand(String json) override;
 	void setStatus(int status);
 	int getStatus();

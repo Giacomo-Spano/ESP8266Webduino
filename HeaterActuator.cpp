@@ -425,63 +425,6 @@ String HeaterActuator::getJSONFields() {
 	return json;
 }
 
-String HeaterActuator::getJSON() {// DA ELIMINARE
-	String json = "";
-	json += "{";
-	json += "\"shieldid\":" + String(Shield::id) + ",";
-	json += "\"heaterenabled\":";
-	if (Shield::getHeaterEnabled())
-		json += "true,";
-	else
-		json += "false,";
-	json += "\"heaterpin\":\"" + Shield::getStrHeaterPin() + "\",";
-
-
-	json += "\"remotetemperature\":" + String(getRemoteTemperature()) + ",";
-	json += "\"addr\":\"" + address + "\",";
-	json += "\"status\":\"" + String(statusStr[getStatus()]) + "\",";
-	json += "\"type\":\"heater\",";
-	json += "\"name\":\"" + sensorname + "\",";
-	json += "\"relestatus\":\"" + String((getReleStatus()) ? "true" : "false") + "\"";
-	
-	if (getStatus() == Program::STATUS_PROGRAMACTIVE
-		|| getStatus() == Program::STATUS_MANUAL_AUTO
-		|| getStatus() == Program::STATUS_MANUAL_OFF) {
-
-		json += F(",\"duration\":");
-		json += String(programDuration / 1000);
-
-		int remainingTime = programDuration - (millis() - programStartTime);
-		json += String(F(",\"remaining\":"));
-		json += String(remainingTime / 1000);
-
-		json += F(",\"localsensor\":");
-		if (!sensorIsRemote())
-			json += F("true");
-		else
-			json += F("false");
-
-		if (getStatus() == Program::STATUS_MANUAL_AUTO || getStatus() == Program::STATUS_PROGRAMACTIVE) {
-			json += F(",\"target\":");
-			json += String(getTargetTemperature());
-		}
-
-		if (getStatus() == Program::STATUS_PROGRAMACTIVE) {
-			json += F(",\"program\":");
-			json += String(getActiveProgram());
-
-			json += F(",\"timerange\":");
-			json += String(getActiveTimeRange());
-		}
-
-	}
-		
-	json += "}";
-
-
-	return json;
-}
-
 void HeaterActuator::setStatus(int status)
 {
 	currentStatus = status;

@@ -22,6 +22,8 @@ bool Shield::heaterEnabled = true;
 bool Shield::temperatureSensorsEnabled = true;
 int Shield::id = 0; //// inizializzato a zero perchè viene impostato dalla chiamata a registershield
 
+
+
 // default shield setting
 String Shield::networkSSID = "TP-LINK-3BD796";
 String Shield::networkPassword = "giacomocasa";
@@ -29,6 +31,10 @@ int Shield::localPort = 80;
 String Shield::serverName = "192.168.1.3";
 int Shield::serverPort = 8080;
 String Shield::shieldName = "shieldName";
+unsigned char Shield::MAC_array[6];
+char Shield::MAC_char[18];
+
+bool Shield::mqttMode = true;
 
 String Shield::powerStatus = "on"; // da aggiungere
 
@@ -187,59 +193,6 @@ String Shield::sendUpdateSensorListCommand(JSON json) {
 	return result;
 }
 
-String Shield::sendHeaterSettingsCommand(JSON json) {
-
-	logger.print(tag, "\n\t>>sendHeaterSettingsCommand");
-	if (json.has("heaterpin")) {
-		String str = json.jsonGetString("heaterpin");
-		logger.print(tag, "\n\tpin=" + str);
-		if (str.equals("D0"))
-			setHeaterPin(D0);
-		if (str.equals("D1"))
-			setHeaterPin(D1);
-		else if (str.equals("D2"))
-			setHeaterPin(D2);
-		else if (str.equals("D3"))
-			setHeaterPin(D3);
-		else if (str.equals("D4"))
-			setHeaterPin(D4);
-		else if (str.equals("D5"))
-			setHeaterPin(D5);
-		else if (str.equals("D6"))
-			setHeaterPin(D6);
-		else if (str.equals("D7"))
-			setHeaterPin(D7);
-		else if (str.equals("D8"))
-			setHeaterPin(D8);
-		else if (str.equals("D9"))
-			setHeaterPin(D9);
-		else if (str.equals("D10"))
-			setHeaterPin(D10);
-	}
-	if (json.has("heaterenabled")) {
-		bool res = json.jsonGetBool("heaterenabled");
-		logger.print(tag, "\n\t heaterenabled= ");
-		if (res)
-			logger.print(tag, "true");
-		else
-			logger.print(tag, "false");
-		setHeaterEnabled(res);
-	}
-	writeEPROM();
-
-	String result = "";
-	result += "{";
-	result += "\"result\": \"succes\"";
-	result += ",\"heaterpin\": \"" + getStrHeaterPin() + "\"";
-	result += ",\"heaterenabled\": ";
-	if (getHeaterEnabled() == true)
-		result += "true";
-	else
-		result += "false";
-	result += "}";
-	logger.print(tag, "\n\t<<sendHeaterSettingsCommand");
-	return result;
-}
 
 String Shield::receiveCommand(String jsonStr) {
 
@@ -249,13 +202,7 @@ String Shield::receiveCommand(String jsonStr) {
 	if (json.has("command")) {
 
 		String command = json.jsonGetString("command");
-		if (command.equals("heatersettings")) {
-			logger.print(tag, "\n\t ++heatersettings");
-			String result = sendHeaterSettingsCommand(json);
-			logger.print(tag, "\n\t <<sendCommand result=" + String(result));
-			return result;
-		}
-		else if (command.equals("updatesensorlist")) {
+		if (command.equals("updatesensorlist")) {
 			logger.print(tag, "\n\t ++updatesensorlist");
 			String result = sendUpdateSensorListCommand(json);
 			logger.print(tag, "\n\t <<sendCommand result=" + String(result));
@@ -410,19 +357,13 @@ String Shield::sendRegisterCommand(JSON json)
 	logger.print(tag, "\n\t>> sendRegisterCommand");
 
 	Command command;
-	int id = command.registerShield(*this);
+
+	command.registerShield(*this);
 
 	String result = "";
 	result += "{";
-
-	if (id != 0) {
 		result += "\"result\": \"succes\"";
 		result += ",\"power\": \"" + String(Shield::getShieldId()) + "\"";
-	}
-	else {
-		result += "\"result\": \"failed\"";
-	}
-
 	result += "}";
 
 	logger.print(tag, "\n\t<< sendRegisterCommand");
@@ -520,73 +461,9 @@ String Shield::getSensorsStatusJson() {
 		json += "}";
 	}
 	json += "]";
-
-	//actuators
-	json += ",\"actuators\":[";
-	if (heaterEnabled) {
-		json += phearterActuator->getJSON();
-	}
-	json += "]";
-
-
 	json += "}";
+
 	logger.print(tag, "\n\t <<getSensorsStatusJson" + json);
-
-	return json;
-}
-
-String Shield::getOneWireJson() {
-
-	logger.print(tag, "\n\t >>String Shield::getOneWireJson()");
-
-
-	String json = "{";
-	json += "\"enabled\":" + String(temperatureSensorsEnabled);
-	json += ",\"type\":\"onewiresensor\"";
-	json += ",\"name\":\"" + String("onewiresensor") + "\"";
-	json += ",\"pin\":\"" + getStrOneWirePin() + "\"";
-	json += ",\"temperaturesensors\":[";
-
-	bool noOnewire = true;
-	for (int i = 0; i < sensorList.count; i++) {
-		Sensor* sensor = (Sensor*)sensorList.get(i);
-		if (!sensor->type.equals("temperature"))
-			continue;
-		//DS18S20Sensor* tSensor = (DS18S20Sensor*)sensor;
-		noOnewire = false;
-		if (i != 0)
-			json += ",";
-		//json += sensor->getJSON();
-		json += "{";
-		json += "\"type\":\"" + sensor->type + "\"";
-		json += ",\"name\":\"" + sensor->sensorname + "\"";
-		json += sensor->getJSONFields();
-		json += "}";
-
-
-	}
-	if (noOnewire)
-		return "";
-
-	json += "]";
-	json += "}";
-	logger.print(tag, "\n\t <<getOneWireJson" + json);
-	return json;
-}
-
-String Shield::getActuatorsStatusJson() {
-
-	logger.print(tag, "\n\t >>getActuatorsStatusJson");
-	String json = "{";
-	json += "\"id\":" + String(id);// shieldid
-	json += ",\"actuators\":[";
-
-	if (heaterEnabled) {
-		json += phearterActuator->getJSON();
-	}
-	json += "]";
-	json += "}";
-	logger.print(tag, "\n\t <<getActuatorsStatusJson" + json);
 	return json;
 }
 

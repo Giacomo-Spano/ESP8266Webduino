@@ -24,6 +24,8 @@ protected:
 	static int serverPort;
 	static String shieldName;
 
+	static bool mqttMode;
+
 public:
 	HeaterActuator* phearterActuator;
 
@@ -62,7 +64,7 @@ private:
 	
 
 protected:
-	String sendHeaterSettingsCommand(JSON json);
+	//String sendHeaterSettingsCommand(JSON json);
 	String sendUpdateSensorListCommand(JSON json);
 	String sendShieldSettingsCommand(JSON jsonStr);
 	String sendPowerCommand(JSON jsonStr);
@@ -90,15 +92,15 @@ public:
 	void init();
 	String getSensorsStatusJson();
 	//String getTemperatureSensorsStatusJson();
-	String getActuatorsStatusJson();
+	//String getActuatorsStatusJson();
 	String getHeaterStatusJson();
 	String getSettingsJson();
 	void checkStatus();	
-	String getOneWireJson();
+	//String getOneWireJson();
 	String receiveCommand(String jsonStr);		
 	
-	unsigned char MAC_array[6];
-	char MAC_char[18];
+	static unsigned char MAC_array[6];
+	static char MAC_char[18];
 	String localIP;
 	
 	void addSensor(Sensor* pSensor);
@@ -108,34 +110,21 @@ public:
 	//void addActuators();
 	void checkTemperatures();
 
-	static int getShieldId() { return id; } // static member function
+	static int getShieldId() {
+		return id; 
+	} 
+
+	static void setShieldId(int shieldid) { 
+		id = shieldid;
+	}
 	static String getLastRestartDate() { return lastRestartDate; }
 	static void setLastRestartDate(String date) { lastRestartDate = date; }
 
-	static String getIoDevicesTypeName(int type)
+	static String getMACAddress()
 	{
-		switch (type) {
-		case 0:
-			return "disconnected";
-		case 1:
-			return "Heater";
-		case 2:
-			return "OneWire dallasSensors";
-		}
-
-		return "empty";
+		return String(MAC_char);
 	}
-
-	static int getMaxIoDevices()
-	{
-		return maxIoDevices;
-	}
-
-	static int getMaxIoDeviceTypes()
-	{
-		return maxIoDeviceTypes;
-	}
-	
+		
 	static int getServerPort()
 	{
 		return serverPort;
@@ -148,7 +137,7 @@ public:
 		logger.print(tag, "\n\t serverPort=" + String(serverPort));
 	}
 
-	static int getIODevice(int port)
+	/*static int getIODevice(int port)
 	{
 		if (port > 0 && port < maxIoDevices)
 			return ioDevices[port];
@@ -158,9 +147,9 @@ public:
 	static void setIODevice(int port, int ioDevice)
 	{
 		ioDevices[port] = ioDevice;
-	}
+	}*/
 
-	static uint8_t getHeaterPin()
+	/*static uint8_t getHeaterPin()
 	{
 		return heaterPin;
 	}
@@ -189,10 +178,10 @@ public:
 			return "D9";
 		if (heaterPin == D10)
 			return "D10";
-	}
+	}*/
 
 	
-	static String getStrOneWirePin()
+	/*static String getStrOneWirePin()
 	{
 		if (oneWirePin == D0)
 			return "D0";
@@ -218,7 +207,7 @@ public:
 			return "D10";
 		else
 			return "";
-	}
+	}*/
 
 	static String getStrPin(uint8_t pin)
 	{
@@ -277,14 +266,14 @@ public:
 	}
 
 
-	static void setHeaterPin(int pin)
+	/*static void setHeaterPin(int pin)
 	{
 		logger.print(tag, "\n\t>>setHeaterPin: " + String(pin));
 		heaterPin = pin;
 		//hearterActuator.setRelePin(pin);
-	}
+	}*/
 
-	static uint8_t getOneWirePin()
+	/*static uint8_t getOneWirePin()
 	{
 		return oneWirePin;
 	}
@@ -305,10 +294,6 @@ public:
 	{
 		logger.print(tag, "\n\t >>setHeaterEnabled: " + String(enabled));
 		heaterEnabled = enabled;
-		/*if (heaterEnabled)
-			logger.print(tag, " true");
-		else
-			logger.print(tag, " false");*/
 		
 	}
 
@@ -324,7 +309,7 @@ public:
 		temperatureSensorsEnabled = enabled;
 		//DS18S20Sensor::setTemperatureSensorsEnabled(enabled);
 		
-	}
+	}*/
 	
 	static int getLocalPort()
 	{
@@ -391,7 +376,7 @@ public:
 	{
 		logger.print(tag, "\n\t >>setShieldName");
 		shieldName = name;
-		logger.print(tag, "\n\t shieldName=");
+		logger.print(tag, "\n\t<< shieldName=");
 		logger.print(tag, shieldName);
 	}
 
@@ -404,7 +389,19 @@ public:
 	{
 		logger.print(tag, "\n\t>>setpowerStatus");
 		powerStatus = status;
-		logger.print(tag, "\n\t powerSatus=" + powerStatus);
+		logger.print(tag, "\n\t<< powerSatus=" + String(powerStatus));
+	}
+
+	static bool getMQTTmode()
+	{
+		return mqttMode;
+	}
+
+	static void setMQTTMode(bool enabled)
+	{
+		logger.print(tag, "\n\t>> setMQTTMode");
+		mqttMode = enabled;
+		logger.print(tag, "\n\t<< setMQTTMode=" + String(mqttMode));
 	}
 
 };
