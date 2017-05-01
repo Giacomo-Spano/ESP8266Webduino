@@ -94,6 +94,62 @@ String HeaterActuator::sendCommand(String jsonStr)
 	return jsonResult;
 }
 
+String HeaterActuator::getJSONFields(int jsontype)
+{
+	logger.print(tag, "\n\t >>HeaterActuator::getJSONFields");
+
+	String json = "";
+	json += ",\"remotetemperature\":" + String(getRemoteTemperature());
+	json += ",\"status\":\"" + String(statusStr[getStatus()]) + "\"";
+	json += ",\"relestatus\":" + String((getReleStatus()) ? "true" : "false");
+
+	if (getStatus() == Program::STATUS_PROGRAMACTIVE
+		|| getStatus() == Program::STATUS_MANUAL_AUTO
+		|| getStatus() == Program::STATUS_MANUAL_OFF) {
+
+		json += ",\"duration\":";
+		json += String(programDuration / 1000);
+
+		int remainingTime = programDuration - (millis() - programStartTime);
+		json += ",\"remaining\":";
+		json += String(remainingTime / 1000);
+
+		json += ",\"localsensor\":";
+		if (!sensorIsRemote())
+			json += "true";
+		else
+			json += "false";
+
+		if (getStatus() == Program::STATUS_MANUAL_AUTO || getStatus() == Program::STATUS_PROGRAMACTIVE) {
+			json += ",\"target\":";
+			json += String(getTargetTemperature());
+		}
+
+		if (getStatus() == Program::STATUS_PROGRAMACTIVE) {
+			json += ",\"program\":";
+			json += String(getActiveProgram());
+
+			json += ",\"timerange\":";
+			json += String(getActiveTimeRange());
+		}
+	}
+	logger.print(tag, "\n\t <<HeaterActuator::getJSONFields json=" + json);
+	return json;
+}
+
+JSONObject HeaterActuator::getJSON2()
+{
+
+	JSONObject jObject = Sensor::getJSON2();
+	/*jObject.pushInteger("id", id);
+	jObject.pushString("phisicaladdr", getPhisicalAddress());
+	jObject.pushFloat("temperature", temperature);
+	jObject.pushFloat("avtemperature", avTemperature);*/
+
+	return jObject;
+}
+
+
 void HeaterActuator::init()
 {
 	logger.print(tag, "\n\t >>init HeaterActuator");
@@ -380,50 +436,6 @@ String HeaterActuator::getSensorAddress()
 	return address;
 }
 
-String HeaterActuator::getJSONFields() {
-
-	logger.print(tag, "\n\t >>HeaterActuator::getJSONFields");
-
-	String json = "";		
-	json += ",\"remotetemperature\":" + String(getRemoteTemperature());
-	json += ",\"status\":\"" + String(statusStr[getStatus()]) +"\"";
-	json += ",\"relestatus\":" + String((getReleStatus()) ? "true" : "false");
-	
-	if (getStatus() == Program::STATUS_PROGRAMACTIVE
-		|| getStatus() == Program::STATUS_MANUAL_AUTO
-		|| getStatus() == Program::STATUS_MANUAL_OFF) {
-
-		json += ",\"duration\":";
-		json += String(programDuration / 1000);
-
-		int remainingTime = programDuration - (millis() - programStartTime);
-		json += ",\"remaining\":";
-		json += String(remainingTime / 1000);
-
-		json += ",\"localsensor\":";
-		if (!sensorIsRemote())
-			json += "true";
-		else
-			json += "false";
-
-		if (getStatus() == Program::STATUS_MANUAL_AUTO || getStatus() == Program::STATUS_PROGRAMACTIVE) {
-			json += ",\"target\":";
-			json += String(getTargetTemperature());
-		}
-
-		if (getStatus() == Program::STATUS_PROGRAMACTIVE) {
-			json += ",\"program\":";
-			json += String(getActiveProgram());
-
-			json += ",\"timerange\":";
-			json += String(getActiveTimeRange());
-		}
-
-	}
-	
-	logger.print(tag, "\n\t <<HeaterActuator::getJSONFields json=" + json);
-	return json;
-}
 
 void HeaterActuator::setStatus(int status)
 {
@@ -475,7 +487,7 @@ void HeaterActuator::enableRele(boolean on) {
 
 	logger.print(tag, F("\n\t >>enableRele "));
 
-	if (releStatus) {
+/*	if (releStatus) {
 		totalConsumptionTime += (millis() - lastConsumptionEnableTime);
 	}
 
@@ -491,7 +503,7 @@ void HeaterActuator::enableRele(boolean on) {
 		logger.print(tag, F("\n\t enableRele:: RELE OFF"));
 		digitalWrite(Shield::heaterPin, RELE_OFF);
 		releStatus = false;
-	}
+	}*/
 	logger.print(tag, F("\n\t <<enableRele "));
 }
 

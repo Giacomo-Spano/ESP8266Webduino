@@ -109,4 +109,7 @@ C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Rel
  C:\Users\giaco\Documents\Arduino\libraries\esp8266-oled-ssd1306/OLEDDisplay.h \
  C:\Users\giaco\Documents\Arduino\libraries\esp8266-oled-ssd1306/OLEDDisplayFonts.h \
  C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\Command.h \
- C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\POSTData.h
+ C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\POSTData.h \
+ C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\JSONObject.h \
+ C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\JSONValue.h \
+ C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\JSONArrayValue.h

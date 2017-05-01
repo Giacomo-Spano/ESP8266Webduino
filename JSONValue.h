@@ -11,7 +11,6 @@ public:
 	~JSONValue();
 
 	String key;
-	//void* value;
 	JSONValueType type;
 
 	virtual String toJSONValueString();

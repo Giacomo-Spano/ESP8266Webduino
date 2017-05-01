@@ -1,8 +1,9 @@
 #include "Command.h"
 #include "Program.h"
 #include "Util.h"
+#include "JSONObject.h"
 
-extern void mqtt_publish(String topic, String message);
+extern bool mqtt_publish(String topic, String message);
 
 //extern const char* statusStr[];
 time_t serverTime = 11111111;
@@ -171,31 +172,6 @@ int Command::timeSync()
 	return 0;
 }
 
-/*boolean Command::sendActuatorStatus(HeaterActuator actuator)
-{
-	logger.println(tag, F(">>sendActuatorStatus\n"));
-
-	if (Shield::getShieldId() == 0) {
-		logger.println(tag, F("ID NON VALIDO"));
-		return false;
-	}
-
-	String jsonActuator = actuator.getJSON();
-
-	String str = "{";
-	str += "\"event\":\"update\",";
-	str += "\"actuator\": " + jsonActuator + "}";
-	
-	String result;
-	HttpHelper hplr;
-	
-	hplr.post(Shield::getServerName(), Shield::getServerPort(), "/webduino/actuator", str, &result);
-	logger.println(tag, "\n\tanswer = ");
-	logger.println(tag, result);
-
-	logger.println(tag, F("<<sendActuatorStatus\n"));
-	return true;
-}*/
 
 boolean Command::sendSensorsStatus(Shield shield)
 {
@@ -209,23 +185,41 @@ boolean Command::sendSensorsStatus(Shield shield)
 	String json = shield.getSensorsStatusJson();
 	
 	logger.print(tag, F("\n\tjson="));
-	logger.print(tag, json);
-
+	logger.print(tag, logger.formattedJson(json));
+	
 	bool res = false;
 	if (Shield::getMQTTmode() == true) {
-		String topic = "toServer/shield/" + String(Shield::getShieldId()) + String("/update");
+		String topic = "toServer/shield/" + String(Shield::getShieldId()) + String("/sensorsupdate");
 		mqtt_publish(topic, String(json));
 		return true;
-	}
-	else {
+	} // ELSE E? DA ELIMINARE
+	/*else {
 		String result;
 		HttpHelper hplr;
-		res = hplr.post(Shield::getServerName(), Shield::getServerPort(), "/webduino/sensor", json, &result);
+		res = hplr.post(Shield::getServerName(), Shield::getServerPort(), "/webduino/sensorsupdate", json, &result);
 		logger.print(tag, "\n\tanswer = ");
 		logger.print(tag, result);
-	}
+	}*/
 
 	logger.println(tag, F("<<sendSensorsStatus\n"));
+	return res;
+}
+
+boolean Command::sendSettingsStatus(Shield shield)
+{
+	logger.println(tag, F("\n\t >>sendSettingsStatus"));
+
+	if (Shield::getShieldId() == 0) {
+		logger.print(tag, String("\n\t ID NON VALIDO ") + String(Shield::getShieldId()));
+		return false;
+	}
+
+	String json = shield.getSettingsJson();
+	
+	String topic = "toServer/shield/" + String(Shield::getShieldId()) + String("/settingsupdate");
+	bool res = mqtt_publish(topic, String(json));
+	
+	logger.println(tag, String("\n\t <<sendSensorsStatus\n") + String(res));
 	return res;
 }
 

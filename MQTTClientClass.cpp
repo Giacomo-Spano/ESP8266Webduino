@@ -18,10 +18,14 @@ void MQTTClientClass::init(WiFiClient* espClient)
 	
 }
 
+//static const char serverMQTT[] = "79.24.3.210";
+//static const char serverMQTT[] = "giacomohome.ddns.net";
+static const char serverMQTT[] = "192.168.1.3";
+
 PubSubClient & MQTTClientClass::setServer(const char * domain, uint16_t port)
 {
 	Serial.println("MQTTClientClass::setServer");
-	return client->setServer(/*"192.168.1.3"*/domain, port);
+	return client->setServer(serverMQTT, port);
 }
 
 PubSubClient & MQTTClientClass::setCallback(MQTT_CALLBACK_SIGNATURE)
@@ -36,9 +40,9 @@ boolean MQTTClientClass::connected()
 	return client->connected();
 }
 
-boolean MQTTClientClass::connect(const char* id)
+boolean MQTTClientClass::connect(String clientid)
 {
-	return client->connect(id);
+	return client->connect(clientid.c_str());
 }
 
 int MQTTClientClass::state()

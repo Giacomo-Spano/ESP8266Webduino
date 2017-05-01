@@ -16,6 +16,10 @@ JSONObject::JSONObject(String json)
 	parse(json);
 }
 
+JSONObject::JSONObject()
+{
+	
+}
 
 JSONObject::~JSONObject()
 {
@@ -34,20 +38,39 @@ String JSONObject::toString()
 	}
 	res = res + "}";
 	return res;
+}
 
+String JSONObject::toFormattedString()
+{
+	/*String res = "\n{";
+
+	res += "\n";
+	for (int i = 0; i < map.length(); i++) {
+		if (i > 0)
+			res = res + ",\n";
+
+		JSONValue* jsonValue = (JSONValue*)map.get(i);
+		res += "\"" + jsonValue->key + "\":";				
+		String str = jsonValue->toJSONValueString();		
+		res = res + str;
+	}
+	res = res + "\n}\n";
+	return res;*/
+	return "";
 }
 
 JSONValue* JSONObject::get(String key)
 {
+	//logger.print(tag, "\n\t JSONObject::get key=" + key);
 	for (int i = 0; i < map.length(); i++) {
 		JSONValue* value = (JSONValue*)map.get(i);
+		//logger.print(tag, "\n\t value->key=" + value->key);
 		if (value->key == key) {
-
 			return value;
 		}
-		return value;
+		//return value;
 	}
-	logger.print(tag, "\n\t JSONArrayObject::get not found key=" + key);
+	//logger.print(tag, "\n\t JSONObject::get not found key=" + key);
 	return nullptr;
 }
 
@@ -70,7 +93,7 @@ String JSONObject::getString(String key)
 		JSONStringValue* p = (JSONStringValue*)value;
 		return p->value;
 	}
-	logger.print(tag, "\n\t JSONArrayObject::getString not found =" + key);
+	//logger.print(tag, "\n\t JSONArrayObject::getString not found =" + key);
 	return "";
 }
 
@@ -82,7 +105,7 @@ int JSONObject::getInteger(String key)
 		JSONIntegerValue* p = (JSONIntegerValue*)value;
 		return p->value;
 	}
-	logger.print(tag, "\n\t JSONArrayObject::getInteger not found =" + key);
+	//logger.print(tag, "\n\t JSONArrayObject::getInteger not found =" + key);
 	return -1;
 }
 
@@ -94,7 +117,7 @@ float JSONObject::getFloat(String key)
 		JSONFloatValue* p = (JSONFloatValue*)value;
 		return p->value;
 	}
-	logger.print(tag, "\n\t JSONArrayObject::getFloat not found =" + key);
+	//logger.print(tag, "\n\t JSONArrayObject::getFloat not found =" + key);
 	return -1;
 }
 
@@ -106,7 +129,7 @@ bool JSONObject::getBool(String key)
 		JSONBoolValue* p = (JSONBoolValue*)value;
 		return p->value;
 	}
-	logger.print(tag, "\n\t JSONArrayObject::getBool not found =" + key);
+	//logger.print(tag, "\n\t JSONArrayObject::getBool not found =" + key);
 	return false;
 }
 
@@ -120,14 +143,14 @@ String JSONObject::getJSONArray(String key)
 		//JSONArrayValue* p = new JSONArrayValue();
 		return "";// p->value;
 	}
-	logger.print(tag, "\n\t JSONArrayObject::getArray not found =" + key);
+	//logger.print(tag, "\n\t JSONArrayObject::getArray not found =" + key);
 	return "";
 }
 
 
 bool JSONObject::pushString(String key, String value)
 {
-	logger.print(tag, String("[") + key + "]:" + value + "(String)\n");
+	//logger.print(tag, String("[") + key + "]:" + value + "(String)\n");
 	JSONStringValue* obj = new JSONStringValue(key,value);
 	map.add(obj);
 	return  true;
@@ -135,7 +158,7 @@ bool JSONObject::pushString(String key, String value)
 
 bool JSONObject::pushInteger(String key, int value)
 {
-	logger.print(tag, String("[") + key + String("]:") + value + "(Integer)\n");
+	//logger.print(tag, String("[") + key + String("]:") + value + "(Integer)\n");
 	JSONIntegerValue* obj = new JSONIntegerValue(key, value);
 	map.add(obj);
 	return  true;
@@ -143,7 +166,7 @@ bool JSONObject::pushInteger(String key, int value)
 
 bool JSONObject::pushFloat(String key, float value)
 {
-	logger.print(tag, String("[") + key + "]:" + value + "(Float)\n");
+	//logger.print(tag, String("[") + key + "]:" + value + "(Float)\n");
 	JSONFloatValue* obj = new JSONFloatValue(key, value);
 	map.add(obj);
 	return  true;
@@ -151,7 +174,7 @@ bool JSONObject::pushFloat(String key, float value)
 
 bool JSONObject::pushBool(String key, bool value)
 {
-	logger.print(tag, String("[") + key + "]:" + String(value) + "(Bool)\n");
+	//logger.print(tag, String("[") + key + "]:" + String(value) + "(Bool)\n");
 	JSONBoolValue* obj = new JSONBoolValue(key, value);
 	map.add(obj);
 	return  true;
@@ -159,7 +182,7 @@ bool JSONObject::pushBool(String key, bool value)
 
 bool JSONObject::pushJSONArray(String key, String value)
 {
-	logger.print(tag, String("[") + key + "]:" + value + "(JSONArray)\n");
+	//logger.print(tag, String("[") + key + "]:" + value + "(JSONArray)\n");
 	JSONArrayValue* obj = new JSONArrayValue(key, value);
 	map.add(obj);
 	return  true;

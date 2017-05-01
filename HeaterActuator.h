@@ -5,12 +5,15 @@
 class HeaterActuator :
 	public Actuator
 {
+private:
+	virtual String getJSONFields(int jsontype);
+
 public:
+	virtual JSONObject getJSON2();
 	static String tag;
 	static Logger logger;
 
 	virtual void init();
-	virtual String getJSONFields();
 	virtual bool checkStatusChange();
 
 

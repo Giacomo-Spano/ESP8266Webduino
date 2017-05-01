@@ -6,7 +6,10 @@
 #include "ObjectClass.h"
 #include "OnewireSensor.h"
 #include "JSONArray.h"
+#include "SensorFactory.h"
+#include "TemperatureSensor.h"
 #include "DoorSensor.h"
+
 #include "TFTDisplay.h"
 #include "HttpResponse.h"
 #include "ESPWebServer.h"
@@ -32,7 +35,12 @@
 #include "TimeLib.h"
 #include "POSTData.h"
 
+#include "JSONObject.h"
 
+extern "C" {
+#include "user_interface.h"
+}
+//uint32_t free = system_get_free_heap_size();
 
 
 
@@ -59,6 +67,8 @@ int EPROM_Table_Schema_Version = 8;
 Logger logger;
 String sensorNames = "";
 
+const int maxjsonLength = 1000;
+
 String tag = "Webduino";
 const char *ssidAP = "ES8266";
 const char *passwordAP = "thereisnospoon";
@@ -68,8 +78,8 @@ Shield shield;
 /*const*/ char* ssidtest =/*"Vodafone-34230543";*/ "TP-LINK_3BD796";
 /*const*/ char* passwordtest = /*"52iw4mmkdmw4ftt";*/ "giacomocasa";
 
-String siid = ""; //= "TP-LINK_3BD796";
-String pass = ""; //= "giacomocasa";
+String siid = "TP-LINK_3BD796";
+String pass = "giacomocasa";
 
 //char networkSSID[100/*Shield::networkSSIDLen*/];
 //char networkPassword[100/*Shield::networkPasswordLen*/];
@@ -77,7 +87,7 @@ String pass = ""; //= "giacomocasa";
 //char* networkPassword = "                                 ";
 
 // EPROM
-const byte EEPROM_ID = 0x94; // used to identify if valid data in EEPROM
+const byte EEPROM_ID = 0x82; // used to identify if valid data in EEPROM
 const int ID_ADDR = 0; // the EEPROM address used to store the ID
 const int TIMERTIME_ADDR = 1; // the EEPROM address used to store the pin
 int epromversion = 0;
@@ -88,6 +98,8 @@ void readEPROM();
 void readSensor();
 extern void writeEPROM();
 extern void resetEPROM();
+extern void writeEPROMJSON();
+extern void readEPROMJSON();
 
 // html page old style
 //String showMain(HttpRequest request, HttpResponse response);
@@ -113,11 +125,14 @@ String getJsonSettings(HttpRequest request, HttpResponse response);
 WiFiServer server(80);
 WiFiClient client;
 
-extern void mqtt_publish(String topic, String message);
+extern bool mqtt_publish(String topic, String message);
 MQTTClientClass mqttclient;
 long lastMsg = 0;
 int messagenumber = 0;
 //String topic = "sendtopic";
+static const char googleServerName[] = "google.com";
+static const char giacomohomeServerName[] = "giacomohome.ddns.net";
+static const char giacomoboxServerName[] = "giacomobox.ddns.net";
 
 const int flash_interval = 30000;
 unsigned long lastFlash = 0;//-flash_interval;
@@ -145,6 +160,254 @@ void resetEPROM() {
 	logger.println(tag, "\n\t <<resetEPROM");
 }
 
+void writeSensorEPROMJSON() {
+
+	logger.print(tag, "\n\t >>writeSensorEPROMJSON");
+
+	JSONObject json;
+
+	
+	//------------------
+
+	// sensor count
+	logger.print(tag, "\n\n\t shield.sensorList.count=" + String(shield.sensorList.count));
+	int count = shield.sensorList.count;
+	logger.print(tag, "\n\t count = " + String(count));
+	
+	for (int i = 0; i < shield.sensorList.count; i++) {
+
+		logger.print(tag, "\n\n\t write sensor #" + String(i));
+		Sensor* sensor = (Sensor*)shield.sensorList.get(i);
+
+		logger.print(tag, "\n\n\t sensor->sensorname=" + sensor->sensorname);
+		json.pushString("name", sensor->sensorname);
+
+		logger.print(tag, "\n\t sensor->type=" + sensor->type);
+		json.pushString("type", sensor->type);
+
+		logger.print(tag, "\n\t sensor->address=" + sensor->address);
+		json.pushString("addr", sensor->address);
+
+		logger.print(tag, "\n\t pin = " + String(sensor->pin));
+		json.pushInteger("pin", sensor->pin);
+
+		logger.print(tag, "\n\t sensor->enabled = " + String(sensor->enabled));
+		json.pushBool("sensor->enabled", sensor->enabled);
+#ifdef dopo		
+		for (int i = 0; i < sensor->; i++) {
+
+		}
+
+
+		logger.print(tag, "\n\t onewire->tempSensorNum=" + String(onewire->tempSensorNum));
+
+		for (int k = 0; k < onewire->tempSensorNum; k++) {
+
+			hiByte = highByte(onewire->temperatureSensors[k].id);
+			loByte = loByte(onewire->temperatureSensors[k].id);
+			EEPROM.write(addr++, hiByte);
+			EEPROM.write(addr++, loByte);
+			logger.print(tag, "\n\t onewire->temperatureSensors[k].id=" + onewire->temperatureSensors[k].id);
+
+			char sensorNameBuffer[Sensor::sensorNameLen];
+			onewire->temperatureSensors[k].name.toCharArray(sensorNameBuffer, sizeof(sensorNameBuffer));
+			res = EEPROM_writeAnything(addr, sensorNameBuffer);
+			logger.print(tag, "\n\t onewire->temperatureSensors[k].name=" + onewire->temperatureSensors[k].name);
+			addr += res;
+		}
+	}
+	logger.print(tag, "\n\n\t --addr:" + String(addr));
+}
+
+
+#endif
+//-----------------
+	}
+	logger.print(tag, "\n\t >>writeSensorEPROMJSON");
+}
+
+int writeJSON(int index, String json) {
+		
+	logger.print(tag, "\n\t >>writeJSON" + String(index));
+	int startIndex = index;
+	
+	logger.print(tag, "\n\t str =" + json);
+
+	if (index < 0 || (index + json.length()) > 4096) return 0;
+	
+	byte hiByte = highByte(json.length());
+	byte loByte = lowByte(json.length());
+	EEPROM.write(index++, hiByte);
+	EEPROM.write(index++, loByte);
+	
+	logger.print(tag, "\n\t len=" + String(json.length()));
+	for (int i = 0; i < json.length(); ++i)
+	{
+		EEPROM.write(index++, json.charAt(i));
+		Serial.print(json.charAt(i));
+		if (i > maxjsonLength) break;
+	}
+	EEPROM.commit();
+
+	logger.print(tag, "\n\t <<writeJSON + written " + String(index - startIndex));
+	return index - startIndex;
+}
+
+void writeEPROMJSON() {
+
+	logger.print(tag, "\n\t >>writeEPROMJSON");
+
+	JSONObject json;
+	
+	/*siid = "TP-LINK_3BD796";
+	pass = "giacomocasa";*/
+	/*siid = "TP-LINK_3D88";
+	pass = "giacomobox";*/
+
+
+	// siid
+	json.pushString("siid", siid);
+
+	// passw
+	json.pushString("passwd", pass);
+		
+	// local port
+	int port = Shield::getLocalPort();
+	logger.print(tag, "\n\t port = " + String(port));
+	json.pushInteger("port", port);
+
+	// server name
+	String serverName = Shield::getServerName();
+	logger.print(tag, "\n\t serverName = " + serverName);
+	json.pushString("servername", serverName);
+
+	// server port
+	int serverport = Shield::getServerPort();
+	logger.print(tag, "\n\t serverport = " + String(serverport));
+	json.pushInteger("serverport", serverport);
+
+	// shieldName name
+	String shieldname = Shield::getShieldName();
+	logger.print(tag, "\n\t shieldname = " + shieldname);
+	json.pushString("shieldname", shieldname);
+	
+	// write json to eprom
+	String str = json.toString();
+	logger.print(tag, "\n\t json=" + str);
+	byte hiByte = highByte(str.length());
+	byte loByte = lowByte(str.length());
+	EEPROM.write(addr++, hiByte);
+	EEPROM.write(addr++, loByte);	
+	logger.print(tag, "\n\t len=" + String(str.length()));
+	for (int i = 0; i < str.length(); ++i)
+	{
+		EEPROM.write(addr++, str[i]);
+		if (i > maxjsonLength) break;
+	}
+	EEPROM.commit();
+
+	logger.print(tag, "\n\t <<writeEPROMJSON");
+}
+
+int readJSON(int index, String* str) {
+
+	logger.print(tag, "\n\t >>readJSON " + String(index));
+
+	int startIndex = index;
+	// read json len
+	byte hiByte = EEPROM.read(index++);
+	byte loByte = EEPROM.read(index++);
+	int len = word(hiByte, loByte);
+	logger.print(tag, "\n\t len=" + String(len));
+
+	int i = 0;
+	while (i < maxjsonLength && i < len && index < 4096)
+	{
+		char c = char(EEPROM.read(index++));
+		logger.print(tag, "" + String(c));
+		*str += c;
+		i++;
+	}
+	*str += '\0';
+
+	logger.print(tag, "\n\t <<readJSON" + String(index - startIndex));
+	
+	return index - startIndex;
+}
+
+void readEPROMJSON() {
+
+	logger.print(tag, "\n\t >>readEPROMJSON");
+
+	// read json len
+	byte hiByte = EEPROM.read(addr++);
+	byte loyte = EEPROM.read(addr++);
+	int len = word(hiByte, loyte);
+	logger.print(tag, "\n\t len=" + String(len));	
+	// read json
+	String str = "";
+	int i = 0;
+	while (i < maxjsonLength && i < len)
+	{
+		char c = char(EEPROM.read(i++ + addr));
+		str += c;
+		if (c == 0)
+			break;
+	}
+	str += '\0';
+	addr += i;
+	logger.print(tag, "\n\t str=" + str);
+	
+	JSONObject json(str);
+	logger.print(tag, "\n\t json=" + json.toString());
+
+
+	// parse json
+	
+	// siid
+	siid = "";
+	if (json.has("siid"))
+		siid = json.getString("siid");
+	siid += '\0';
+	logger.print(tag, "\n\t siid=" + siid);
+	// password
+	pass = "";
+	if (json.has("passwd"))
+		pass = json.getString("passwd");
+	pass += '\0';
+	logger.print(tag, "\n\t pass=" + pass);
+
+	// port
+	int port = 0;
+	if (json.has("port"))
+		port = json.getInteger("port");
+	logger.print(tag, "\n\t port=" + String(port));
+	Shield::setLocalPort(port);
+
+	// server name
+	String servername = "";
+	if (json.has("servername"))
+		servername = json.getString("servername");
+	logger.print(tag, "\n\t servername=" + servername);
+	Shield::setServerName(servername);	
+
+	// serverport
+	int serverport = 0;
+	if (json.has("serverport"))
+		serverport = json.getInteger("serverport");
+	logger.print(tag, "\n\t serverport=" + String(serverport));
+	Shield::setServerPort(serverport);
+
+	// shield name
+	String shieldname = "";
+	if (json.has("shieldname"))
+		shieldname = json.getString("shieldname");
+	logger.print(tag, "\n\t shieldname=" + shieldname);
+	Shield::setShieldName(shieldname);	
+
+	logger.print(tag, "\n\t <<readEPROMJSON");
+}
+
 void writeEPROM() {
 
 	logger.print(tag, "\n\n\t >>write EPROM");
@@ -160,79 +423,9 @@ void writeEPROM() {
 	EEPROM.write(addr++, hiByte);
 	EEPROM.write(addr++, loByte);
 
-	// ssid
-	int i = 0;
-
-	//String prova = String("TP-LINK_3BD796");
-	String prova = Shield::getNetworkSSID();
-	siid = prova;
-
-	logger.print(tag, "\n\t siid.length = " + String(siid.length()));
-	logger.print(tag, "\n\t ");
-	for (i = 0; i < siid.length(); ++i)
-	{
-		logger.print(tag, "|" + String(i));
-		logger.print(tag, ":" + String(siid[i]));
-		EEPROM.write(i + addr, siid[i]);
-	}
-	EEPROM.write(i + addr, 0);
-	addr += Shield::networkSSIDLen;
-	logger.print(tag, "\n\t networkSSID = " + siid);
-	/*char networkSSID[Shield::networkSSIDLen];
-	Shield::getNetworkSSID().toCharArray(networkSSID, sizeof(networkSSID));
-	int res = EEPROM_writeAnything(addr, networkSSID);
-	addr += res;*/
-
-
-	// password
-	i = 0;
-	logger.print(tag, "\n\t pass.length() = " + String(pass.length()));
-	logger.print(tag, "\n\t ");
-	for (i = 0; i < pass.length(); ++i)
-	{
-		logger.print(tag, "|" + String(i));
-		logger.print(tag, ":" + String(pass[i]));
-		EEPROM.write(i + addr, pass[i]);
-	}
-	EEPROM.write(i + addr, 0);
-	addr += Shield::networkPasswordLen;
-	logger.print(tag, "\n\t networkPassword = " + pass);
-	/*addr += Shield::networkSSIDLen;
-	char networkPasswordBuffer[Shield::networkPasswordLen];
-	Shield::getNetworkPassword().toCharArray(networkPasswordBuffer, sizeof(networkPasswordBuffer));
-	res = EEPROM_writeAnything(addr, networkPasswordBuffer);
-	addr += res;*/
-
-	// local port
-	int port = Shield::getLocalPort();
-	hiByte = highByte(port);
-	loByte = lowByte(port);
-	EEPROM.write(addr++, hiByte);
-	EEPROM.write(addr++, loByte);
-	logger.print(tag, "\n\t port = " + String(port));
-
-	// server name
-	char serverNameBuffer[Shield::serverNameLen];
-	Shield::getServerName().toCharArray(serverNameBuffer, sizeof(serverNameBuffer));
-	int res = EEPROM_writeAnything(addr, serverNameBuffer);
-	addr += res;
-	logger.print(tag, "\n\t serverNameBuffer = " + String(serverNameBuffer));
-
-	// server port
-	port = Shield::getServerPort();
-	hiByte = highByte(port);
-	loByte = lowByte(port);
-	EEPROM.write(addr++, hiByte);
-	EEPROM.write(addr++, loByte);
-	logger.print(tag, "\n\t port = " + String(port));
-
-	// shieldName name
-	char shieldNameBuffer[Shield::shieldNameLen];
-	Shield::getShieldName().toCharArray(shieldNameBuffer, sizeof(shieldNameBuffer));
-	res = EEPROM_writeAnything(addr, shieldNameBuffer);
-	addr += res;
-	logger.print(tag, "\n\t shieldNameBuffer = " + String(shieldNameBuffer));
-
+	writeEPROMJSON();
+	logger.print(tag, "\n\n\t --addr:" + String(addr));
+		
 	// sensor count
 	logger.print(tag, "\n\n\t shield.sensorList.count=" + String(shield.sensorList.count));
 	int count = shield.sensorList.count;
@@ -241,14 +434,17 @@ void writeEPROM() {
 	EEPROM.write(addr++, hiByte);
 	EEPROM.write(addr++, loByte);
 
+	logger.print(tag, "\n\n\t --addr:" + String(addr));
 	bool lastSensorWasTemperature = false;
 	for (int i = 0; i < shield.sensorList.count; i++) {
+
+		logger.print(tag, "\n\n\t write sensor #" + String(i));
 		Sensor* sensor = (Sensor*)shield.sensorList.get(i);
 
 		logger.print(tag, "\n\n\t sensor->sensorname=" + sensor->sensorname);
 		char sensorNameBuffer[Sensor::sensorNameLen];
 		sensor->sensorname.toCharArray(sensorNameBuffer, sizeof(sensorNameBuffer));
-		res = EEPROM_writeAnything(addr, sensorNameBuffer);
+		int  res = EEPROM_writeAnything(addr, sensorNameBuffer);
 		addr += res;
 
 		logger.print(tag, "\n\t sensor->sensorTypeBuffer=" + sensor->type);
@@ -297,18 +493,56 @@ void writeEPROM() {
 				addr += res;
 			}
 		}
-	}
+		logger.print(tag, "\n\n\t --addr:" + String(addr));
+
+		
+	}	
 
 	EEPROM.commit();
-	logger.println(tag, "\n\t <<write EPROM\n");
+
+	logger.print(tag, "\n\n\t --free: " + String(system_get_free_heap_size()));
+
+	logger.print(tag, "\n\n\t --START---------");
+	hiByte = highByte(shield.sensorList.length());
+	loByte = lowByte(shield.sensorList.length());
+	EEPROM.write(addr++, hiByte);
+	EEPROM.write(addr++, loByte);
+	logger.print(tag, "\n\n\t --addr:" + String(addr));
+
+	logger.print(tag, "\n\n\t --free: " + String(system_get_free_heap_size()));
+
+	int index = addr;
+	logger.print(tag, "\n\n\t --index=" + String(index));
+	for (int i = 0; i < shield.sensorList.length(); i++) {
+		logger.print(tag, "\n\n\t writesensor:" + String(i));
+		Sensor* sensor = (Sensor*)shield.sensorList.get(i);
+	
+		JSONObject json2 = sensor->getJSON2();
+
+		String json = sensor->getJSON();
+		logger.print(tag, "\n\n\t sensor:\n" + logger.formattedJson(json2.toString()));
+
+		int written = 0;
+		written = writeJSON(index, json2.toString());
+			
+		logger.print(tag, "\n\n\t --written:" + String(written));
+		index += written;
+
+		logger.print(tag, "\n\n\t --index=" + String(index));
+	}
+	//EEPROM.commit();
+
+	logger.print(tag, "\n\t <<write EPROM\n");
+	logger.print(tag, "\n\n\t --addr:" + String(addr));
 }
 
 void readEPROM() {
 
 	logger.print(tag, "\n\n\t >>read EPROM");
+	logger.print(tag, "\n\n\t --addr:" + String(addr));
 
 	byte hiByte;
-	byte lowByte;
+	byte loByte;
 	addr = ID_ADDR;
 
 	// check EPROM_ID
@@ -324,95 +558,43 @@ void readEPROM() {
 	addr = TIMERTIME_ADDR;
 	// epromversion
 	hiByte = EEPROM.read(addr++);
-	lowByte = EEPROM.read(addr++);
-	epromversion = word(hiByte, lowByte);
+	loByte = EEPROM.read(addr++);
+	epromversion = word(hiByte, loByte);
 	logger.print(tag, "\n\t epromversion=" + String(epromversion));
 
-	// ssid
-	siid = "";
-	int i;
-	for (int i = 0; i < Shield::networkSSIDLen; ++i)
-	{
-		siid += char(EEPROM.read(i + addr));
-	}
-	//siid += "";
-	addr += Shield::networkSSIDLen;
-	logger.print(tag, "\n\t networkSSID=" + siid);
-
-
-	/* char networkSSIDBuffer[Shield::networkSSIDLen];
-	int res = EEPROM_readAnything(addr, networkSSIDBuffer);
-	logger.print(tag, "\n\t networkSSIDBuffer=" + String(networkSSIDBuffer));
-	Shield::setNetworkSSID(String(networkSSIDBuffer));
-	siid = String(networkSSIDBuffer);
-	addr += res;*/
-
-	// password
-	pass = "";
-	for (int i = 0; i < Shield::networkPasswordLen; ++i)
-	{
-		pass += char(EEPROM.read(i + addr));
-	}
-	//pass += "";
-	addr += Shield::networkPasswordLen;
-	logger.print(tag, "\n\t networkPassword=" + pass);
-	/*char networkPasswordBuffer[Shield::networkPasswordLen];
-	res = EEPROM_readAnything(addr, networkPasswordBuffer);
-	logger.print(tag, "\n\t networkPasswordBuffer = " + String(networkPasswordBuffer));
-	Shield::setNetworkPassword(String(networkPasswordBuffer));
-	pass = String(networkPasswordBuffer);
-	addr += res;*/
-
-	// local port
-	hiByte = EEPROM.read(addr++);
-	lowByte = EEPROM.read(addr++);
-	int port = word(hiByte, lowByte);
-	logger.print(tag, "\n\t port = ");
-	logger.print(tag, String(port));
-	Shield::setLocalPort(port);
-
-	//server name
-	char servernnameBuffer[Shield::serverNameLen];
-	int res = EEPROM_readAnything(addr, servernnameBuffer);
-	logger.print(tag, "\n\t servernnameBuffer=" + String(servernnameBuffer));
-	Shield::setServerName(String(servernnameBuffer));
-	addr += res;
-
-	// server port
-	hiByte = EEPROM.read(addr++);
-	lowByte = EEPROM.read(addr++);
-	port = word(hiByte, lowByte);
-	logger.print(tag, "\n\t port=" + String(port));
-	Shield::setServerPort(port);
-
-	// shield name
-	char shieldNameBuffer[Shield::shieldNameLen];
-	res = EEPROM_readAnything(addr, shieldNameBuffer);
-	logger.print(tag, "\n\t shieldNameBuffer =" + String(shieldNameBuffer));
-	Shield::setShieldName(String(shieldNameBuffer));
-	addr += res;
-
+	logger.print(tag, "\n\n\t --addr:" + String(addr));
+	readEPROMJSON();
+	logger.print(tag, "\n\n\t --addr:" + String(addr));
+	
 	logger.print(tag, "\n\n\t <<read EPROM res=\n" + String(addr));
+
+	logger.print(tag, "\n\n\t --addr:" + String(addr));
 }
 
 void readSensor() {
 
 	logger.print(tag, "\n\n\t >>read Sensor");
+	logger.print(tag, "\n\n\t --addr:" + String(addr));
 
 	byte hiByte;
-	byte lowByte;
+	byte loByte;
 
 	// sensor count
 	hiByte = EEPROM.read(addr++);
-	lowByte = EEPROM.read(addr++);
-	int sensorCount = word(hiByte, lowByte);
+	loByte = EEPROM.read(addr++);
+	int sensorCount = word(hiByte, loByte);
 	logger.print(tag, "\n\t sensorCount=" + String(sensorCount));
 	if (sensorCount < 0 || sensorCount > Shield::maxSensorNum) {
 		sensorCount = 0;
 	}
 	//sensorCount = 0;
+
+	logger.print(tag, "\n\n\t --addr:" + String(addr));
+
+	SensorFactory factory;
 	shield.clearAllSensors(); // serve per inizializzare
 	for (int i = 0; i < sensorCount; i++) {
+		
 
 		// read sensor data
 		char sensorNameBuffer[Sensor::sensorNameLen];
@@ -434,32 +616,41 @@ void readSensor() {
 		String address = String(shield.sensorList.length() + 1);
 
 		hiByte = EEPROM.read(addr++);
-		lowByte = EEPROM.read(addr++);
-		int sensorPin = word(hiByte, lowByte);
+		loByte = EEPROM.read(addr++);
+		int sensorPin = word(hiByte, loByte);
 		logger.print(tag, "\n\t sensorPin=" + String(sensorPin));
 
 		bool sensorEnabled = EEPROM.read(addr++);
 		logger.print(tag, "\n\t sensorEnabled=" + String(sensorEnabled));
-		//logger.print(tag, "\n");
-		// init sensor
+		
 		Sensor* pSensor = nullptr;
+		//Sensor* pSensor = factory.createSensor(type, pin, enabled, subaddress, name);
+
 		if (type == "onewiresensor") {
 			logger.print(tag, "\n\t onewiresensor found");
-			pSensor = new OnewireSensor(sensorPin, sensorEnabled, address, name);
+			//pSensor = new OnewireSensor(sensorPin, sensorEnabled, address, name);
+			pSensor = factory.createSensor(type, sensorPin, sensorEnabled, address, name);
 
 			OnewireSensor* pOnewireSensor = (OnewireSensor*)pSensor;
 			hiByte = EEPROM.read(addr++);
-			lowByte = EEPROM.read(addr++);
-			int n = word(hiByte, lowByte);
+			loByte = EEPROM.read(addr++);
+			int n = word(hiByte, loByte);
 			logger.print(tag, "\n\t temperatur sensor number=" + String(n));
 			if (n < 0 || n > OnewireSensor::maxTempSensors) {
 				n = 0;
 			}
-			for (int k = 0; k < n; k++) {
+			//n = 0;
+
+			// sbagliatissimo in questo casoi perchè è uììone wire
+			//pOnewireSensor->childsensors.clearAll();
+
+			logger.print(tag, "\n\t pOnewireSensor->childsensors.length()" + String(pOnewireSensor->childsensors.length()));
+
+			for (int k = 0; k < n/*pOnewireSensor->childsensors.length()*/; k++) {
 
 				hiByte = EEPROM.read(addr++);
-				lowByte = EEPROM.read(addr++);
-				int id = word(hiByte, lowByte);
+				loByte = EEPROM.read(addr++);
+				int id = word(hiByte, loByte);
 				pOnewireSensor->temperatureSensors[k].id = id;
 				//logger.print(tag, "\n\t onewire->temperatureSensors[k].id=" + String(pOnewireSensor->temperatureSensors[k].id));
 
@@ -468,15 +659,32 @@ void readSensor() {
 				logger.print(tag, "\n\t sensorAddressBuffer =" + String(sensorNameBuffer));
 				addr += res;
 				pOnewireSensor->temperatureSensors[k].name = String(sensorNameBuffer);
+								
+				// aggorna sensore figlio già creato in begin sensor di one wire
+				String name = String(sensorNameBuffer);
+				uint8_t pin = pSensor->pin;
+				bool enabled = true;
+				String subaddress = pSensor->address + "." + String(id);
+				//Sensor* child = factory.createSensor("temperaturesensor", pin, enabled, subaddress, name);
+				Sensor* child = (Sensor*) pSensor->childsensors.get(k);
+				if (child != nullptr) {
+					child->pin = pin;
+					child->enabled = enabled;
+					child->address = subaddress;
+					child->sensorname = name;
+					//pSensor->childsensors.add(child);
+				}
 			}
 		}
 		else if (type == "doorsensor") {
 			logger.print(tag, "doorsensor found");
-			pSensor = new DoorSensor(sensorPin, sensorEnabled, address, name);
+			//pSensor = new DoorSensor(sensorPin, sensorEnabled, address, name);
+			pSensor = factory.createSensor(type, sensorPin, sensorEnabled, address, name);
 		}
 		else if (type == "heatersensor") {
 			//logger.print(tag, "doorsensor found");
-			pSensor = new HeaterActuator(sensorPin, sensorEnabled, address, name);
+			//pSensor = new HeaterActuator(sensorPin, sensorEnabled, address, name);
+			pSensor = factory.createSensor(type, sensorPin, sensorEnabled, address, name);
 		}
 		else {
 			logger.print(tag, "\n\t sensor type nor found");
@@ -485,9 +693,36 @@ void readSensor() {
 
 		pSensor->init();
 		shield.addSensor(pSensor);
+		logger.print(tag, "\n\n\t --addr:" + String(addr));
+
 	}
 
 	shield.sensorList.show();
+
+#ifdef dopo
+	hiByte = EEPROM.read(addr++);
+	loByte = EEPROM.read(addr++);
+	int n = word(hiByte, loByte);
+	//n = 0;
+	logger.print(tag, "\n\t sensor number =" + String(n));
+	int index = addr;
+	for (int i = 0; i < n; i++) {
+		//JSONObject jObject;
+		String json;
+		int read = readJSON(index, &json);
+		logger.print(tag, "\n\t --json=" + json);
+		JSONObject jObject(json);
+		index += read;
+			
+		//Sensor* sensor = factory.createSensor(jObject);
+		//sensor->init();
+		//shield.addSensor(sensor);
+
+		logger.print(tag, "\n\n\t SENSOR: #" + String(i));
+		logger.print(tag, "\n: " + logger.formattedJson(json));
+	}
+
+#endif
 
 	logger.print(tag, "\n\n\t <<read Sensor Eprom ");
 }
@@ -496,38 +731,18 @@ void initEPROM()
 {
 	logger.print(tag, "\n\n\t >>initEPROM");
 
-	EEPROM.begin(512);
+	EEPROM.begin(4096);
 
 	byte id = EEPROM.read(ID_ADDR); // read the first byte from the EEPROM
 	if (id == EEPROM_ID)
 	{
 		readEPROM();
 
-		/*siid = "TP-LINK_3BD796";
-		pass = "giacomocasa";*/
-
-		siid = "TP-LINK_3D88";
-		pass = "giacomobox";
-
-		/*Serial.println("--");
-
-		String prova = Shield::getNetworkSSID();
-		Serial.println(siid);
-
-		Serial.println("--");
-		siid = "";
-		for (int i = 0; i < 14; i++) {
-			siid += prova.charAt(i);
-			Serial.print(siid[i],DEC);
-		}
-		siid += '\0';
-
-		//siid = String("TP-LINK_3BD796");
-		Serial.println(siid);
-
+		siid = "TP-LINK_3BD796";
 		pass = "giacomocasa";
-		Serial.println(pass);*/
 
+		/*siid = "TP-LINK_3D88";
+		pass = "giacomobox";*/
 	}
 	else
 	{
@@ -628,84 +843,39 @@ void checkOTA()
 	//ArduinoOTA.handle();  uesta chiamata deve essere messa in loop()
 }
 
-
-
-
 bool testWifi() {
-
-	// We start by connecting to a WiFi network
-	/*char networkSSID[Shield::networkSSIDLen];
-	char networkPassword[Shield::networkPasswordLen];
-
-	memset(networkSSID, 0, sizeof(networkSSID));
-	memset(networkPassword, 0, sizeof(networkPassword));
-
-	int i;
-	for (i = 0; i < Shield::getNetworkSSID().length(); i++) {
-		if (i < Shield::getNetworkSSID().length())
-			networkSSID[i] = Shield::getNetworkSSID().charAt(i);
-	}
-	for (i = 0; i < Shield::getNetworkPassword().length(); i++) {
-		if (i < Shield::getNetworkPassword().length())
-			networkPassword[i] = Shield::getNetworkPassword().charAt(i);
-	}*/
-
-
-	/*Serial.println("WiFi connection timeout");
-
-	Serial.println("\n\n-------DEBUG----------------\n->");
-	Serial.println(ssidtest);
-	for (int i = 0; i < sizeof(networkSSID); ++i) {
-		Serial.printf("%02x:%02x ", ssidtest[i], networkSSID[i]);
-	}
-	Serial.println("\n->");
-	Serial.println(passwordtest);
-	for (int i = 0; i < sizeof(networkPassword); ++i) {
-		Serial.printf("%02x:%02x ", passwordtest[i], networkPassword[i]);
-	}
-	Serial.println("\n->");
-	/*Serial.println(passwordtest);
-	for (int i = 0; i < sizeof(passwordtest); ++i) {
-		Serial.printf("%02x ", passwordtest[i]);
-	}
-	Serial.println("\n->");
-	Serial.println(networkPassword);
-	for (int i = 0; i < sizeof(networkPassword); ++i) {
-		Serial.printf("%02x ", networkPassword[i]);
-	}
-	Serial.println("\n->");*/
-	Serial.println("\n\n-------DEBUG----------------");
-
 
 	Serial.println();
 	Serial.println();
 	Serial.print("Connecting");
 
 	WiFi.mode(WIFI_STA);
+
+	WiFi.disconnect();
+	delay(100);
+
 	//delay(2000);
 	//WiFi.begin(networkSSID, networkPassword);
-
+	//logger.print(tag, "\n\t WiFi.siid=" + WiFi.SSID());
+	//logger.print(tag, "\n\t WiFi.pass=" + WiFi.RSSI());
 
 
 	/*String pass = Shield::getNetworkSSID();
 	String siid = Shield::getNetworkSSID();*/
+	logger.print(tag, "\n\t siid=" + siid);
+	logger.print(tag, "\n\t pass=" + pass);
 	WiFi.begin(siid.c_str(), pass.c_str());
 	//WiFi.begin(ssidtest, passwordtest);
-
-
+	
 	int count = 0;
 	while (WiFi.status() != WL_CONNECTED) {
 		delay(1000);
 		Serial.print(".");
 		if (count++ > 15) {
-
-
 			return false;
+			//WiFi.
 		}
 	}
-
-
-
 
 
 	//WiFi.begin((const char*) networkSSID, (const char*) networkPassword);
@@ -760,17 +930,41 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
 void parseMessageReceived(String topic, String message) {
 
-	if (topic.equals(String("fromServer/shield/") + Shield::getMACAddress() + String("/registerresponse")))
+	String str = String("fromServer/shield/") + Shield::getMACAddress() + String("/registerresponse");
+	//logger.print(tag, "\n\t str=" + str);
+	String serverRequest = "fromServer/shield/" + String(Shield::getShieldId());
+
+	if (topic.equals(str))
 	{
 		int id = message.toInt();
 		logger.print(tag, "\n\t received registerresponse id=" + id);
 		if (id > 0) {
 			Shield::setShieldId(id);
-			logger.println(tag, "\n\t Shieldid=" + String(Shield::getShieldId()));
+			logger.print(tag, "\n\t Shieldid=" + String(Shield::getShieldId()));
 		}
 		return;
 
-	} else if (message.equals("start")) {
+	}
+	else if (topic.equals(serverRequest) &&
+		message.equals("updatesettingstatusrequest")) {
+		logger.print(tag, "\n\t received  setting status update request");
+		//String response = shield.getSettingsJson();
+		Command command;
+		command.sendSettingsStatus(shield);
+	}
+	else if (topic.equals(serverRequest) &&
+		message.equals("updatesensorstatusrequest")) {
+		logger.print(tag, "\n\t received sensor status update request");
+		//String response = shield.getSensorsStatusJson();
+		Command command;
+		command.sendSensorsStatus(shield);
+	}
+	else if (topic.equals(serverRequest + String("/postcommand"))) {
+		logger.print(tag, "\n\t received command " + message);
+		//String response = shield.getSensorsStatusJson();
+		shield.receiveCommand(message);
+	}
+	else if (message.equals("start")) {
 		logger.print(tag, "\n\t START!!!!!!!!!!!!!!!!");
 		Shield::setMQTTMode(true);
 	}
@@ -790,7 +984,8 @@ void reconnect() {
 	while (!mqttclient.connected()) {
 		Serial.print("Attempting MQTT connection...");
 		// Attempt to connect
-		if (mqttclient.connect("ESP8266Client")) {
+		String clientId = "ESP8266Client" + Shield::getMACAddress();
+		if (mqttclient.connect(clientId)) {
 			Serial.println("connected");
 			// Once connected, publish an announcement...
 			//mqttclient.publish("send"/*topic.c_str()*/, "hello world");
@@ -806,7 +1001,6 @@ void reconnect() {
 		}
 	}
 }
-//#endif
 
 void setup()
 {
@@ -817,6 +1011,7 @@ void setup()
 	logger.print(tag, "\n\t >>setup");
 	logger.print(tag, "\n\n *******************RESTARTING************************");
 	
+		
 	shield.init();
 	shield.drawString(0, 0, "restarting..", 1, ST7735_WHITE);
 
@@ -863,7 +1058,9 @@ void setup()
 		wdt_disable();
 		wdt_enable(WDTO_8S);
 
+		//readEPROMJSON();
 		readSensor();
+		
 
 		shield.drawString(0, 70, "init heater", 1, ST7735_WHITE);
 		//shield.hearterActuator.init(String(shield.MAC_char));
@@ -872,9 +1069,42 @@ void setup()
 		//shield.drawString(60, 80, "DONE", 1, ST7735_WHITE);
 		//shield.addActuators();
 
+		IPAddress ipaddrgoogle;	
+		/*int i = 0;
+		while (WiFi.hostByName(googleServerName, ipaddrgoogle) != 1) {
+			Serial.print("i: ");
+			Serial.println(i,DEC);
+			if (i++ > 10)
+				break;
+		}*/
+		Serial.println("\n");
+		WiFi.hostByName(googleServerName, ipaddrgoogle);
+		Serial.print(googleServerName);
+		Serial.print(": ");
+		Serial.println(ipaddrgoogle);
+		
+		IPAddress ipaddr;
+		WiFi.hostByName(giacomohomeServerName, ipaddr);
+		Serial.print(giacomohomeServerName);
+		Serial.print(": ");
+		Serial.println(ipaddr);
+
+		IPAddress ipaddr2;
+		WiFi.hostByName(giacomoboxServerName, ipaddr2);
+		Serial.print(giacomoboxServerName);
+		Serial.print(": ");
+		Serial.println(ipaddr2);
+		
+		char ipaddress[255];
+		sprintf(ipaddress,"%d.%d.%d.%d\n", ipaddr[0], ipaddr[1], ipaddr[2], ipaddr[3]);
+		Serial.print("ipaddres= ");
+		Serial.println(ipaddress);
+
 		mqttclient.init(&client);
 		//mqttclient.setServer("192.168.1.3", 1883);
-		mqttclient.setServer("79.24.3.210", 1883);
+		//mqttclient.setServer("79.24.3.210", 1883);
+		//mqttclient.setServer((const IPAddress *)&ipaddr, 1883);
+		mqttclient.setServer("giacomohome.ddns.net", 1883);
 		mqttclient.setCallback(callback);
 		reconnect();
 
@@ -895,9 +1125,11 @@ void setup()
 		wdt_enable(WDTO_8S);
 
 		shield.phearterActuator->setStatus(Program::STATUS_DISABLED);
+
+		Shield::setMQTTMode(false);
 	}
 
-	logger.print(tag, "\n\t lastRestartDate=" + Shield::getLastRestartDate());
+	/*logger.print(tag, "\n\t lastRestartDate=" + Shield::getLastRestartDate());
 	if (Shield::getLastRestartDate().equals("") == true) {
 		Shield::setLastRestartDate(Logger::getStrDate());
 		logger.print(tag, "\n\t *lastRestartDate=" + Shield::getLastRestartDate());
@@ -909,7 +1141,7 @@ void setup()
 	commannd.sendRestartNotification();
 
 	shield.clearScreen();
-	logger.print(tag, "\n\t <<setup");
+	logger.print(tag, "\n\t <<setup");*/
 }
 
 String softwareReset(HttpRequest request, HttpResponse response) {
@@ -1016,7 +1248,6 @@ String showwol(HttpRequest request, HttpResponse response) {
 	return data;
 }
 
-
 String getJsonStatus(HttpRequest request, HttpResponse response)
 {
 	logger.print(tag, F("\n\n\t >>getJsonStatus"));
@@ -1028,6 +1259,7 @@ String getJsonStatus(HttpRequest request, HttpResponse response)
 	logger.print(tag, "\n\t <<getJsonStatus " + data + "\n");
 	return data;
 }
+
 String getJsonSensorsStatus(HttpRequest request, HttpResponse response)
 {
 	logger.print(tag, F("\n\t >> getJsonSensorsStatus"));
@@ -1050,7 +1282,6 @@ String getJsonSettings(HttpRequest request, HttpResponse response) {
 	logger.print(tag, "\n\t << getJsonSettings" + data + "\n");
 	return data;
 }
-
 
 void processNextPage() {
 
@@ -1126,20 +1357,14 @@ void processNextPage() {
 
 }
 
-void mqtt_publish(String topic, String message) {
+bool mqtt_publish(String topic, String message) {
 
-	logger.print(tag, "\n\n\t >>mqtt_publish");
-	logger.print(tag, "\n\n\t MQTT_MAX_PACKET_SIZE=" + String(MQTT_MAX_PACKET_SIZE));
+	logger.print(tag, "\n\n\t Publish message: [" + topic + String("] ") + message);
+	bool res = mqttclient.publish(topic.c_str(), message.c_str());
+	// qui bisognerebbe aggiungere qualche logica per gestire errore
+	logger.print(tag, "\n\t res=" + String(res));
 
-	String prova = message;
-	/*if (message.length() > MQTT_MAX_PACKET_SIZE)
-		prova = message.substring(0, 128);*/
-
-	logger.print(tag, "\n\n\t Publish message: [" + topic + String("] ") + prova);
-	bool res = mqttclient.publish(topic.c_str(), prova.c_str());
-
-
-	logger.println(tag, "\n\n\t res=" + String(res));
+	return res;
 }
 
 char msg[50];  //// DA ELIMINARE
@@ -1151,113 +1376,21 @@ void loop()
 	wdt_enable(WDTO_8S);
 
 	if (Shield::getMQTTmode()) {
-		long now = millis();
-		if (!mqttclient.connected()) {
-			logger.println(tag, String("state=") + mqttclient.state());
+		
+		if (!client.connected()) {
 			reconnect();
 		}
 		mqttclient.loop();
-		if (now - lastMsg > 5000) {
-
-			lastMsg = now;
-			++messagenumber;
-			snprintf(msg, 50, "hello world #%ld", messagenumber);
-			/*Serial.print("Publish message: ");
-			Serial.println(msg);
-			mqttclient.publish(topic.c_str(), msg);*/
-			mqtt_publish("toServer", String(msg));
-
-			//processNextPage();		
-		}
+	
 	}
 
 	if (!Shield::getMQTTmode()) {
-
 		processNextPage();
-#ifdef dopo
-		String page, param;
-		client = server.available();
-		HttpHelper http;
-
-		ESPWebServer espWebServer(&client);
-		if (client) {
-			HttpRequest request = espWebServer.getHttpRequest();
-			HttpRequest::HttpRequestMethod method = request.method;
-			page = request.page;
-			param = request.param;
-			HttpResponse response = espWebServer.getHttpResponse();
-
-			if (request.method != HttpRequest::HTTP_NULL) {
-
-				logger.print(tag, "\n");
-				logger.println(tag, ">>next HTTP request " + page);
-
-				if (page.equalsIgnoreCase("command")) {
-					response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, receiveCommand(request, response));
-				}
-				else if (page.equalsIgnoreCase("temp")) {
-					response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, setRemoteTemperature(request, response));
-				}
-				else if (page.equalsIgnoreCase("power")) {
-					response.send(response.HTTPRESULT_OK, ESPWebServer::htmlContentType, showPower(request, response));
-				}
-				else if (page.equalsIgnoreCase("wol")) {
-					response.send(response.HTTPRESULT_OK, ESPWebServer::htmlContentType, showwol(request, response));
-				}
-				else if (page.equalsIgnoreCase("status")) {
-					response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, getJsonStatus(request, response));
-				}
-				else if (page.equalsIgnoreCase("settings")) {
-					response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, getJsonSettings(request, response));
-				}
-				else if (page.equalsIgnoreCase("heaterstatus")) { // DA ELIMINARE
-					response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, getJsonHeaterStatus(request, response));
-				}
-				else if (page.equalsIgnoreCase("sensorstatus")) {
-					response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, getJsonSensorsStatus(request, response));
-				}
-				else if (page.equalsIgnoreCase("actuatorsstatus")) { // DA ELIMINARE
-					response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, getJsonActuatorsStatus(request, response));
-				}
-				else if (page.equalsIgnoreCase("reset")) {
-					// la chiamara a  send è dentro software reset perchè il metodo non torna mai
-					softwareReset(request, response);
-				}
-				else if (page.equalsIgnoreCase("startmqtt")) {
-					// la chiamara a  send è dentro software reset perchè il metodo non torna mai
-					Shield::setMQTTMode(true);
-				}
-				else if (page.endsWith(".html") ||
-					page.endsWith(".css") ||
-					page.endsWith(".js") ||
-					page.endsWith(".txt")) {
-					response.sendVirtualFile(response.HTTPRESULT_OK, ESPWebServer::htmlContentType, request.page);
-				}
-			}
-
-			logger.println(tag, "<<next request " + page + "\n");
-			logger.print(tag, "\n");
-
-			return;
-		}
-
-		if (shield.id >= 0 && !WiFi.localIP().toString().equals(shield.localIP)) {
-
-			Command command;
-			logger.println(tag, "IP ADDRESS ERROR - re-register shield\n");
-			command.registerShield(shield);
-			shield.localIP = WiFi.localIP().toString();
-			return;
-		}
-
-#endif;
-
 	}
-	//#endif
-
 
 	shield.checkStatus();
-//#ifdef dopo
+
+	//#ifdef dopo
 	if (Shield::getMQTTmode()) {
 		//#ifdef dopo
 		unsigned long currMillis = millis();

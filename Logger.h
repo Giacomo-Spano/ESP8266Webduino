@@ -39,6 +39,7 @@ public:
 	static String getStrDayDate();
 	static String getStrTimeDate();
 	static void init();
-	
+
+	String formattedJson(String str);
 };
 

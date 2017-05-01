@@ -184,6 +184,12 @@
     <ClInclude Include="MQTTClientClass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="TemperatureSensor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SensorFactory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="wol.cpp">
@@ -283,6 +289,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MQTTClientClass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TemperatureSensor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SensorFactory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

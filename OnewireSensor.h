@@ -15,8 +15,9 @@
 #include <DallasTemperature.h>
 #include "Logger.h"
 #include "JSON.h"
+#include "JSONArray.h"
 
-class TemperatureSensor {
+class TemperatureSensorOld /*: public Sensor*/ {
 
 public:
 	String name = "Sensor name";
@@ -53,7 +54,11 @@ private:
 	OneWire* oneWirePtr;
 	DallasTemperature* pDallasSensors;
 
+	virtual String getJSONFields(int jsontype);
+
 public:
+	virtual JSONObject getJSON2();
+	//virtual void loadChildren(JSONObject json);
 	static const int avTempsize = 10;
 
 	//const int checkTemperature_interval = 10000;//60000; // 60 seconds
@@ -61,20 +66,22 @@ public:
 
 	//OnewireSensor();
 	OnewireSensor(uint8_t pin, bool enabled, String address, String name);
+	void loadChildren(JSONArray jarray);
 	~OnewireSensor();
 	virtual bool checkStatusChange();
 
 	void beginTemperatureSensors();
 
 	static const int maxTempSensors = 10; // max num sensori onewire sullo stesso pin
-	TemperatureSensor temperatureSensors[maxTempSensors];
+	TemperatureSensorOld temperatureSensors[maxTempSensors];
 	int tempSensorNum = 0;
+	
 
 	int avTempCounter = 0;
 	float avTemp[avTempsize];
 
 	bool readTemperatures();
-	virtual String getJSONFields();
+	//virtual String getJSONFields();
 	virtual void init();
 	float getTemperature(int index);
 	float getAvTemperature(int index);

@@ -227,3 +227,130 @@ void Logger::init() {
 	}	
 	//logFile.close();
 }
+
+String Logger::formattedJson(String str)
+{
+
+	//char *json = str.c_str();
+
+	String pretty;
+
+	if (str == NULL || str.length() == 0)
+	{
+		return pretty;
+	}
+
+	//String str = String(json);
+	bool        quoted = false;
+	bool        escaped = false;
+	String INDENT = ".";
+	int indentval = 1;
+	int         indent = 0;
+	int         length = (int)str.length();
+	int         i;
+
+	for (i = 0; i < length; i++)
+	{
+		char ch = str[i];
+
+		switch (ch)
+		{
+		case '{':
+		case '[':
+			pretty += ch;
+
+			if (!quoted)
+			{
+				pretty += "\n";
+
+				if (!(str[i + 1] == '}' || str[i + 1] == ']'))
+				{
+					++indent;
+
+					for (int j = 0; j < indent*indentval; j++)
+					{
+						pretty += INDENT;
+					}
+				}
+			}
+
+			break;
+
+		case '}':
+		case ']':
+			if (!quoted)
+			{
+				if ((i > 0) && (!(str[i - 1] == '{' || str[i - 1] == '[')))
+				{
+					pretty += "\n";
+
+					--indent;
+
+					for (int j = 0; j < indent*indentval; j++)
+					{
+						pretty += INDENT;
+					}
+				}
+				else if ((i > 0) && ((str[i - 1] == '[' && ch == ']') || (str[i - 1] == '{' && ch == '}')))
+				{
+					for (int j = 0; j < indent*indentval; j++)
+					{
+						pretty += INDENT;
+					}
+				}
+			}
+
+			pretty += ch;
+
+			break;
+
+		case '"':
+			pretty += ch;
+			escaped = false;
+
+			if (i > 0 && str[i - 1] == '\\')
+			{
+				escaped = !escaped;
+			}
+
+			if (!escaped)
+			{
+				quoted = !quoted;
+			}
+
+			break;
+
+		case ',':
+			pretty += ch;
+
+			if (!quoted)
+			{
+				pretty += "\n";
+
+				for (int j = 0; j < indent*indentval; j++)
+				{
+					pretty += INDENT;
+				}
+			}
+
+			break;
+
+		case ':':
+			pretty += ch;
+
+			if (!quoted)
+			{
+				pretty += " ";
+			}
+
+			break;
+
+		default:
+			pretty += ch;
+
+			break;
+		}
+	}
+
+	return pretty;
+}

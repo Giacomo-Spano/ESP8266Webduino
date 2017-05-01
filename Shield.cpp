@@ -16,11 +16,11 @@ Logger Shield::logger;
 String Shield::tag = "Shield";
 String Shield::lastRestartDate = "";
 String Shield::swVersion = "1.02";
-uint8_t Shield::heaterPin = D5;
-uint8_t Shield::oneWirePin = D4;
-bool Shield::heaterEnabled = true;
-bool Shield::temperatureSensorsEnabled = true;
-int Shield::id = 0; //// inizializzato a zero perchè viene impostato dalla chiamata a registershield
+//uint8_t Shield::heaterPin = D5;
+//uint8_t Shield::oneWirePin = D4;
+//bool Shield::heaterEnabled = true;
+//bool Shield::temperatureSensorsEnabled = true;
+int Shield::id = 0; //// inizializzato a zero perchï¿½ viene impostato dalla chiamata a registershield
 
 
 
@@ -34,7 +34,7 @@ String Shield::shieldName = "shieldName";
 unsigned char Shield::MAC_array[6];
 char Shield::MAC_char[18];
 
-bool Shield::mqttMode = true;
+bool Shield::mqttMode = true;// true;
 
 String Shield::powerStatus = "on"; // da aggiungere
 
@@ -256,16 +256,14 @@ String Shield::receiveCommand(String jsonStr) {
 			logger.print(tag, "\n\t<<Shield::receiveCommand result=" + String(result));
 			return result;
 		}
-		else if (heaterEnabled /*&& json.has("actuatorid")*/) { // se arriva direttamente dalla scheda non c'è actuatorid
-			/*int actuatorId = json.jsonGetInt("actuatorid");
-			logger.print(tag, F("\n\tactuatorid="));
-			logger.print(tag, actuatorId);*/
+		/*else if (heaterEnabled ) { // se arriva direttamente dalla scheda non c'ï¿½ actuatorid
+			
 			logger.print(tag, "\n\t ++heater command");
 
 			String result = phearterActuator->sendCommand(jsonStr);
 			logger.print(tag, "\n\t<<Shield::receiveCommand result=" + String(result));
 			return result;
-		}
+		}*/
 	}
 
 	logger.println(tag, "\n\t command not valid");
@@ -447,23 +445,13 @@ String Shield::getSensorsStatusJson() {
 		Sensor* sensor = (Sensor*)sensorList.get(i);
 		if (i != 0)
 			json += ",";
-		json += "{";
-		json += "\"type\":\"" + sensor->type + "\"";
-		json += ",\"name\":\"" + sensor->sensorname + "\"";
-		json += ",\"addr\":\"" + sensor->address + "\"";
-		json += ",\"enabled\":";
-		if (sensor->enabled == true)
-			json += "true";
-		else
-			json += "false";
-		json += ",\"pin\":\"" + getStrPin(sensor->pin) + "\"";
-		json += sensor->getJSONFields();
-		json += "}";
+
+		json += sensor->getJSON();
 	}
 	json += "]";
 	json += "}";
 
-	logger.print(tag, "\n\t <<getSensorsStatusJson" + json);
+	logger.print(tag, "\n\t <<getSensorsStatusJson"/* + json*/);
 	return json;
 }
 
@@ -549,12 +537,12 @@ void Shield::checkStatus()
 	//display.update();
 }
 
-void Shield::checkActuatorsStatus()
+/*void Shield::checkActuatorsStatus()
 {
 	if (heaterEnabled) {
 		phearterActuator->checkStatus();
 	}
-}
+}*/
 
 void Shield::checkSensorsStatus()
 {
@@ -579,7 +567,7 @@ void Shield::checkSensorsStatus()
 		// imposta la temperatura locale a quella del primo sensore (DA CAMBIARE)
 		if (i == 0)
 			hearterActuator.setLocalTemperature(pSensor->getTemperature(0));
-		// se il sensore attivo è quello locale aggiorna lo stato
+		// se il sensore attivo ï¿½ quello locale aggiorna lo stato
 // del rele in base alla temperatur del sensore locale
 //if (!hearterActuator.sensorIsRemote())
 		hearterActuator.updateReleStatus();
@@ -648,7 +636,7 @@ void Shield::checkTemperatures() {
 		}
 	}
 
-	// se il sensore attivo è quello locale aggiorna lo stato
+	// se il sensore attivo ï¿½ quello locale aggiorna lo stato
 	// del rele in base alla temperatur del sensore locale
 	//if (!hearterActuator.sensorIsRemote())
 	phearterActuator->updateReleStatus();

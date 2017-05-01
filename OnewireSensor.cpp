@@ -7,9 +7,13 @@
 #include "ESP8266Webduino.h"
 #include "Shield.h"
 #include "JSONArray.h"
+#include "TemperatureSensor.h"
+#include "SensorFactory.h"
 
 Logger OnewireSensor::logger;
 String OnewireSensor::tag = "OnewireSensor";
+
+
 
 OnewireSensor::OnewireSensor(uint8_t pin, bool enabled, String address, String name) : Sensor(pin, enabled, address, name)
 {
@@ -20,9 +24,52 @@ OnewireSensor::OnewireSensor(uint8_t pin, bool enabled, String address, String n
 	// beginTemperatureSensors deve essere chiamata nel costruttore per inizializzare
 	// la var tempSensorNum. 
 	beginTemperatureSensors();
-
-
 }
+
+void OnewireSensor::loadChildren(JSONArray jarray) {
+
+	logger.print(tag, "\n\t loadChildren");
+		
+	String child = jarray.getFirst();
+	while (child != "") {
+
+		String name = "";
+		JSONObject json(child);
+		if (json.has("name")) {
+			logger.print(tag, "\n\t name=" + name);
+		}
+		child = jarray.getNext();
+	}
+}
+
+
+
+JSONObject OnewireSensor::getJSON2() {
+
+
+	JSONObject jObject = Sensor::getJSON2();
+
+	String childrenJsonArray = "[";
+	for (int i = 0; i < childsensors.length(); i++) {
+		Sensor* child = (Sensor*) childsensors.get(i);
+		JSONObject childJson = child->getJSON2();
+		if (i > 0) childrenJsonArray += ",";
+		childrenJsonArray += childJson.toString();
+		//jObject.pu
+	}
+	childrenJsonArray += "]";
+
+	JSONArray jarray(childrenJsonArray);
+	jObject.pushJSONArray("childsensors",childrenJsonArray);
+
+	/*jObject.pushInteger("id", id);
+	jObject.pushString("phisicaladdr", getPhisicalAddress());
+	jObject.pushFloat("temperature", temperature);
+	jObject.pushFloat("avtemperature", avTemperature);*/
+
+	return jObject;
+}
+
 
 /*OnewireSensor::OnewireSensor()
 {
@@ -31,6 +78,7 @@ OnewireSensor::OnewireSensor(uint8_t pin, bool enabled, String address, String n
 
 OnewireSensor::~OnewireSensor()
 {
+	
 }
 
 void OnewireSensor::init()
@@ -41,42 +89,58 @@ void OnewireSensor::beginTemperatureSensors()
 {
 	// questa funz può essere chiamata solo dopo
 	// aver inizializzato pin
-	logger.print(tag, "\n\t >>init OnewireSensor");
+	logger.print(tag, "\n\t >>beginTemperatureSensors");
 	oneWirePtr = new OneWire(pin);
 	pDallasSensors = new DallasTemperature(oneWirePtr);
 	pDallasSensors->begin();
 
-	uint8_t address[8];
+	uint8_t _address[8];
 	tempSensorNum = 0;
-	while (oneWirePtr->search(address) && tempSensorNum < OnewireSensor::maxTempSensors) {
-		logger.print(tag, "\n\tFound \'1-Wire\' device with address:");
+
+	SensorFactory factory;
+	childsensors.clearAll();
+
+	while (oneWirePtr->search(_address) && tempSensorNum < OnewireSensor::maxTempSensors) {
+		
+		logger.print(tag, "\n\tFound \'1-Wire\' device with _address:");
 		for (int i = 0; i < 8; i++) {
 			logger.print(tag, "0x");
-			if (address[i] < 16) {
+			if (_address[i] < 16) {
 				logger.print(tag, '0');
 			}
-			logger.print(tag, address[i]);
+			logger.print(tag, _address[i]);
 			if (i < 7) {
 				logger.print(tag, ", ");
 			}
 		}
-		if (OneWire::crc8(address, 7) != address[7]) {
-			logger.print(tag, "\n\tCRC is not valid!");
+		if (OneWire::crc8(_address, 7) != _address[7]) {
+			logger.print(tag, "\n\t CRC is not valid!");
 			return;
 		}
 
 		for (int i = 0; i < 8; i++) {
-			temperatureSensors[tempSensorNum].sensorAddr[i] = address[i];
+			temperatureSensors[tempSensorNum].sensorAddr[i] = _address[i];
 		}
 		logger.print(tag, "\n\t tempSensorNum.name = " + String(tempSensorNum));
 
 		temperatureSensors[tempSensorNum].id = tempSensorNum + 1;
-		temperatureSensors[tempSensorNum].name = "sensore temperatura" + String(tempSensorNum + 1);
+		temperatureSensors[tempSensorNum].name = "sensoretemperatura" + String(tempSensorNum + 1);
 		
 		logger.print(tag, "\n\t temperatureSensors[tempSensorNum].name = " + temperatureSensors[tempSensorNum].name);
 		logger.print(tag, "\n\t temperatureSensors[tempSensorNum].id = " + String(temperatureSensors[tempSensorNum].id));
 
 		tempSensorNum++;
+
+		// aggiunge un child
+		String name = "sensoretemperatura" + String(tempSensorNum + 1);
+		int id = tempSensorNum;
+		String subaddress = address + "." + tempSensorNum;
+		TemperatureSensor* child = (TemperatureSensor*) factory.createSensor("temperaturesensor", pin, true, subaddress, name);
+		child->id = id;
+		for (int i = 0; i < 8; i++) {
+			child->sensorAddr[i] = _address[i];
+		}
+		childsensors.add(child);
 
 	}
 	oneWirePtr->reset_search();
@@ -115,36 +179,41 @@ bool OnewireSensor::readTemperatures() {
 
 	pDallasSensors->requestTemperatures(); // Send the command to get temperatures
 
-	logger.print(tag, "\n\t tempSensorNum: " + String(tempSensorNum));
-	for (int i = 0; i < tempSensorNum; i++) {
-
+	logger.print(tag, "\n\t childsensors.length(): " + String(childsensors.length()));
+	for (int i = 0; i < /*tempSensorNum*/childsensors.length(); i++) {
+		TemperatureSensor* tempSensor = (TemperatureSensor*)childsensors.get(i);
+		
 		// call dallasSensors.requestTemperatures() to issue a global temperature 
 		// request to all devices on the bus
 		logger.print(tag, "\n\t sensor: ");
-		logger.print(tag, temperatureSensors[i].name);
+		logger.print(tag, tempSensor->name);
 		logger.print(tag, "\n\t index: ");
 		logger.print(tag, i);
 		logger.print(tag, "\n\t addr ");
-		logger.print(tag, temperatureSensors[i].getPhisicalAddress());
+		logger.print(tag, tempSensor->getPhisicalAddress());
 
-		float oldTemperature = temperatureSensors[i].temperature;
+		//float oldTemperature = temperatureSensors[i].temperature;
+		float oldTemperature = tempSensor->temperature;
 		logger.print(tag, "\n\t old Temperature   is: ");
-		logger.print(tag, String(temperatureSensors[i].temperature));
+		logger.print(tag, String(oldTemperature));
 
-		float dallasTemperature = pDallasSensors->getTempC(temperatureSensors[i].sensorAddr);
+		float dallasTemperature = pDallasSensors->getTempC(tempSensor->sensorAddr);
+		//float dallasTemperature = pDallasSensors->getTempC(temperatureSensors[i].sensorAddr);
 		logger.print(tag, "\n\t dallas Temperature   is: ");
 		logger.print(tag, String(dallasTemperature));
 
+		
+		tempSensor->temperature = (((int)(dallasTemperature * 10 + .5)) / 10.0);
 		temperatureSensors[i].temperature = (((int)(dallasTemperature * 10 + .5)) / 10.0);
 		logger.print(tag, "\n\t rounded Temperature  is: ");
-		logger.print(tag, String(temperatureSensors[i].temperature));
+		logger.print(tag, String(tempSensor->temperature));
 
 		// se è cambiata almeno una temperatura ritorna true
-		if (oldTemperature != temperatureSensors[i].temperature)
+		if (oldTemperature != tempSensor->temperature)
 			res = true;
 
 		if (avTempCounter < avTempsize) {
-			avTemp[avTempCounter] = temperatureSensors[i].temperature;
+			avTemp[avTempCounter] = tempSensor->temperature;
 			avTempCounter++;
 		}
 		else {
@@ -152,59 +221,48 @@ bool OnewireSensor::readTemperatures() {
 			{
 				avTemp[i] = avTemp[i + 1];
 			}
-			avTemp[avTempCounter - 1] = temperatureSensors[i].temperature;
+			avTemp[avTempCounter - 1] = tempSensor->temperature;
 		}
 		float average = 0.0;
 		for (int i = 0; i < avTempCounter; i++) {
 			average += avTemp[i];
 		}
 		average = average / (avTempCounter);
+		tempSensor->avTemperature = (((int)(dallasTemperature * 10 + .5)) / 10.0);
 		temperatureSensors[i].avTemperature = ((int)(average * 100 + .5) / 100.0);
 
 		logger.print(tag, "\n\tAverage temperature  is: ");
-		logger.print(tag, String(temperatureSensors[i].avTemperature));
+		logger.print(tag, String(tempSensor->avTemperature));
 		logger.print(tag, "\n");
 
 	}
 	
 	if(res)
-		logger.print(tag, "\n\n\t >>readTemperatures - temperatura cambiata");
+		logger.print(tag, "\n\n\t --temperatura cambiata");
 	else
 		logger.print(tag, "\n\n\t >>readTemperatures - temperatura non cambiata");
 	
 	return res;
 }
 
-String OnewireSensor::getJSONFields() {
-
+String OnewireSensor::getJSONFields(int jsontype)
+{
 	logger.print(tag, "\n\t >>OnewireSensor::getJSONFields");
 
 	String json = "";
-	//json += ",\"addr\":";
-	//json += "\"" + getSensorAddress() + "\"";
 
-	json += ",\"childsensors\":[";
+	/*json += ",\"childsensors\":[";
 
-	for (int i = 0; i < tempSensorNum; i++) {
+	for (int i = 0; i < childsensors.length(); i++) {
+
+
 		if (i > 0)
 			json += ",";
-		json += "{";
-		json += "\"id\":";
-		json += String(temperatureSensors[i].id);
-		json += ",\"name\":";
-		json += "\"" + temperatureSensors[i].name + "\"";
-		json += ",\"addr\":";
-		json += "\"" + address + "." + String(temperatureSensors[i].id) + "\"";
-		json += ",\"phisicaladdr\":";
-		json += "\"" + temperatureSensors[i].getPhisicalAddress() + "." + String(temperatureSensors[i].id) + "\"";
-		json += ",\"temperature\":";
-		json += String(getTemperature(i));
-		json += ",\"avtemperature\":";
-		json += String(getAvTemperature(i));
-		json += "}";
+
+		json += ((Sensor*)childsensors.get(i))->getJSON();
 	}
 
-	json += "]";
+	json += "]";*/
 
 	logger.print(tag, "\n\t <<OnewireSensor::getJSONFields json=" + json);
 	return json;

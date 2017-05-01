@@ -4,6 +4,7 @@
       "name": "Visual Micro",
       "intelliSenseMode": "msvc-x64",
       "includePath": [
+        "${projectRoot}..\\..\\..\\Documents\\Arduino\\libraries\\pubsubclient-2.6\\src",
         "${projectRoot}..\\..\\..\\Documents\\Arduino\\libraries\\Time",
         "${projectRoot}..\\..\\..\\Documents\\Arduino\\libraries\\OneWire",
         "${projectRoot}..\\..\\..\\Documents\\Arduino\\libraries\\DallasTemperature",
@@ -17,6 +18,7 @@
         "${projectRoot}..\\..\\..\\AppData\\Local\\arduino15\\packages\\esp8266\\hardware\\esp8266\\2.3.0\\libraries\\Wire",
         "${projectRoot}..\\..\\..\\Documents\\Arduino\\libraries\\esp8266-oled-ssd1306",
         "${projectRoot}..\\..\\..\\AppData\\Local\\arduino15\\packages\\esp8266\\hardware\\esp8266\\2.3.0\\libraries\\ESP8266mDNS",
+        "${projectRoot}..\\..\\..\\AppData\\Local\\arduino15\\packages\\esp8266\\hardware\\esp8266\\2.3.0\\libraries\\Ethernet\\src\\utility",
         "${projectRoot}..\\..\\..\\..\\..\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\Common7\\IDE\\Extensions\\bjgs31r1.33a\\Micro Platforms\\visualmicro\\ide\\libraries",
         "${projectRoot}..\\..\\..\\AppData\\Local\\arduino15\\packages\\esp8266\\hardware\\esp8266\\2.3.0\\libraries",
         "${projectRoot}..\\..\\..\\Documents\\Arduino\\libraries",

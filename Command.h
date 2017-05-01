@@ -24,6 +24,7 @@ public:
 	void registerShield(Shield shield);
 	void sendRestartNotification();
 	boolean sendSensorsStatus(Shield shield);
+	boolean sendSettingsStatus(Shield shield);
 	bool sendLog(String log/*, int shieldid/*, String serverName, int port*/);
 	//boolean sendActuatorStatus(HeaterActuator actuator);
 	boolean download(String filename, Shield shield);

@@ -22,21 +22,42 @@ Sensor::Sensor(uint8_t pin, bool enabled, String address, String name)
 
 Sensor::~Sensor()
 {
+	childsensors.clearAll();
 }
 
 void Sensor::show() {
 
-		logger.print(tag, "\n\t name=");
-		logger.print(tag,sensorname);
-		logger.print(tag, "\n\t addr= ");
-		logger.print(tag, address);
-		logger.print(tag, "\n\t enabled= ");
-		logger.print(tag, String(enabled));
-		logger.print(tag, "\n\t pin= ");
-		logger.print(tag, String(pin));
+	logger.print(tag, "\n\t name=");
+	logger.print(tag, sensorname);
+	logger.print(tag, "\n\t addr= ");
+	logger.print(tag, address);
+	logger.print(tag, "\n\t enabled= ");
+	logger.print(tag, String(enabled));
+	logger.print(tag, "\n\t pin= ");
+	logger.print(tag, String(pin));
 }
 
 String Sensor::getJSON() {
+	return getJSON(json_full);
+}
+
+JSONObject Sensor::getJSON2() {
+
+	JSONObject jObject;
+	jObject.pushString("type",type);
+	jObject.pushString("name", sensorname);
+	jObject.pushBool("enabled", enabled);
+	jObject.pushInteger("pin", pin);
+	jObject.pushString("addr", address);
+	
+	return jObject;
+}
+
+void Sensor::loadChildren(JSONArray json)
+{
+}
+
+String Sensor::getJSON(int jsontype) {
 
 	logger.print(tag, "\n\t>>getJSON");
 
@@ -44,7 +65,7 @@ String Sensor::getJSON() {
 	json += "{";
 
 	// common field
-	json += "\"type\":\""+ type + "\"";
+	json += "\"type\":\"" + type + "\"";
 	json += ",\"name\":\"";
 	json += String(sensorname) + "\"";
 	json += ",\"enabled\":";
@@ -55,19 +76,31 @@ String Sensor::getJSON() {
 	json += ",\"pin\":\"" + Shield::getStrPin(pin) + "\"";
 	json += ",\"addr\":\"";
 	json += address + "\"";
-	
+
 	// get custom json field
-	json += getJSONFields();
-	
+	json += getJSONFields(jsontype);
+
+	// get children json
+	logger.print(tag, "\n\t childsensors.length()" + String(childsensors.length()));
+	if (childsensors.length() > 0) {
+		json += ",\"childsensors\":[";
+		for (int i = 0; i < childsensors.length(); i++) {
+			if (i > 0)
+				json += ",";
+			json += ((Sensor*)childsensors.get(i))->getJSON();
+		}
+		json += "]";
+	}
+
 	json += "}";
 
-	logger.print(tag, "\n\t<<getJSON json=" + json);
+	logger.print(tag, "\n\t<<getJSON json="/* + json*/);
 	return json;
 }
 
-String Sensor::getJSONFields()
+String Sensor::getJSONFields(int type)
 {
-	return String();
+	return "";
 }
 
 void Sensor::init()

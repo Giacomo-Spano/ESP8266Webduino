@@ -6,6 +6,19 @@
 Logger DoorSensor::logger;
 String DoorSensor::tag = "DoorSensor";
 
+JSONObject DoorSensor::getJSON2()
+{
+
+	JSONObject jObject = Sensor::getJSON2();
+	jObject.pushBool("open", openStatus);
+	/*jObject.pushString("phisicaladdr", getPhisicalAddress());
+	jObject.pushFloat("temperature", temperature);
+	jObject.pushFloat("avtemperature", avTemperature);*/
+
+	return jObject;
+}
+
+
 DoorSensor::DoorSensor(uint8_t pin, bool enabled, String address, String name) : Sensor(pin, enabled, address, name)
 {
 	type = "doorsensor";
@@ -61,18 +74,19 @@ bool DoorSensor::checkStatusChange() {
 	return false;
 }
 
-String DoorSensor::getJSONFields() {
+String DoorSensor::getJSONFields(int jsontype)
+{
 	logger.print(tag, "\n\t>>Door::getJSONFields");
 	String json = "";
-	
+
 	// specific field
 	json += ",\"open\":";
 	if (openStatus)
 		json += "true";
-	else 
+	else
 		json += "false";
-	
-	logger.print(tag, "\n\t<<Door::getJSONFields json=" + json);
+
+	logger.print(tag, "\n\t<<Door::getJSONFields json=" /*+ json*/);
 	return json;
 }
 

@@ -17,6 +17,7 @@ private:
 
 public:
 
+	JSONObject();
 	JSONObject(String json);
 	~JSONObject();
 
@@ -38,6 +39,7 @@ public:
 	String getJSONArray(String key);
 
 	String toString();
+	String toFormattedString();
 
 };
 
