@@ -31,11 +31,11 @@ public:
 	int checkStatus_interval = 20000;//60000; // 60 seconds
 	unsigned long lastCheckStatus;// = 0;//-flash_interval;
 
-	virtual String getJSON();
+	//virtual String getJSON();
 	virtual JSONObject getJSON2();
 	virtual void loadChildren(JSONArray json);
-	virtual String getJSON(int type);
-	virtual String getJSONFields(int jsontype);
+	//virtual String getJSON(int type);
+	//virtual String getJSONFields(int jsontype);
 	
 	static const int sensorNameLen = 20;
 	static const int sensorAddressLen = 20;

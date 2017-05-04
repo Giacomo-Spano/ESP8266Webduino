@@ -82,6 +82,7 @@ void Command::registerShield(Shield shield)
 {
 	logger.println(tag, F(">> registerShield\n"));
 	
+	// questo sarebbe da cambiare e trasformare in JSONOject
 	String str = "{";
 	str += "\"event\":\"register\",";
 
@@ -98,11 +99,14 @@ void Command::registerShield(Shield shield)
 		Sensor* sensor = (Sensor*)shield.sensorList.get(i);
 		if (i != 0)
 			str += ",";
-		str += sensor->getJSON();
+		str += sensor->getJSON2().toString();
 	}
 	str += "]";
 	str += "}";
 	str += "}";
+
+
+	logger.print(tag, "\n\tjson=" + logger.formattedJson(str));
 	
 	if (Shield::getMQTTmode() == true) {
 		String topic = "toServer/register";

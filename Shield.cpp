@@ -446,7 +446,7 @@ String Shield::getSensorsStatusJson() {
 		if (i != 0)
 			json += ",";
 
-		json += sensor->getJSON();
+		json += sensor->getJSON2().toString();
 	}
 	json += "]";
 	json += "}";

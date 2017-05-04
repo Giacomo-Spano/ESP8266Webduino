@@ -37,19 +37,34 @@ void Sensor::show() {
 	logger.print(tag, String(pin));
 }
 
-String Sensor::getJSON() {
+/*String Sensor::getJSON() {
 	return getJSON(json_full);
-}
+}*/
 
 JSONObject Sensor::getJSON2() {
-
+	logger.print(tag, "\n\t>>Sensor::getJSON2");
 	JSONObject jObject;
-	jObject.pushString("type",type);
+	jObject.pushString("type", type);
 	jObject.pushString("name", sensorname);
 	jObject.pushBool("enabled", enabled);
 	jObject.pushInteger("pin", pin);
 	jObject.pushString("addr", address);
-	
+
+	// child sensors
+	if (childsensors.length() > 0) {
+		String childrenJsonArray = "[";
+		for (int i = 0; i < childsensors.length(); i++) {
+			Sensor* child = (Sensor*)childsensors.get(i);
+			JSONObject childJson = child->getJSON2();
+			if (i > 0) childrenJsonArray += ",";
+			childrenJsonArray += childJson.toString();
+		}
+		childrenJsonArray += "]";
+		JSONArray jarray(childrenJsonArray);
+		jObject.pushJSONArray("childsensors", childrenJsonArray);
+	}
+
+	logger.print(tag, "\n\t<<Sensor::getJSON2");
 	return jObject;
 }
 
@@ -57,7 +72,7 @@ void Sensor::loadChildren(JSONArray json)
 {
 }
 
-String Sensor::getJSON(int jsontype) {
+/*String Sensor::getJSON(int jsontype) {
 
 	logger.print(tag, "\n\t>>getJSON");
 
@@ -94,14 +109,14 @@ String Sensor::getJSON(int jsontype) {
 
 	json += "}";
 
-	logger.print(tag, "\n\t<<getJSON json="/* + json*/);
+	logger.print(tag, "\n\t<<getJSON json=");
 	return json;
-}
+}*/
 
-String Sensor::getJSONFields(int type)
+/*String Sensor::getJSONFields(int type)
 {
 	return "";
-}
+}*/
 
 void Sensor::init()
 {

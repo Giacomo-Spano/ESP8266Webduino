@@ -19,8 +19,8 @@ void MQTTClientClass::init(WiFiClient* espClient)
 }
 
 //static const char serverMQTT[] = "79.24.3.210";
-//static const char serverMQTT[] = "giacomohome.ddns.net";
-static const char serverMQTT[] = "192.168.1.3";
+static const char serverMQTT[] = "giacomohome.ddns.net";
+//static const char serverMQTT[] = "192.168.1.3";
 
 PubSubClient & MQTTClientClass::setServer(const char * domain, uint16_t port)
 {

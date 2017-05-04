@@ -193,42 +193,13 @@ void writeSensorEPROMJSON() {
 
 		logger.print(tag, "\n\t sensor->enabled = " + String(sensor->enabled));
 		json.pushBool("sensor->enabled", sensor->enabled);
-#ifdef dopo		
-		for (int i = 0; i < sensor->; i++) {
-
-		}
-
-
-		logger.print(tag, "\n\t onewire->tempSensorNum=" + String(onewire->tempSensorNum));
-
-		for (int k = 0; k < onewire->tempSensorNum; k++) {
-
-			hiByte = highByte(onewire->temperatureSensors[k].id);
-			loByte = loByte(onewire->temperatureSensors[k].id);
-			EEPROM.write(addr++, hiByte);
-			EEPROM.write(addr++, loByte);
-			logger.print(tag, "\n\t onewire->temperatureSensors[k].id=" + onewire->temperatureSensors[k].id);
-
-			char sensorNameBuffer[Sensor::sensorNameLen];
-			onewire->temperatureSensors[k].name.toCharArray(sensorNameBuffer, sizeof(sensorNameBuffer));
-			res = EEPROM_writeAnything(addr, sensorNameBuffer);
-			logger.print(tag, "\n\t onewire->temperatureSensors[k].name=" + onewire->temperatureSensors[k].name);
-			addr += res;
-		}
-	}
-	logger.print(tag, "\n\n\t --addr:" + String(addr));
-}
-
-
-#endif
-//-----------------
 	}
 	logger.print(tag, "\n\t >>writeSensorEPROMJSON");
 }
 
 int writeJSON(int index, String json) {
 		
-	logger.print(tag, "\n\t >>writeJSON" + String(index));
+	logger.print(tag, "\n\t >>writeJSON index=" + String(index));
 	int startIndex = index;
 	
 	logger.print(tag, "\n\t str =" + json);
@@ -244,7 +215,6 @@ int writeJSON(int index, String json) {
 	for (int i = 0; i < json.length(); ++i)
 	{
 		EEPROM.write(index++, json.charAt(i));
-		Serial.print(json.charAt(i));
 		if (i > maxjsonLength) break;
 	}
 	EEPROM.commit();
@@ -318,19 +288,19 @@ int readJSON(int index, String* str) {
 	byte hiByte = EEPROM.read(index++);
 	byte loByte = EEPROM.read(index++);
 	int len = word(hiByte, loByte);
-	logger.print(tag, "\n\t len=" + String(len));
+	//logger.print(tag, "\n\t len=" + String(len));
 
 	int i = 0;
 	while (i < maxjsonLength && i < len && index < 4096)
 	{
 		char c = char(EEPROM.read(index++));
-		logger.print(tag, "" + String(c));
+		//logger.print(tag, "" + String(c));
 		*str += c;
 		i++;
 	}
 	*str += '\0';
 
-	logger.print(tag, "\n\t <<readJSON" + String(index - startIndex));
+	logger.print(tag, "\n\t <<readJSON read=" + String(index - startIndex));
 	
 	return index - startIndex;
 }
@@ -500,8 +470,9 @@ void writeEPROM() {
 
 	EEPROM.commit();
 
-	logger.print(tag, "\n\n\t --free: " + String(system_get_free_heap_size()));
+	writeSensor(2000);
 
+#ifdef dopo
 	logger.print(tag, "\n\n\t --START---------");
 	hiByte = highByte(shield.sensorList.length());
 	loByte = lowByte(shield.sensorList.length());
@@ -532,9 +503,47 @@ void writeEPROM() {
 	}
 	//EEPROM.commit();
 
+#endif
+
 	logger.print(tag, "\n\t <<write EPROM\n");
 	logger.print(tag, "\n\n\t --addr:" + String(addr));
 }
+
+void writeSensor(int index) {
+
+	logger.print(tag, "\n\t >>writeSensor");
+
+	byte hiByte;
+	byte loByte;
+
+	// sensor number
+	hiByte = highByte(shield.sensorList.length());
+	loByte = lowByte(shield.sensorList.length());
+	EEPROM.write(index++, hiByte);
+	EEPROM.write(index++, loByte);
+		
+	for (int i = 0; i < shield.sensorList.length(); i++) {
+		logger.print(tag, "\n\n\t writesensor:" + String(i));
+		Sensor* sensor = (Sensor*)shield.sensorList.get(i);
+
+		JSONObject json2 = sensor->getJSON2();
+
+		//String json = sensor->getJSON();
+		logger.print(tag, "\n\n\t sensor:\n" + logger.formattedJson(json2.toString()));
+
+		int written = 0;
+		written = writeJSON(index, json2.toString());
+
+		logger.print(tag, "\n\n\t --written:" + String(written));
+		index += written;
+
+		logger.print(tag, "\n\n\t --index=" + String(index));
+	}
+	EEPROM.commit();
+
+	logger.print(tag, "\n\t <<writeSensor\n");
+}
+
 
 void readEPROM() {
 
@@ -569,6 +578,51 @@ void readEPROM() {
 	logger.print(tag, "\n\n\t <<read EPROM res=\n" + String(addr));
 
 	logger.print(tag, "\n\n\t --addr:" + String(addr));
+}
+
+void readSensor2(int index) {
+
+	logger.print(tag, "\n\n\t >>read Sensor2");
+	
+	byte hiByte;
+	byte loByte;
+
+	// sensor count
+	hiByte = EEPROM.read(index++);
+	loByte = EEPROM.read(index++);
+	int sensorCount = word(hiByte, loByte);
+	logger.print(tag, "\n\t sensorCount=" + String(sensorCount));
+	if (sensorCount < 0 || sensorCount > Shield::maxSensorNum) {
+		sensorCount = 0;
+		return;
+	}
+	
+	SensorFactory factory;
+
+	shield.clearAllSensors(); // serve per inizializzare
+	for (int i = 0; i < sensorCount; i++) {
+
+		logger.print(tag, "\n\n\t SENSOR: #" + String(i));
+
+		String json;
+		int read = readJSON(index, &json);
+		logger.print(tag, "\n\t read=" + String(read));
+		index += read;
+		JSONObject jObject(json);
+
+		logger.print(tag, "\n: " + logger.formattedJson(json));
+
+		logger.print(tag, "\n\n\t --free: " + String(system_get_free_heap_size()));
+		Sensor* sensor = factory.createSensor(&jObject);
+		if (sensor != nullptr) {
+			
+			shield.addSensor(sensor);
+		}
+		logger.print(tag, "\n\t next");
+		logger.print(tag, "\n\n\t --free: " + String(system_get_free_heap_size()));
+	}
+	
+	logger.print(tag, "\n\n\t <<read Sensor2\n");
 }
 
 void readSensor() {
@@ -915,7 +969,7 @@ int testWifi2(void) {
 
 void callback(char* topic, byte* payload, unsigned int length) {
 	
-	logger.print(tag, "\n\t >>callback");
+	logger.print(tag, "\n\n\t >>callback");
 	logger.print(tag, "\n\t Message received");
 	logger.print(tag, "\n\t topic=" + String(topic));
 	
@@ -925,7 +979,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
 	}
 	logger.print(tag, "\n\t message=" + message);
 	parseMessageReceived(String(topic), message);
-	logger.print(tag, "\n\t <<CALLBACK");
+	logger.print(tag, "\n\t <<callback\n");
 }
 
 void parseMessageReceived(String topic, String message) {
@@ -1059,7 +1113,8 @@ void setup()
 		wdt_enable(WDTO_8S);
 
 		//readEPROMJSON();
-		readSensor();
+		//readSensor();
+		readSensor2(2000);
 		
 
 		shield.drawString(0, 70, "init heater", 1, ST7735_WHITE);
@@ -1362,7 +1417,10 @@ bool mqtt_publish(String topic, String message) {
 	logger.print(tag, "\n\n\t Publish message: [" + topic + String("] ") + message);
 	bool res = mqttclient.publish(topic.c_str(), message.c_str());
 	// qui bisognerebbe aggiungere qualche logica per gestire errore
-	logger.print(tag, "\n\t res=" + String(res));
+	if (res)
+		logger.print(tag, "\n\t message sent\n");
+	else
+		logger.print(tag, "\n\t message NOT sent!!!\n");
 
 	return res;
 }

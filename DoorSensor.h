@@ -19,7 +19,7 @@ class DoorSensor :
 private:
 	static String tag;
 	static Logger logger;
-	virtual String getJSONFields(int jsontype);
+	//virtual String getJSONFields(int jsontype);
 
 public:
 	virtual JSONObject getJSON2();

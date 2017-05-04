@@ -22,7 +22,7 @@ public:
 	~SensorFactory();
 
 	Sensor* createSensor(String type, uint8_t pin, bool enabled, String address, String name);
-	Sensor * createSensor(JSONObject json);
+	Sensor * createSensor(JSONObject* json);
 };
 
 #endif

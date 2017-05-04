@@ -32,19 +32,22 @@ bool TemperatureSensor::checkStatusChange() {
 
 JSONObject TemperatureSensor::getJSON2() {
 
-	
+	logger.print(tag, "\n\t>>TemperatureSensorgetJSON2");
+
 	JSONObject jObject = Sensor::getJSON2();
 	jObject.pushInteger("id", id);
 	jObject.pushString("phisicaladdr", getPhisicalAddress());
 	jObject.pushFloat("temperature", temperature);
 	jObject.pushFloat("avtemperature", avTemperature);
+	
+	logger.print(tag, "\n\t<<TemperatureSensor::getJSON2");
 
 	return jObject;
 }
 
 String TemperatureSensor::getJSONFields(int jsontype) {
 
-	logger.print(tag, "\n\t>>TemperatureSensor::getJSONFields");
+	logger.print(tag, "\n\TemperatureSensor::>>TemperatureSensor::getJSONFields");
 	String json = "";
 
 	// specific field
@@ -57,6 +60,6 @@ String TemperatureSensor::getJSONFields(int jsontype) {
 	json += ",\"avtemperature\":";
 	json += String(avTemperature);
 
-	logger.print(tag, "\n\t<<TemperatureSensor::getJSONFields json=" + json);
+	logger.print(tag, "\n\TemperatureSensor::<<TemperatureSensor::getJSONFields json=" + json);
 	return json;
 }

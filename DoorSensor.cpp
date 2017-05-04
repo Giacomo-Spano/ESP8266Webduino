@@ -74,7 +74,7 @@ bool DoorSensor::checkStatusChange() {
 	return false;
 }
 
-String DoorSensor::getJSONFields(int jsontype)
+/*String DoorSensor::getJSONFields(int jsontype)
 {
 	logger.print(tag, "\n\t>>Door::getJSONFields");
 	String json = "";
@@ -86,8 +86,8 @@ String DoorSensor::getJSONFields(int jsontype)
 	else
 		json += "false";
 
-	logger.print(tag, "\n\t<<Door::getJSONFields json=" /*+ json*/);
+	logger.print(tag, "\n\t<<Door::getJSONFields json=" );
 	return json;
-}
+}*/
 
 
