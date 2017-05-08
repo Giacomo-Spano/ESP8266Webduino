@@ -21,9 +21,10 @@ public:
 
 	Command();
 	~Command();
-	void registerShield(Shield shield);
+	void registerShield(String json);
+	String loadShieldSettings();
 	void sendRestartNotification();
-	boolean sendSensorsStatus(Shield shield);
+	boolean sendSensorsStatus(String json);
 	boolean sendSettingsStatus(Shield shield);
 	bool sendLog(String log/*, int shieldid/*, String serverName, int port*/);
 	//boolean sendActuatorStatus(HeaterActuator actuator);

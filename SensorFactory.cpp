@@ -4,6 +4,7 @@
 #include "DoorSensor.h"
 #include "OnewireSensor.h"
 #include "JSONObject.h"
+#include "Shield.h"
 //#include "Util.h"
 //#include "ESP8266Webduino.h"
 
@@ -40,30 +41,32 @@ Sensor * SensorFactory::createSensor(String type, uint8_t pin, bool enabled, Str
 		sensor = new OnewireSensor(pin, enabled, address, name);
 	}
 
-	logger.print(tag, "\n\t <<SensorFactory::createSensor type=" + type);
+	logger.println(tag, "createSensor type=" + type);
 	return sensor;
 }
 
 Sensor * SensorFactory::createSensor(JSONObject* json)
 {
-	logger.print(tag, "\n\t >>SensorFactory::createSensor \n");
+	logger.print(tag, "\n");
+	logger.println(tag, "\n\t >>createSensor  json = " + logger.formattedJson(json->toString()));
 
 	String type;
 	String address;
 	uint8_t pin = 0;
 	bool enabled = true;
-	String name;
+	String name = "";
 		
 	
-	if (!json->has("type") || !json->has("addr")) {
+	if (!json->has("type") || !json->has("subaddress")) {
 		logger.print(tag, "\n\t invalid address and typ=");
 		return nullptr;
 	}
 	type = json->getString("type");
-	address = json->getString("addr");
+	address = json->getString("subaddress");
 		
 	if (json->has("pin")) {
-		pin = json->getInteger("pin");
+		String strPin = json->getString("pin");
+		pin = Shield::pinFromStr(strPin);
 	}
 	if (json->has("enabled")) {
 		enabled = json->getBool("enabled");
@@ -100,13 +103,13 @@ Sensor * SensorFactory::createSensor(JSONObject* json)
 
 	sensor->init();
 	if (json->has("childsensors")) {
-		String children = json->getString("childsensors");
+		String children = json->getJSONArray("childsensors");
 		logger.print(tag, "\n\t children=" + children);
 		JSONArray jarray(children);
 		sensor->loadChildren(jarray);
 	}
 	
-	logger.print(tag, "\n\t <<SensorFactory::createSensor");
+	logger.println(tag, "<<SensorFactory::createSensor");
 	return sensor;
 }
 

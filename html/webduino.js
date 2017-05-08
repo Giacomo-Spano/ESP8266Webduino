@@ -1,10 +1,21 @@
-var serverPath = '..';
+var serverPath = '.';
 
 var heaterStatusPath = serverPath+'/heaterstatus';
-var sensorsStatusPath = serverPath+'/sensorstatus';
-var commandPath = serverPath+'/command';
-var settingsPath = serverPath+'/settings';
+//var sensorsStatusPath = serverPath+'/sensorstatus';
+//var commandPath = serverPath+'/command';
+//var settingsPath = serverPath+'/settings';
+var sensorsStatusPath = serverPath+'/shield?command=updatesensorstatusrequest';
+var commandPath = serverPath+'/shield';
+var settingsPath = serverPath+'/shield?command=updatesettingstatusrequest';
 
+function getUrlVars() {
+    var vars = {};
+    var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi,
+        function(m,key,value) {
+            vars[key] = value;
+        });
+    return vars;
+}
 
 var popFunction = function pop(modalText,okCallback,cancelCallback) {
 

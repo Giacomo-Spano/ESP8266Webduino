@@ -24,6 +24,7 @@ public:
 	bool has(String key);*/
 	String getFirst();
 	String getNext();
+	String toString();
 
 private:
 	static String tag;

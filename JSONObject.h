@@ -21,6 +21,11 @@ public:
 	JSONObject(String json);
 	~JSONObject();
 
+	virtual String toString();
+
+	//virtual void show();
+	//JSONObject & operator=(const JSONObject &rhs);
+
 	List map;
 
 	void parse(String json);
@@ -38,7 +43,6 @@ public:
 	bool getBool(String key);
 	String getJSONArray(String key);
 
-	String toString();
 	String toFormattedString();
 
 };

@@ -8,8 +8,9 @@ void ObjectClass::init()
 
 }
 
-void ObjectClass::show()
+String ObjectClass::toString()
 {
+	return String("");
 }
 
 

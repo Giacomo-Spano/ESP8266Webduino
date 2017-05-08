@@ -21,8 +21,8 @@ public:
 	SensorFactory();
 	~SensorFactory();
 
-	Sensor* createSensor(String type, uint8_t pin, bool enabled, String address, String name);
-	Sensor * createSensor(JSONObject* json);
+	static Sensor* createSensor(String type, uint8_t pin, bool enabled, String address, String name);
+	static Sensor * createSensor(JSONObject* json);
 };
 
 #endif

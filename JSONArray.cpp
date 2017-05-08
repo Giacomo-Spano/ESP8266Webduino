@@ -56,3 +56,8 @@ String JSONArray::getNext()
 
 	return "";
 }
+
+String JSONArray::toString()
+{
+	return jsonArrayString;
+}

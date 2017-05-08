@@ -1,20 +1,22 @@
+var shieldId = 0;
+
 var onResetFunction = function onReset() {
 
-    var jsonString = '{"command" : "reset"}';
+    var jsonString = '{"command" : "reset", "shieldid":' + shieldId + '}';
     var json =  JSON.parse(jsonString);
     sendCommand(json, refreshFunction);
 }
 
 var onRebootFunction = function onReset() {
 
-    var jsonString = '{"command" : "reboot"}';
+    var jsonString = '{"command" : "reboot", "shieldid":' + shieldId + '}';
     var json =  JSON.parse(jsonString);
     sendCommand(json, refreshFunction);
 }
 
 var onUpdateSensorStatusFunction = function onReset() {
 
-    var jsonString = '{"command" : "updatesensorstatus"}';
+    var jsonString = '{"command" : "updatesensorstatus", "shieldid":' + shieldId + '}';
     var json =  JSON.parse(jsonString);
     sendCommand(json, refreshFunction);
 }
@@ -26,12 +28,14 @@ var onRegisterFunction = function onRegister() {
     if (this.checked == true ) {
         enabled = true;
     }
-    jsonString = '{"command" : "register"}';
+    jsonString = '{"command" : "register", "shieldid":' + shieldId + '}';
     var json =  JSON.parse(jsonString);
     sendCommand(json, refreshFunction);
 }
 
 function load() {
+
+    shieldId = getUrlVars()["id"];
 
     var powerCheckBox = document.getElementById('powerCheckBox').onclick = onClickPowerCheckBoxFunction;
     var resetButton = document.getElementById('resetButton').onclick = onResetFunction;
@@ -39,7 +43,7 @@ function load() {
     var updateStatusButton = document.getElementById('updateStatusButton').onclick = onUpdateSensorStatusFunction;
     var registerButton = document.getElementById('registerButton').onclick = onRegisterFunction;
 
-    getJson(settingsPath, refreshFunction);
+    getJson(settingsPath+"&id="+shieldId, refreshFunction);
 }
 
 var refreshFunction = function refresh(json) {
@@ -61,7 +65,8 @@ var refreshFunction = function refresh(json) {
         document.getElementById('macaddress').innerHTML = json.macaddress;
     }
     if (json.hasOwnProperty("shieldid")) {
-        document.getElementById('shieldid').innerHTML = json.shieldid;
+        shieldId = json.shieldid;
+        document.getElementById('shieldid').innerHTML = shieldId;
     }
     if (json.hasOwnProperty("shieldname")) {
         document.getElementById('shieldname').innerHTML = json.shieldname;
@@ -87,10 +92,10 @@ var onClickPowerCheckBoxFunction = function onClickPowerCheckBox() {
     var jsonString;
     if ( this.checked == true ) {
         alert( "Accendere il dispositivo?" );
-        jsonString = '{"command" : "power", "status" : "on"}';
+        jsonString = '{"command" : "power", "status" : "on", "shieldid":' + shieldId + '}';
     } else {
         alert( "Spengere il dispositivo?" );
-        var jsonString = '{"command" : "power", "status" : "off"}';
+        var jsonString = '{"command" : "power", "status" : "off", "shieldid":' + shieldId + '}';
     }
 
     var json =  JSON.parse(jsonString);

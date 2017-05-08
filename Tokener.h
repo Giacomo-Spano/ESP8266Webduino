@@ -18,6 +18,7 @@ public:
 	String json;
 	char next();
 	char nextClean();
+	char nextCleanNoCursor();
 	String nextTo(char toChar);
 	bool nextIsFloat();
 	float nextFloat();
@@ -28,7 +29,7 @@ public:
 	String nextJson();
 
 protected:
-	int current = 0;
+	int current;
 
 };
 

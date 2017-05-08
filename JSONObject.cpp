@@ -26,6 +26,27 @@ JSONObject::~JSONObject()
 	map.clearAll();
 }
 
+/*JSONObject & JSONObject::operator=(const JSONObject & rhs)
+{
+	// TODO: insert return statement here
+	ObjectClass* p = rhs.map.getFirst();
+	int i = 0;
+	while (p != nullptr) {
+		
+		p = p->next;
+	}
+
+	return *this;
+}*/
+
+// Take a const-reference to the right-hand side of the assignment.
+// Return a non-const reference to the left-hand side.
+/*JSONObject& JSONObject::operator=(const JSONObject &rhs) {
+	// Do the assignment operation!
+
+		return *this;  // Return a reference to myself.
+}*/
+
 String JSONObject::toString()
 {
 	String res = "{";
@@ -139,9 +160,9 @@ String JSONObject::getJSONArray(String key)
 
 	if (value->type == JSONValueType_JSONArray)
 	{
-		//JSONArrayValue* p = (JSONArrayValue*)value;
+		JSONArrayValue* p = (JSONArrayValue*)value;
 		//JSONArrayValue* p = new JSONArrayValue();
-		return "";// p->value;
+		return p->value;
 	}
 	//logger.print(tag, "\n\t JSONArrayObject::getArray not found =" + key);
 	return "";
@@ -158,7 +179,7 @@ bool JSONObject::pushString(String key, String value)
 
 bool JSONObject::pushInteger(String key, int value)
 {
-	//logger.print(tag, String("[") + key + String("]:") + value + "(Integer)\n");
+	logger.print(tag, String("[") + key + String("]:") + value + "(Integer)\n");
 	JSONIntegerValue* obj = new JSONIntegerValue(key, value);
 	map.add(obj);
 	return  true;
@@ -190,15 +211,24 @@ bool JSONObject::pushJSONArray(String key, String value)
 
 void JSONObject::parse(String json)
 {
+	//logger.print(tag, "\n");
+	//logger.println(tag, "parse json=" + json);
+
 	Tokener tokener(json);
 
 	char c = tokener.nextClean();
 
+	//logger.print(tag, "c=" + String(c) + "\n");
+
 	if (c == '{') {
+
 
 		while (c != 0) {
 
+			
 			c = tokener.nextClean();
+
+			//logger.print(tag, "c=" + String(c) + "\n");
 
 			if (c == 34) { // '"'
 
@@ -209,9 +239,18 @@ void JSONObject::parse(String json)
 					c = tokener.nextClean();
 
 					if (c == 34) { // '"'
-						// string
-						String val = tokener.nextTo(34);
-						pushString(key, val);
+
+						char c2 = tokener.nextCleanNoCursor();
+						/*if (c2 == '[') {
+							String val = tokener.nextArray();
+							JSONArrayObject* jarray = new JSONArrayObject(val);
+							pushJSONArray(key, val);
+						} else {*/
+
+							// string
+							String val = tokener.nextTo(34);	
+							pushString(key, val);
+						/*}*/
 
 					}
 					else if ((c >= '0' && c <= '9') //numeric 
@@ -237,15 +276,14 @@ void JSONObject::parse(String json)
 					/*else if (c == '{') {
 						throw("unexpected {");
 					}*/
-					else if (c == '[') {
+					else if (c == '[') { 
 						String val = tokener.nextArray();
-
 						JSONArrayObject* jarray = new JSONArrayObject(val);
-
 						pushJSONArray(key, val);
 					}
 					else {
-						logger.print(tag, "\n\t JSONArrayObject::parse invalid format =" + json);
+						logger.print(tag, "\n\t JSONObject::parse c = " + String(c));
+						logger.print(tag, "\n\t JSONObject::parse invalid format =" + json);
 						return;
 					}
 

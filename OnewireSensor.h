@@ -54,10 +54,10 @@ private:
 	OneWire* oneWirePtr;
 	DallasTemperature* pDallasSensors;
 
-	virtual String getJSONFields(int jsontype);
+	virtual String getJSONFields();
 
 public:
-	virtual JSONObject getJSON2();
+	virtual bool getJSON(JSONObject *jObject);
 	//virtual void loadChildren(JSONObject json);
 	static const int avTempsize = 10;
 
@@ -66,7 +66,7 @@ public:
 
 	//OnewireSensor();
 	OnewireSensor(uint8_t pin, bool enabled, String address, String name);
-	void loadChildren(JSONArray jarray);
+	virtual void loadChildren(JSONArray& jarray);
 	~OnewireSensor();
 	virtual bool checkStatusChange();
 

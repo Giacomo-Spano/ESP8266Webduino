@@ -37,38 +37,117 @@ void Sensor::show() {
 	logger.print(tag, String(pin));
 }
 
+String Sensor::toString()
+{
+	String str = "sensor: " + sensorname + ";type: " + type;
+	if (childsensors.count > 0)
+		str += ";chidren:" + String(childsensors.count);
+	return str;
+}
+
 /*String Sensor::getJSON() {
 	return getJSON(json_full);
 }*/
 
-JSONObject Sensor::getJSON2() {
-	logger.print(tag, "\n\t>>Sensor::getJSON2");
-	JSONObject jObject;
-	jObject.pushString("type", type);
-	jObject.pushString("name", sensorname);
-	jObject.pushBool("enabled", enabled);
-	jObject.pushInteger("pin", pin);
-	jObject.pushString("addr", address);
+bool Sensor::getJSON(JSONObject *jObject) {
+	logger.print(tag, "\n");
+	logger.println(tag, ">>getJSON");
+	
+	jObject->pushString("type", type);
+	jObject->pushString("name", sensorname);
+	jObject->pushBool("enabled", enabled);
+	jObject->pushString("pin", Shield::getStrPin(pin));
+	jObject->pushString("addr", address);
 
 	// child sensors
 	if (childsensors.length() > 0) {
+		logger.println(tag, "\n\t add child sensors JSON");
 		String childrenJsonArray = "[";
+		JSONObject childJson;
 		for (int i = 0; i < childsensors.length(); i++) {
 			Sensor* child = (Sensor*)childsensors.get(i);
-			JSONObject childJson = child->getJSON2();
-			if (i > 0) childrenJsonArray += ",";
+			//JSONObject childJson;
+			childJson.map.clearAll();
+			child->getJSON(&childJson);
+			if (i > 0) 
+				childrenJsonArray += ",";
 			childrenJsonArray += childJson.toString();
 		}
 		childrenJsonArray += "]";
 		JSONArray jarray(childrenJsonArray);
-		jObject.pushJSONArray("childsensors", childrenJsonArray);
+		jObject->pushJSONArray("childsensors", childrenJsonArray);
+		logger.println(tag, "\n\t child sensors JSON added\n");
 	}
 
-	logger.print(tag, "\n\t<<Sensor::getJSON2");
-	return jObject;
+	logger.println(tag, "<<getJSON");
+	return true;
 }
 
-void Sensor::loadChildren(JSONArray json)
+String Sensor::getJSONFields() {
+
+	logger.println(tag, ">>getJSONFields");
+
+	String json = "";
+	json += "\"type\":\"" + type + "\",";
+	json += "\"name\":\"" + sensorname + "\",";
+	json += "\"enabled\":";
+	if (enabled)
+		json += "true,";
+	else
+		json += "false,";
+	json += "\"pin\":\"" + Shield::getStrPin(pin) + "\",";
+	json += "\"addr\":\"" + address + "\"";
+
+	logger.println(tag, ">>getJSONFields" + json);
+	return json;
+
+}
+
+String Sensor::getChildren() {
+
+	logger.print(tag, "\n");
+	logger.println(tag, ">>getChildren child num=" + String(childsensors.length()));
+
+	String json = "";
+	if (childsensors.length() > 0) {
+
+		json += ",\"childsensors\":";
+		json += "[";
+		for (int i = 0; i < childsensors.length(); i++) {
+			if (i > 0)
+				json += ",";
+			Sensor* child = (Sensor*)childsensors.get(i);
+			json += child->getJSON();
+			
+		}
+		json += "]";
+
+		
+		//return json;
+	}
+
+	logger.println(tag, "<<getChildren" + json);
+	return json;
+}
+
+String Sensor::getJSON() {
+
+	logger.print(tag, "\n");
+	logger.println(tag, ">>getJSON");
+
+	String json = "{";
+	
+	json += getJSONFields();
+	// child sensors
+	json += getChildren();
+	
+	json += "}";
+
+	logger.println(tag, "<<getJSON " + json);
+	return json;
+}
+
+void Sensor::loadChildren(JSONArray& json)
 {
 }
 

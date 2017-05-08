@@ -94,11 +94,13 @@ String HeaterActuator::sendCommand(String jsonStr)
 	return jsonResult;
 }
 
-String HeaterActuator::getJSONFields(int jsontype)
+String HeaterActuator::getJSONFields()
 {
 	logger.print(tag, "\n\t >>HeaterActuator::getJSONFields");
 
 	String json = "";
+	json += Sensor::getJSONFields();
+
 	json += ",\"remotetemperature\":" + String(getRemoteTemperature());
 	json += ",\"status\":\"" + String(statusStr[getStatus()]) + "\"";
 	json += ",\"relestatus\":" + String((getReleStatus()) ? "true" : "false");
@@ -137,16 +139,21 @@ String HeaterActuator::getJSONFields(int jsontype)
 	return json;
 }
 
-JSONObject HeaterActuator::getJSON2()
+bool HeaterActuator::getJSON(JSONObject * jObject)
 {
+	logger.print(tag, "\n");
+	logger.println(tag, ">>getJSON");
 
-	JSONObject jObject = Sensor::getJSON2();
+	bool res = Sensor::getJSON(jObject);
+	if (!res) return false;
+
 	/*jObject.pushInteger("id", id);
 	jObject.pushString("phisicaladdr", getPhisicalAddress());
 	jObject.pushFloat("temperature", temperature);
 	jObject.pushFloat("avtemperature", avTemperature);*/
 
-	return jObject;
+	logger.println(tag, "<<getJSON");
+	return res;
 }
 
 

@@ -27,8 +27,6 @@ protected:
 	static bool mqttMode;
 
 public:
-	HeaterActuator* phearterActuator;
-
 	static String swVersion;
 	static const int shieldNameLen = 30;
 	static const int serverNameLen = 30;
@@ -43,7 +41,6 @@ public:
 
 	void drawString(int x, int y, String txt, int size, int color);
 	void clearScreen();
-	
 
 private:
 	static String tag;
@@ -52,18 +49,18 @@ private:
 	String oldDate;
 
 protected:
-	String sendUpdateSensorListCommand(JSON json);
-	String sendShieldSettingsCommand(JSON jsonStr);
-	String sendPowerCommand(JSON jsonStr);
-	String sendRegisterCommand(JSON jsonStr);
-	String sendResetCommand(JSON jsonStr);
-	String sendRebootCommand(JSON json);
-	String sendUpdateSensorStatusCommand(JSON json);
-
-	bool temperatureChanged = false; // indica se la temperatura � cambiata dall'ultima chiamata a flash()
-	void checkSensorsStatus();	
+	String onUpdateSensorListCommand(JSON& json);
+	String onShieldSettingsCommand(JSON& json);
+	String onPowerCommand(JSON& json);
+	String sendRegister();
+	String onResetCommand(JSON& json);
+	String onRebootCommand(JSON& json);
+	String sendUpdateSensorStatus();
 	
 
+	//bool temperatureChanged = false; // indica se la temperatura � cambiata dall'ultima chiamata a flash()
+	void checkSensorsStatus();	
+	
 	ESPDisplay display;
 	TFTDisplay tftDisplay;
 
@@ -74,9 +71,10 @@ public:
 	Shield();
 	~Shield();
 	void init();
+	String getJson();
 	String getSensorsStatusJson();
-	String getHeaterStatusJson();
 	String getSettingsJson();
+	void registerShield();
 	void checkStatus();	
 	String receiveCommand(String jsonStr);		
 	
@@ -87,9 +85,6 @@ public:
 	void addSensor(Sensor* pSensor);
 	void clearAllSensors();
 	Sensor* getSensorFromAddress(String addr);
-
-	//void addActuators();
-	void checkTemperatures();
 
 	static int getShieldId() {
 		return id; 

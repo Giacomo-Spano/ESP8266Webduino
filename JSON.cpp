@@ -99,7 +99,7 @@ String JSON::jsonGetArrayString(String key) {
 			count--;
 			if (count == 0) {
 				json = json.substring(start, i + 1);
-				logger.print(tag, "\n\t json=" + json);
+				//logger.print(tag, "\n\t json=" + json);
 				return json;
 			}
 		}

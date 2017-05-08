@@ -8,6 +8,7 @@ String Tokener::tag = "Shield";
 Tokener::Tokener(String json)
 {
 	this->json = json;
+	current = 0;
 }
 
 
@@ -18,18 +19,45 @@ Tokener::~Tokener()
 // ritorna il prossimo carattere diverso da zero. 
 char Tokener::nextClean()
 {	
+	/*logger.println(tag, "\n");
+	logger.println(tag, "nextClean json=-" + json);
+	logger.println(tag, "current= " + String(current));
+	logger.println(tag, "json.length()= " + String(json.length()));*/
+
 	while (current < json.length()) {
 
 		char c = json[current];		
-		if (c == 32 /* space */ ) { 
+		if (c == 32 /* space */ || c == 10 /* line feed*/) {
 			current++;
 			continue;
 		}
 		current++;
+		//logger.println(tag, "<<nextClean c=" + String(c));
+		return c;
+	}
+	//logger.println(tag, "<<nextClean zero char");
+	return 0;
+}
+
+// ritorna il prossimo carattere diverso da zero senza spostare il cursore. 
+char Tokener::nextCleanNoCursor()
+{
+	int n = current;
+	while (n < json.length()) {
+
+		char c = json[n];
+		if (c == 32 /* space */ || c == 10 /* line feed*/) {
+			n++;
+			continue;
+		}
+		n++;
 		return c;
 	}
 	return 0;
 }
+
+
+
 // ritorna il prossimo carattere. 
 char Tokener::next()
 {
@@ -209,6 +237,8 @@ bool Tokener::nextBool()
 
 String Tokener::nextArray()
 {
+	//logger.print(tag, "\n");
+	//logger.println(tag, ">>nextArray current="+String(current));
 	
 	if (current < 1)
 	{
@@ -217,12 +247,17 @@ String Tokener::nextArray()
 	}
 
 	String token = "";
+	//token = token + json[current - 1];
 	current--;
 
 	int count = 0;
 	while (current < json.length()) {
 
+		//logger.print(tag, "\n\t token="+token);
+		//logger.print(tag, " current=" + String(current));
+
 		char c = json[current++];
+		//logger.print(tag, "\n\t c=" + String(c));
 
 		if (c == '[') {
 			count++;
@@ -232,6 +267,7 @@ String Tokener::nextArray()
 			count--;
 			if (count == 0) {
 				token = token + c;
+				//logger.print(tag, "\n\t END token=" + token);
 				return token;
 			}
 		}

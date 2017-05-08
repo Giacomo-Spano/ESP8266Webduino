@@ -6,10 +6,10 @@ class HeaterActuator :
 	public Actuator
 {
 private:
-	virtual String getJSONFields(int jsontype);
+	virtual String getJSONFields();
 
 public:
-	virtual JSONObject getJSON2();
+	virtual bool getJSON(JSONObject * jObject);
 	static String tag;
 	static Logger logger;
 

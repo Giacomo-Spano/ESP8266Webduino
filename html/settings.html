@@ -42,12 +42,14 @@
 
             <form action='/command' method='POST' id='shield'>
                 <p>
+                    <strong>ShieldID: </strong><input type='number' id='shieldid' name='shieldid' value='0' min='1' max='9999' disabled><BR><BR>
                     <strong>Local Port: </strong><input type='number' id='localport' name='localport' value='80' step='1' min='1' max='9999'><BR><BR>
                     <strong>Shield name: </strong><input type='text'  id='shieldname' name='shieldname' value='shieldname' size='29' maxlength='29'><BR><BR>
                     <strong>SSID: </strong><input type='text' id='ssid' name='ssid' value='SSID' size='32' maxlength='32'><BR><BR>
                     <strong>password: </strong><input type='text' id='password' name='password' value='password' size='96' maxlength='96'><BR><BR>
                     <strong>Server name: </strong><input type='text' id='servername' name='servername' value='Server name' size='29' maxlength='29'><BR><BR>
                     <strong>Server Port: </strong><input type='number' id='serverport' name='serverport' value='8080' step='1' min='1' max='9999'><BR><BR>
+
 
                     <input type='hidden' name='command' value='shieldsettings'>
                     <input type='submit' value="save" onclick='whichPressed=this'>

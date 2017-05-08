@@ -15,3 +15,8 @@ String JSONValue::toJSONValueString()
 {
 	return "";
 }
+
+String JSONValue::toString()
+{
+	return key;
+}

@@ -30,36 +30,41 @@ bool TemperatureSensor::checkStatusChange() {
 	return false;
 }
 
-JSONObject TemperatureSensor::getJSON2() {
+bool TemperatureSensor::getJSON(JSONObject *jObject) {
 
-	logger.print(tag, "\n\t>>TemperatureSensorgetJSON2");
+	logger.print(tag, "\n");
+	logger.println(tag, ">>getJSON");
 
-	JSONObject jObject = Sensor::getJSON2();
-	jObject.pushInteger("id", id);
-	jObject.pushString("phisicaladdr", getPhisicalAddress());
-	jObject.pushFloat("temperature", temperature);
-	jObject.pushFloat("avtemperature", avTemperature);
+	bool res = Sensor::getJSON(jObject);
+	if (!res) return false;
+
+	jObject->pushInteger("id", id);
+	jObject->pushString("phisicaladdr", getPhisicalAddress());
+	jObject->pushFloat("temperature", temperature);
+	jObject->pushFloat("avtemperature", avTemperature);
 	
-	logger.print(tag, "\n\t<<TemperatureSensor::getJSON2");
+	logger.println(tag, "<<getJSON");
 
-	return jObject;
+	return res;
 }
 
-String TemperatureSensor::getJSONFields(int jsontype) {
+String TemperatureSensor::getJSONFields() {
 
-	logger.print(tag, "\n\TemperatureSensor::>>TemperatureSensor::getJSONFields");
+	logger.println(tag, ">>getJSONFields");
 	String json = "";
+	json += Sensor::getJSONFields();
 
 	// specific field
-	json += ",\"id\":";
+	json += String(",\"id\":");
 	json += String(id) + "";
 	json += ",\"phisicaladdr\":";
 	json += "\"" + getPhisicalAddress() + "\"";
-	json += ",\"temperature\":";
+	json += ",\"temperature\": ";
 	json += String(temperature);
-	json += ",\"avtemperature\":";
+	json += ",\"avtemperature\": ";
 	json += String(avTemperature);
 
-	logger.print(tag, "\n\TemperatureSensor::<<TemperatureSensor::getJSONFields json=" + json);
+	logger.println(tag, "<<getJSONField" + json);
 	return json;
 }
+

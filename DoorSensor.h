@@ -19,15 +19,13 @@ class DoorSensor :
 private:
 	static String tag;
 	static Logger logger;
-	//virtual String getJSONFields(int jsontype);
+
+	virtual String getJSONFields();
 
 public:
-	virtual JSONObject getJSON2();
+	virtual bool getJSON(JSONObject *jObject);
 	DoorSensor(uint8_t pin, bool enabled, String address, String name);
 	~DoorSensor();
-	//virtual String getJSON();
-	//virtual String getJSON(int type);
-	
 
 	virtual void init();	
 	virtual bool checkStatusChange();

@@ -7,13 +7,16 @@
 #include "WProgram.h"
 #endif
 
-
+#include "Logger.h"
 #include <PubSubClient.h>
 #include <ESP8266WiFi.h>
 
 class MQTTClientClass
 {
 private:
+	static String tag;
+	static Logger logger;
+
 	PubSubClient *client;
 public:
 	MQTTClientClass();

@@ -1,11 +1,14 @@
+var shieldId = 0;
 
 function load() {
+
+    shieldId = getUrlVars()["id"];
 
     document.getElementById('shield').onsubmit = function (event) {
         event.preventDefault();
         sendPost(this, commandResponse);
     };
-    getJson(settingsPath, refreshFunction);
+    getJson(settingsPath+'&id='+shieldId, refreshFunction);
 }
 
 function commandResponse(json) {
@@ -15,6 +18,8 @@ function commandResponse(json) {
 var refreshFunction = function refresh(json) {
     document.getElementById('summary').innerHTML = JSON.stringify(json);
 
+    shieldId = json.shieldid;
+    document.getElementById('shieldid').value = shieldId;
     document.getElementById('localport').value = json.localport;
     document.getElementById('shieldname').value = json.shieldname;
     document.getElementById('ssid').value = json.ssid;

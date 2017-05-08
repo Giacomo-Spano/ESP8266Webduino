@@ -14,6 +14,7 @@ public:
 	JSONValueType type;
 
 	virtual String toJSONValueString();
+	virtual String toString();
 
 protected:
 	

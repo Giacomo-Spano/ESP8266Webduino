@@ -15,68 +15,76 @@ String OnewireSensor::tag = "OnewireSensor";
 
 OnewireSensor::OnewireSensor(uint8_t pin, bool enabled, String address, String name) : Sensor(pin, enabled, address, name)
 {
-	checkStatus_interval = 60000;
+	logger.print(tag, "\n");
+	logger.println(tag, ">>OnewireSensor");
+
+	checkStatus_interval = 15000;
 	lastCheckStatus = 0;
 
 	type = "onewiresensor";
 	// beginTemperatureSensors deve essere chiamata nel costruttore per inizializzare
 	// la var tempSensorNum. 
 	beginTemperatureSensors();
+	logger.println(tag, "<<OnewireSensor");
 }
 
-void OnewireSensor::loadChildren(JSONArray jarray) {
+void OnewireSensor::loadChildren(JSONArray& jarray) {
 
-	logger.print(tag, "\n\t >>loadChildren");
+	logger.println(tag, ">>loadChildren jarray=" + jarray.toString());
+
+	childsensors.show();
 		
-	String child = jarray.getFirst();
+	String jsonChild = jarray.getFirst();
 	int current = 0;
-	while (child != "") {
+	while (jsonChild != "") {
 
 		Sensor* sensor = (Sensor*)childsensors.get(current++);
-
+		if (sensor == nullptr) break;
 		
-		JSONObject json(child);
+		JSONObject json(jsonChild);
 		if (json.has("name")) {
 			String name = json.getString("name");
 			logger.print(tag, "\n\t name=" + name);
 			sensor->sensorname = name;
 		}
-		child = jarray.getNext();
+		jsonChild = jarray.getNext();
 	}
 
-	logger.print(tag, "\n\t <<loadChildren");
+	childsensors.show();
+	logger.println(tag, "<<loadChildren");
 }
 
 
-JSONObject OnewireSensor::getJSON2() {
+bool OnewireSensor::getJSON(JSONObject * jObject) {
 
-	logger.print(tag, "\n\t>>OnewireSensor::getJSON2");
+	logger.print(tag, "\n");
+	logger.println(tag, ">>getJSON");
 
-	JSONObject jObject = Sensor::getJSON2();
+	bool res = Sensor::getJSON(jObject);
+	if (!res) return false;
 
-	/*jObject.pushInteger("id", id);
-	jObject.pushString("phisicaladdr", getPhisicalAddress());
-	jObject.pushFloat("temperature", temperature);
-	jObject.pushFloat("avtemperature", avTemperature);*/
 
-	logger.print(tag, "\n\t<<OnewireSensor::getJSON2");
-	return jObject;
+	logger.println(tag, "<<getJSON");
+	return true;
 }
 
 OnewireSensor::~OnewireSensor()
 {
-	
+	logger.print(tag, "\n");
+	logger.println(tag, "~OnewireSensor");
 }
 
 void OnewireSensor::init()
 {
+
 }
 
 void OnewireSensor::beginTemperatureSensors()
 {
 	// questa funz può essere chiamata solo dopo
 	// aver inizializzato pin
-	logger.print(tag, "\n\n\t >>beginTemperatureSensors");
+	logger.print(tag, "\n");
+	logger.println(tag, ">>beginTemperatureSensors pin=" + String(pin));
 	oneWirePtr = new OneWire(pin);
 	pDallasSensors = new DallasTemperature(oneWirePtr);
 	pDallasSensors->begin();
@@ -84,9 +92,10 @@ void OnewireSensor::beginTemperatureSensors()
 	uint8_t _address[8];
 	tempSensorNum = 0;
 
-	SensorFactory factory;
+	//SensorFactory factory;
 	childsensors.clearAll();
 
+	logger.print(tag, "\n\t search for 1-Wire devices.....");
 	while (oneWirePtr->search(_address) && tempSensorNum < OnewireSensor::maxTempSensors) {
 		
 		// cerca il prossimo sensore di temperatura reali attaccato allo stesso pin
@@ -114,7 +123,7 @@ void OnewireSensor::beginTemperatureSensors()
 		int id = tempSensorNum + 1;
 		String name = "sensoretemperatura" + String(id);
 		String subaddress = address + "." + id;
-		TemperatureSensor* child = (TemperatureSensor*)factory.createSensor("temperaturesensor", pin, true, subaddress, name);
+		TemperatureSensor* child = (TemperatureSensor*)SensorFactory::createSensor("temperaturesensor", pin, true, subaddress, name);
 		child->id = id;
 		for (int i = 0; i < 8; i++) {
 			child->sensorAddr[i] = _address[i];
@@ -122,10 +131,13 @@ void OnewireSensor::beginTemperatureSensors()
 
 		childsensors.add(child);
 		tempSensorNum++;
+
+		childsensors.show();
 	}
 	oneWirePtr->reset_search();
 
-	logger.print(tag, "\n\t <<beginTemperatureSensors\n");
+	childsensors.show();
+	logger.println(tag, "<<beginTemperatureSensors\n");
 }
 
 float OnewireSensor::getTemperature(int index) {
@@ -212,26 +224,15 @@ bool OnewireSensor::readTemperatures() {
 	return res;
 }
 
-String OnewireSensor::getJSONFields(int jsontype)
-{
-	logger.print(tag, "\n\t >>OnewireSensor::getJSONFields");
+String OnewireSensor::getJSONFields() {
 
+	logger.println(tag, ">>getJSONFields");
 	String json = "";
+	json += Sensor::getJSONFields();
 
-	/*json += ",\"childsensors\":[";
+	// specific field
 
-	for (int i = 0; i < childsensors.length(); i++) {
-
-
-		if (i > 0)
-			json += ",";
-
-		json += ((Sensor*)childsensors.get(i))->getJSON();
-	}
-
-	json += "]";*/
-
-	logger.print(tag, "\n\t <<OnewireSensor::getJSONFields json=" + json);
+	logger.println(tag, "<<getJSONField");
 	return json;
 }
 
@@ -267,10 +268,16 @@ bool OnewireSensor::checkStatusChange() {
 	unsigned long timeDiff = currMillis - lastCheckStatus;
 	//logger.println(tag, "\n\t currMillis="+String(currMillis) + "timeDiff=" + String(timeDiff));
 	if (timeDiff > checkStatus_interval) {
-		logger.println(tag, F("\n\t checkTemperatures"));
+		logger.print(tag, F("\n\n"));
+		logger.println(tag, F(">>checkStatusChange()::checkTemperatures"));
 		lastCheckStatus = currMillis;
 		bool temperatureChanged = readTemperatures();
-		logger.println(tag, "\n\t temperatureChanged" + String(temperatureChanged));
+		if (temperatureChanged)
+			logger.println(tag, "temperatura cambiata");
+		else
+			logger.println(tag, "temperatura NON cambiata");
+		logger.print(tag, F("\n\n"));
+		logger.println(tag, F(">>checkStatusChange()::checkTemperatures"));
 		return temperatureChanged;
 	}
 

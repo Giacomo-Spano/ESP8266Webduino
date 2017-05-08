@@ -21,14 +21,13 @@ private:
 	static String tag;
 	static Logger logger;
 
-	virtual String getJSONFields(int jsontype);
+	virtual String getJSONFields();
 
 
 public:
-	virtual JSONObject getJSON2();
+	virtual bool getJSON(JSONObject *jObject);
 	TemperatureSensor(uint8_t pin, bool enabled, String address, String name);
 	~TemperatureSensor();
-	//virtual String getJSONFields();
 	virtual void init();
 	virtual bool checkStatusChange();
 

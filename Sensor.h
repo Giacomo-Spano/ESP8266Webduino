@@ -28,12 +28,16 @@ public:
 	uint8_t pin;
 	String address;
 
-	int checkStatus_interval = 20000;//60000; // 60 seconds
+	int checkStatus_interval = 0;	// il valore corretto per ogni tipo di sensore
+									// è impostato nel costruttore 
 	unsigned long lastCheckStatus;// = 0;//-flash_interval;
 
 	//virtual String getJSON();
-	virtual JSONObject getJSON2();
-	virtual void loadChildren(JSONArray json);
+	virtual bool getJSON(JSONObject *jObject);
+	virtual String getJSONFields();
+	String getChildren();
+	virtual String getJSON();
+	virtual void loadChildren(JSONArray& json);
 	//virtual String getJSON(int type);
 	//virtual String getJSONFields(int jsontype);
 	
@@ -42,6 +46,7 @@ public:
 	static const int sensorTypeLen = 20;
 
 	virtual void show();
+	virtual String toString();
 	
 	virtual void init();
 	virtual bool checkStatusChange();

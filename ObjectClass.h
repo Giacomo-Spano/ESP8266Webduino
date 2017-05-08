@@ -18,7 +18,8 @@ class ObjectClass
 	void init();
 
 	ObjectClass* next = NULL;
-	virtual void show();
+	//virtual void show();
+	virtual String toString();
 };
 
 extern ObjectClass Object;
