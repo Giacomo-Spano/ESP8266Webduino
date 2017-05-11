@@ -28,9 +28,11 @@ public:
 
 	int readJSON(int index, JSONObject *json);
 	int readInt(int index, int *value);
+	int readString(int index, String *txt);
 
 	int writeInt(int index, int value);
 	int writeJSON(int index, JSONObject *json);
+	int writeString(int index, String *txt);
 
 };
 #endif

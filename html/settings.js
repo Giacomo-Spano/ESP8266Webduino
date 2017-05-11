@@ -2,13 +2,13 @@ var shieldId = 0;
 
 function load() {
 
-    shieldId = getUrlVars()["id"];
+    //shieldId = getUrlVars()["id"];
 
     document.getElementById('shield').onsubmit = function (event) {
         event.preventDefault();
         sendPost(this, commandResponse);
     };
-    getJson(settingsPath+'&id='+shieldId, refreshFunction);
+    getJson(settingsPath, refreshFunction);
 }
 
 function commandResponse(json) {

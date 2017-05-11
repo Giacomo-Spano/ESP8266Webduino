@@ -17,11 +17,13 @@
 class Shield
 {	
 protected:
-	static String networkSSID;
-	static String networkPassword;
+	//static String networkSSID;
+	//static String networkPassword;
 	static int localPort;
 	static String serverName;//[serverNameLen];
 	static int serverPort;
+	static String mqttServer;
+	static int mqttPort;
 	static String shieldName;
 
 	static bool mqttMode;
@@ -182,12 +184,9 @@ public:
 		logger.print(tag, "\n\t localPort="+ String(localPort));
 	}
 
-	static String getNetworkSSID()
+	/*static String getNetworkSSID()
 	{
-		//return "TP-LINK-3BD796";
-		//return "Vodafone-34230543";
 		return networkSSID;
-		//return "Connectify-me";
 	}
 
 	static void setNetworkSSID(String ssid)
@@ -201,17 +200,12 @@ public:
 	{
 
 		return networkPassword;
-		//return "giacomocasa";
-		//return "giacomo00";
-		//return "52iw4mmkdmw4ftt";
 	}
 
 	static void setNetworkPassword(String password)
 	{
-		//logger.print(tag, "\n\t >>setNetworkPassword: " + password);
 		networkPassword = password;
-		//logger.print(tag, "\n\t networkPassword=" + networkPassword);
-	}
+	}*/
 
 	static String getServerName()
 	{
@@ -261,6 +255,31 @@ public:
 		logger.print(tag, "\n\t>> setMQTTMode");
 		mqttMode = enabled;
 		logger.print(tag, "\n\t<< setMQTTMode=" + String(mqttMode));
+	}
+
+	static String getMQTTServer()
+	{
+		return mqttServer;
+	}
+
+	static void setMQTTServer(String server)
+	{
+		logger.print(tag, "\n\t>> setMQTTServer");
+		mqttServer = server;
+		logger.print(tag, "\n\t<< setMQTTServer=" + String(mqttServer));
+	}
+
+
+	static int getMQTTPort()
+	{
+		return mqttPort;
+	}
+
+	static void setMQTTPort(int port)
+	{
+		logger.print(tag, "\n\t>> setMQTTPort");
+		mqttPort = port;
+		logger.print(tag, "\n\t<< setMQTTPort=" + String(mqttPort));
 	}
 
 };

@@ -10,27 +10,29 @@
 
 extern void writeEPROM();
 extern void resetEPROM();
-extern String siid;
-extern String pass;
+//extern String siid;
+//extern String pass;
 
 Logger Shield::logger;
 String Shield::tag = "Shield";
+
 String Shield::lastRestartDate = "";
 String Shield::swVersion = "1.02";
 int Shield::id = 0; //// inizializzato a zero perch� viene impostato dalla chiamata a registershield
 
 // default shield setting
-String Shield::networkSSID = "TP-LINK-3BD796";
-String Shield::networkPassword = "giacomocasa";
+//String Shield::networkSSID = "TP-LINK_3BD796";
+//String Shield::networkPassword = "giacomocasa";
 int Shield::localPort = 80;
 String Shield::serverName = "192.168.1.3";
+String Shield::mqttServer = "192.168.1.3";
+int Shield::mqttPort = 1883;
 int Shield::serverPort = 8080;
 String Shield::shieldName = "shieldName";
+
 unsigned char Shield::MAC_array[6];
 char Shield::MAC_char[18];
-
 bool Shield::mqttMode = true;// true;
-
 String Shield::powerStatus = "on"; // da aggiungere
 
 Shield::Shield()
@@ -249,19 +251,16 @@ String Shield::onShieldSettingsCommand(JSON& json)
 		logger.print(tag, "\n\t shieldname=" + name);
 		setShieldName(name);
 	}
-	if (json.has("ssid")) {
+	/*if (json.has("ssid")) {
 		String name = json.jsonGetString("ssid");
 		logger.print(tag, "\n\t ssid=" + name);
 		setNetworkSSID(name);
-
-		siid = name;		
 	}
 	if (json.has("password")) {
 		String password = json.jsonGetString("password");
 		logger.print(tag, "\n\t password=" + password);
 		setNetworkPassword(password);
-		pass = password;
-	}
+	}*/
 	if (json.has("servername")) {
 		String name = json.jsonGetString("servername");
 		logger.print(tag, "\n\t servername=" + name);
@@ -272,18 +271,30 @@ String Shield::onShieldSettingsCommand(JSON& json)
 		logger.print(tag, "\n\t serverport=" + serverPort);
 		setServerPort(serverPort);
 	}
+	if (json.has("mqttserver")) {
+		String mqttserver = json.jsonGetString("mqttserver");
+		logger.print(tag, "\n\t mqttserver=" + mqttserver);
+		setMQTTServer(mqttserver);
+	}
+	if (json.has("mqttport")) {
+		int mqttport = json.jsonGetInt("mqttport");
+		logger.print(tag, "\n\t mqttport=" + mqttport);
+		setMQTTPort(mqttport);
+	}
 	writeEPROM();
 
 	String result = "";
 	result += "{";
 	result += "\"result\": \"succes\"";
 
-	result += ",\"localport\": \"" + String(getLocalPort()) + "\"";
+	result += ",\"localport\": " + String(getLocalPort());
 	result += ",\"shieldname\": \"" + getShieldName() + "\"";
-	result += ",\"ssid\": \"" + getNetworkSSID() + "\"";
-	result += ",\"password\": \"" + getNetworkPassword() + "\"";
+	//result += ",\"ssid\": \"" + getNetworkSSID() + "\"";
+	//result += ",\"password\": \"" + getNetworkPassword() + "\"";
+	result += ",\"mqttserver\": \"" + getMQTTServer() + "\"";
+	result += ",\"mqttport\": " + String(getMQTTPort());
 	result += ",\"servername\": \"" + getServerName() + "\"";
-	result += ",\"serverport\": \"" + String(getServerPort()) + "\"";
+	result += ",\"serverport\": " + String(getServerPort());
 	
 	result += "}";
 
@@ -481,10 +492,12 @@ String Shield::getSettingsJson() { // usata per le impostazioni da jscript pages
 
 	json += "\"localport\":" + String(localPort);
 	json += ",\"shieldname\":\"" + shieldName + "\"";
-	json += ",\"ssid\":\"" + networkSSID + "\"";
-	json += ",\"password\":\"" + networkPassword + "\"";
+	//json += ",\"ssid\":\"" + networkSSID + "\"";
+	//json += ",\"password\":\"" + networkPassword + "\"";
 	json += ",\"servername\":\"" + serverName + "\"";
 	json += ",\"serverport\":" + String(serverPort);
+	json += ",\"mqttserver\":\"" + mqttServer + "\"";
+	json += ",\"mqttport\":" + String(mqttPort);
 	json += ",\"localip\":\"" + String(localIP) + "\"";
 	json += ",\"macaddress\":\"" + String(MAC_char) + "\"";
 	json += ",\"shieldid\":" + String(id);

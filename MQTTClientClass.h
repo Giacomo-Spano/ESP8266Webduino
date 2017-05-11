@@ -24,7 +24,7 @@ public:
 //#ifdef dopo
 	void init(WiFiClient* espClient);
 
-	PubSubClient& setServer(const char * domain, uint16_t port);
+	PubSubClient& setServer(String domain, uint16_t port);
 	PubSubClient& setCallback(MQTT_CALLBACK_SIGNATURE);
 
 	boolean connected();

@@ -11,22 +11,25 @@ MQTTClientClass::MQTTClientClass()
 MQTTClientClass::~MQTTClientClass()
 {
 }
-//#ifdef dopo
+
 void MQTTClientClass::init(WiFiClient* espClient)
 {
 	Serial.println("MQTTClientClass::init");
 
-	client = new PubSubClient(*espClient);	
-	
+	client = new PubSubClient(*espClient);		
 }
 
-static const char serverMQTT[] = "giacomohome.ddns.net";
-//static const char serverMQTT[] = "192.168.1.3";
-
-PubSubClient & MQTTClientClass::setServer(const char * domain, uint16_t port)
+PubSubClient & MQTTClientClass::setServer(String domain, uint16_t port)
 {
 	Serial.println("MQTTClientClass::setServer");
-	return client->setServer(/*domain*/serverMQTT, port);
+
+	IPAddress ipaddr;
+	WiFi.hostByName(domain.c_str(), ipaddr);
+	Serial.print(domain);
+	Serial.print(": ");
+	Serial.println(ipaddr);
+
+	return client->setServer(ipaddr, port);
 }
 
 PubSubClient & MQTTClientClass::setCallback(MQTT_CALLBACK_SIGNATURE)
@@ -37,8 +40,6 @@ PubSubClient & MQTTClientClass::setCallback(MQTT_CALLBACK_SIGNATURE)
 
 boolean MQTTClientClass::connected()
 {
-	logger.println(tag, "debug2");
-	//Serial.println("MQTTClientClass::connected");
 	return client->connected();
 }
 
@@ -71,6 +72,3 @@ boolean MQTTClientClass::loop()
 {
 	return client->loop();
 }
-
-
-//#endif

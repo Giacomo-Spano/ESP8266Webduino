@@ -1,12 +1,15 @@
 var serverPath = '.';
 
 var heaterStatusPath = serverPath+'/heaterstatus';
-//var sensorsStatusPath = serverPath+'/sensorstatus';
-//var commandPath = serverPath+'/command';
-//var settingsPath = serverPath+'/settings';
-var sensorsStatusPath = serverPath+'/shield?command=updatesensorstatusrequest';
-var commandPath = serverPath+'/shield';
-var settingsPath = serverPath+'/shield?command=updatesettingstatusrequest';
+
+var sensorsStatusPath = serverPath+'/sensorstatus';
+var commandPath = serverPath+'/command';
+var settingsPath = serverPath+'/settings';
+
+
+//var sensorsStatusPath = serverPath+'/shield?command=updatesensorstat\usrequest';
+//var commandPath = serverPath+'/shield';
+//var settingsPath = serverPath+'/shield?command=updatesettingstatusrequest';
 
 function getUrlVars() {
     var vars = {};

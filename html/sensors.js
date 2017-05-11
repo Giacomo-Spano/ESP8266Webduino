@@ -30,7 +30,7 @@ var refreshFunction = function refresh(json) {
 
 function load() {
 
-    shieldId = getUrlVars()["id"];
+    //shieldId = getUrlVars()["id"];
 
     sensorDiv = document.getElementById('sensor');
 
@@ -41,7 +41,7 @@ function load() {
     listDiv = document.getElementById('sensorList');
 
 
-    getJson(sensorsStatusPath+"&id="+shieldId, refreshFunction);
+    getJson(sensorsStatusPath, refreshFunction);
 }
 
 function addSensor(sensor) {
@@ -169,7 +169,7 @@ function save() {
                 'type': type,
                 'enabled': enabled,
                 'pin': pin,
-                'addr': address,
+                'addr': '' + address,
                 'childsensors': []
             });
 

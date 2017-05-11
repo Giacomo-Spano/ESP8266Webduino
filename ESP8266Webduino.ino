@@ -41,7 +41,7 @@
 // HTTP Update
 #include <ESP8266HTTPClient.h>
 #include <ESP8266httpUpdate.h>
-bool checkHTTPUpdate = true;
+bool checkHTTPUpdate = true; //true;
 //
 
 #define production "1"
@@ -56,7 +56,6 @@ extern "C" {
 
 
 //#include "Ucglib.h"
-
 //#include "ESPDisplay.h"
 
 //ESPDisplay display;
@@ -83,24 +82,22 @@ const int maxjsonLength = 1000;
 String tag = "Webduino";
 const char *ssidAP = "ES8266";
 const char *passwordAP = "thereisnospoon";
-//const char* ssid = "xxBUBBLES";
 static Shield shield;
-
-/*const*/ char* ssidtest =/*"Vodafone-34230543";*/ "TP-LINK_3BD796";
-/*const*/ char* passwordtest = /*"52iw4mmkdmw4ftt";*/ "giacomocasa";
 
 String siid = "TP-LINK_3BD796";
 String pass = "giacomocasa";
+//siid = "TP-LINK_3D88";
+//pass = "giacomobox";
 
 // EPROM
-const byte EEPROM_ID = 0x87; // used to identify if valid data in EEPROM
+const byte EEPROM_ID = 0x96; // used to identify if valid data in EEPROM
 const int ID_ADDR = 0; // the EEPROM address used to store the ID
-const int SWVERSION_ADDR = 1; // the EEPROM address used to store the sw version
-const int SETTINGS_ADDR = 3; // the EEPROM address used to store the pin
-const int SENSOR_ADDR = 2000; // the EEPROM address used to store the pin
+const int SWVERSION_ADDR = 1;
+const int CREDENTIAL_ADDR = SWVERSION_ADDR + 10; // the EEPROM address used to store the pin
+const int SETTINGS_ADDR = CREDENTIAL_ADDR + Shield::networkSSIDLen + Shield::networkPasswordLen + 2; // the EEPROM address used to store the pin
+const int SENSOR_ADDR = SETTINGS_ADDR + 1000; // the EEPROM address used to store the pin
 
 int epromversion = 0;
-//int addr = TIMERTIME_ADDR;
 
 void initEPROM();
 void readEPROM();
@@ -167,18 +164,7 @@ void writeSettings() {
 	logger.println(tag, "\n\t >>writeSettings");
 
 	JSONObject json;
-	
-	/*siid = "TP-LINK_3BD796";
-	pass = "giacomocasa";*/
-	/*siid = "TP-LINK_3D88";
-	pass = "giacomobox";*/
-
-	// siid
-	json.pushString("siid", siid);
-
-	// passw
-	json.pushString("passwd", pass);
-		
+			
 	// local port
 	int port = Shield::getLocalPort();
 	logger.print(tag, "\n\t port = " + String(port));
@@ -198,50 +184,33 @@ void writeSettings() {
 	String shieldname = Shield::getShieldName();
 	logger.print(tag, "\n\t shieldname = " + shieldname);
 	json.pushString("shieldname", shieldname);
-	
-	// write json to eprom
-	/*String str = json.toString();
-	logger.print(tag, "\n\t json=" + str);
-	byte hiByte = highByte(str.length());
-	byte loByte = lowByte(str.length());
-	EEPROM.write(addr++, hiByte);
-	EEPROM.write(addr++, loByte);	
-	logger.print(tag, "\n\t len=" + String(str.length()));
-	for (int i = 0; i < str.length(); ++i)
-	{
-		EEPROM.write(addr++, str[i]);
-		if (i > maxjsonLength) break;
-	}
-	EEPROM.commit();*/
 
 	MyEPROMClass eprom;
-	//int index = 3;
 	logger.print(tag, "\n" + logger.formattedJson(json.toString()));
-	eprom.writeJSON(SWVERSION_ADDR, &json);
+	eprom.writeJSON(SETTINGS_ADDR, &json);
 	
 	logger.println(tag, "<<writeSettings\n");
 }
 
-String loadSettings() {
+String getSettingsFromServer() {
 
-	logger.print(tag, "\n");
-	logger.println(tag, ">>loadSettings");
-	//JSONObject json;
+	//logger.print(tag, "\n");
+	logger.println(tag, ">>getSettingsFromServer");
 
 	Command command;
 	String settings = command.loadShieldSettings();	
 
-	logger.println(tag, "<<loadSettings settings=" + settings);
+	logger.println(tag, "<<getSettingsFromServer settings=" + settings);
 	return settings;
 }
 
 void readSettings(JSONObject *json) {
 
-	logger.print(tag, "\n\t >>readSettings");
+	logger.println(tag, "\n\t >>readSettings");
 	
 	// parse json
 	// siid
-	siid = "";
+	/*siid = "";
 	if (json->has("siid"))
 		siid = json->getString("siid");
 	siid += '\0';
@@ -251,7 +220,8 @@ void readSettings(JSONObject *json) {
 	if (json->has("passwd"))
 		pass = json->getString("passwd");
 	pass += '\0';
-	logger.print(tag, "\n\t pass=" + pass);
+	logger.print(tag, "\n\t pass=" + pass);*/
+
 	// port
 	int port = 0;
 	if (json->has("port"))
@@ -270,6 +240,21 @@ void readSettings(JSONObject *json) {
 		serverport = json->getInteger("serverport");
 	logger.print(tag, "\n\t serverport=" + String(serverport));
 	Shield::setServerPort(serverport);
+
+	// mqtt server
+	String mqttserver = "";
+	if (json->has("mqttserver"))
+		mqttserver = json->getString("mqttserver");
+	logger.print(tag, "\n\t mqttserver=" + servername);
+	Shield::setMQTTServer(servername);
+	// mqtt port
+	int mqttport = 0;
+	if (json->has("mqttport"))
+		mqttport = json->getInteger("mqttport");
+	logger.print(tag, "\n\t mqttport=" + String(mqttport));
+	Shield::setMQTTPort(mqttport);
+
+
 	// shield name
 	String shieldname = "";
 	if (json->has("shieldname"))
@@ -294,6 +279,11 @@ void writeEPROM() {
 	writeSettings();
 	
 	writeSensors();
+
+	//siid = Shield::getNetworkSSID();
+	//pass = Shield::getNetworkPassword();
+
+	saveCredentials(CREDENTIAL_ADDR);
 
 	logger.print(tag, "\n\t <<write EPROM\n");
 }
@@ -324,15 +314,14 @@ void writeSensors() {
 
 void readEPROM() {
 
-	logger.print(tag, "\n\n\t >>read EPROM");
+	logger.println(tag, "\t >>read EPROM");
 	
-
 	// check EPROM_ID
-	byte dummy = EEPROM.read(ID_ADDR);
-	logger.print(tag, "\n\t dummy=" + String(dummy));
+	byte epromID = EEPROM.read(ID_ADDR);
+	logger.print(tag, "\n\t epromID=" + String(epromID));
 
-	if (dummy != EEPROM_ID) { // reset EPROM_ID
-		logger.print(tag, "\n\t INVALID DATA" + String(dummy));
+	if (epromID != EEPROM_ID) { // reset EPROM_ID
+		logger.print(tag, "\n\t INVALID DATA" + String(epromID));
 		writeEPROM();
 		return;
 	}
@@ -340,17 +329,20 @@ void readEPROM() {
 	// epromversion
 	eprom.readInt(SWVERSION_ADDR,&epromversion);
 	logger.print(tag, "\n\t epromversion=" + String(epromversion));
-
-
+	
+	// load netword credential
+	loadCredentials(CREDENTIAL_ADDR);
+	
+	// load settings
 	JSONObject json;	
 	eprom.readJSON(SETTINGS_ADDR, &json);
 	logger.print(tag, "\n\n\t json:" + logger.formattedJson(json.toString()));
-
 	readSettings(&json);
 	
 	logger.print(tag, "\n\n\t <<read EPROM\n");
 }
 
+// carica i settings dal server
 bool loadSensors(String settings) {
 
 	logger.print(tag, "\n\n");
@@ -371,7 +363,6 @@ bool loadSensors(String settings) {
 		logger.println(tag, "error -ID MISSING");
 		return false;
 	}
-
 
 	if (json.has("sensors")) {
 		String str = json.getJSONArray("sensors");
@@ -440,61 +431,20 @@ void readSensors() {
 
 void initEPROM()
 {
-	logger.print(tag, "\n\n\t >>initEPROM");
+	logger.println(tag, ">>initEPROM");
 
 	EEPROM.begin(4096);
 
 	byte id = EEPROM.read(ID_ADDR); // read the first byte from the EEPROM
 	if (id == EEPROM_ID)
 	{
-		//readEPROM();
-
-
-		logger.print(tag, "\n\t OVERRIDE SERVER SETTINGS");
-
-#ifdef production
-		// port
-		int port = 8080;
-		logger.print(tag, "\n\t serverport=" + String(port));
-		Shield::setServerPort(port);
-		// server name
-		String servername = "giacomohome.ddns.net";
-		logger.print(tag, "\n\t servername=" + servername);
-		Shield::setServerName(servername);
-#else
-		// port
-		int port = 8080;
-		logger.print(tag, "\n\t serverport=" + String(port));
-		Shield::setServerPort(port);
-		// server name
-		String servername = "192.168.1.3";
-		logger.print(tag, "\n\t servername=" + servername);
-		Shield::setServerName(servername);
-
-
-#endif
-
-
-#ifdef wifibox
-		siid = "TP-LINK_3D88";
-		pass = "giacomobox";
-
-#else
-		siid = "TP-LINK_3BD796";
-		pass = "giacomocasa";
-
-#endif
-
-		
-
-		/*siid = "TP-LINK_3D88";
-		pass = "giacomobox";*/
+		readEPROM();
 	}
 	else
 	{
 		writeEPROM();
 	}
-	logger.print(tag, "\n\n\t <<initEPROM");
+	logger.println(tag, "<<initEPROM");
 }
 
 void setupAP(void) {
@@ -595,6 +545,8 @@ bool testWifi() {
 	Serial.println();
 	Serial.print("Connecting");
 
+	WiFi.begin();
+
 	WiFi.mode(WIFI_STA);
 
 	WiFi.disconnect();
@@ -608,8 +560,10 @@ bool testWifi() {
 
 	/*String pass = Shield::getNetworkSSID();
 	String siid = Shield::getNetworkSSID();*/
-	logger.print(tag, "\n\t siid=" + siid);
-	logger.print(tag, "\n\t pass=" + pass);
+	logger.print(tag, "\nCONNECTING\n");
+	logger.print(tag, "siid=" + siid);
+	logger.print(tag, "--" + pass);
+	logger.print(tag, "--\n");
 	WiFi.begin(siid.c_str(), pass.c_str());
 	//WiFi.begin(ssidtest, passwordtest);
 	
@@ -618,36 +572,9 @@ bool testWifi() {
 		delay(1000);
 		Serial.print(".");
 		if (count++ > 15) {
-      
-      WiFi.begin();
-      WiFi.mode(WIFI_STA);
-      WiFi.disconnect();
-      delay(100);
-      siid = "TP-LINK_3BD796";
-      pass = "giacomocasa";
-      WiFi.begin(siid.c_str(), pass.c_str());
-      while (WiFi.status() != WL_CONNECTED) {
-        delay(1000);
-        Serial.print("x");
-        if (count++ > 15) {
-          return false;
-        }
-      }  
-			
-			//WiFi.
+			return false;
 		}
 	}
-
-
-	//WiFi.begin((const char*) networkSSID, (const char*) networkPassword);
-
-	//WiFi.begin(ssidtest, passwordtest);
-
-	//Serial.println(Shield::getNetworkSSID());
-
-	/* Explicitly set the ESP8266 to be a WiFi-client, otherwise, it by default,
-	would try to act as both a client and an access-point and could cause
-	network-issues with your other WiFi-devices on your WiFi-network. */
 
 	Serial.println("");
 	Serial.println("WiFi connected");
@@ -768,6 +695,33 @@ void reconnect() {
 	logger.println(tag, ">>reconnect");
 }
 
+void loadCredentials(int index) {
+
+	logger.println(tag, ">>loadCredentials");
+
+	MyEPROMClass eprom; 
+	eprom.readString(index, &siid);
+	eprom.readString(index+32, &pass);
+	logger.print(tag, "\n\t siid=" + siid);
+	logger.print(tag, "\n\t pass=" + pass);
+
+	logger.println(tag, "<<loadCredentials");
+}
+
+/** Store WLAN credentials to EEPROM */
+void saveCredentials(int index) {
+
+	logger.println(tag, ">>saveCredentials");
+	MyEPROMClass eprom;
+	eprom.writeString(index, &siid);
+	eprom.writeString(index+32, &pass);
+
+	logger.println(tag, "<<saveCredentials");
+}
+
+
+
+
 void setup()
 {
 	Serial.begin(115200);
@@ -776,13 +730,11 @@ void setup()
 	Logger::init();
 	logger.print(tag, "\n\t >>setup");
 	logger.print(tag, "\n\n *******************RESTARTING************************");
-	
-		
+			
 	shield.init();
 	shield.drawString(0, 0, "restarting..", 1, ST7735_WHITE);
 
 	// Initialising the UI will init the display too.
-
 	String str = "\n\nstarting.... Versione 2.0";
 	str += Shield::swVersion;
 	logger.print(tag, str);
@@ -796,29 +748,30 @@ void setup()
 
 	}
 	logger.print(tag, shield.MAC_char);
-
-
+	
 	shield.drawString(0, 20, "read eprom..", 1, ST7735_WHITE);
+	
 	initEPROM();
+
+	logger.print(tag, "\n\t siid=" + siid);
+	logger.print(tag, "\n\t pass=" + pass);
 	
-	//logger.print(tag, "\n\tSensorNames=" + sensorNames);
-	shield.drawString(0, 80, "init onewire", 1, ST7735_WHITE);
-	shield.drawString(0, 40, "connecting to WiFi", 1, ST7735_WHITE);
+	//shield.drawString(0, 80, "init onewire", 1, ST7735_WHITE);
+	//shield.drawString(0, 40, "connecting to WiFi", 1, ST7735_WHITE);
+	
 	// Connect to WiFi network
-	//logger.print(tag, "\n\nConnecting to " + Shield::getNetworkSSID() + " " + Shield::getNetworkPassword());
-	
 	if (testWifi()) {
 
-		checkOTA();
+		//checkOTA();
 
 		JSONObject json;
-		String settings = loadSettings();
-
+		String settings = getSettingsFromServer();
 		loadSensors(settings);
-
-		//updateTime();
+		writeSettings();
+		writeSensors();
 
 		shield.drawString(0, 50, "connected..Start server", 1, ST7735_WHITE);
+
 		// Start the server
 		server.begin();
 		logger.print(tag, "Server started");
@@ -832,23 +785,12 @@ void setup()
 		wdt_enable(WDTO_8S);
 
 		//readSensors();
-				
-
-		shield.drawString(0, 70, "init heater", 1, ST7735_WHITE);
-		//shield.hearterActuator.init(String(shield.MAC_char));
 
 		//shield.drawString(50, 70, String(shield.MAC_char), 1, ST7735_RED);
 		//shield.drawString(60, 80, "DONE", 1, ST7735_WHITE);
 		//shield.addActuators();
 
 		IPAddress ipaddrgoogle;	
-		/*int i = 0;
-		while (WiFi.hostByName(googleServerName, ipaddrgoogle) != 1) {
-			Serial.print("i: ");
-			Serial.println(i,DEC);
-			if (i++ > 10)
-				break;
-		}*/
 		Serial.println("\n");
 		WiFi.hostByName(googleServerName, ipaddrgoogle);
 		Serial.print(googleServerName);
@@ -873,26 +815,16 @@ void setup()
 		Serial.println(ipaddress);
 
 		mqttclient.init(&client);
-
-#ifdef production
-		mqttclient.setServer("giacomohome.ddns.net", 1883);
-#else
-		mqttclient.setServer("192.168.1.3", 1883);
-		//mqttclient.setServer("79.24.3.210", 1883);
-		//mqttclient.setServer((const IPAddress *)&ipaddr, 1883);
-		
-#endif
+		mqttclient.setServer(Shield::getServerName(), 1883);
 		mqttclient.setCallback(callback);
 		reconnect();
-
-
-		/*logger.println(tag, "\ncalling registerShield\n");
-		shield.registerShield();
-		logger.println(tag, "\nreturning from registerShield\n");*/
 		
 	}
 	else {
 		logger.println(tag, "\n\n\tIMPOSSIBILE COLLEGARSI ALLA RETE\n");
+		
+		Shield::setMQTTMode(false);
+
 		setupAP();
 
 		server.begin();
@@ -901,8 +833,6 @@ void setup()
 		// Print the IP address
 		wdt_disable();
 		wdt_enable(WDTO_8S);
-
-		//shield.phearterActuator->setStatus(Program::STATUS_DISABLED);
 
 		Shield::setMQTTMode(false);
 	}
@@ -1158,36 +1088,41 @@ bool mqtt_publish(String topic, String message) {
 
 char msg[50];  //// DA ELIMINARE
 
+void checkForSWUpdate() {
+
+	logger.println(tag, ">>checkForSWUpdate");
+	delay(2000);
+
+	//t_httpUpdate_return ret = ESPhttpUpdate.update("http://192.168.1.3:8080//webduino/ota",Shield::swVersion);
+	String updatePath = "http://" + Shield::getServerName() + ":" + Shield::getServerPort() + "//webduino/ota";
+	logger.print(tag, "check for sw update " + updatePath);
+	t_httpUpdate_return ret = ESPhttpUpdate.update(updatePath, Shield::swVersion);
+
+	switch (ret) {
+	case HTTP_UPDATE_FAILED:
+
+		logger.print(tag, "\n\tHTTP_UPDATE_FAILD Error " + String(ESPhttpUpdate.getLastError()) + " " + ESPhttpUpdate.getLastErrorString().c_str());
+
+		break;
+
+	case HTTP_UPDATE_NO_UPDATES:
+		logger.print(tag, "\n\tHTTP_UPDATE_NO_UPDATES");
+		break;
+
+	case HTTP_UPDATE_OK:
+		logger.print(tag, "\n\tHTTP_UPDATE_OK");
+		break;
+	}
+	logger.println(tag, "<<checkForSWUpdate");
+}
+
 void loop()
 {
 	//ArduinoOTA.handle();  // questa chiamata deve essere messa in loop()
 
 	if (checkHTTPUpdate) {
 		checkHTTPUpdate = false;
-		//
-		delay(5000);
-		//++value;
-
-		Serial.print("download sw update ");
-		//Serial.println(host);
-
-		//t_httpUpdate_return ret = ESPhttpUpdate.update("http://192.168.1.3:8080/prova/httpUpdate.ino.bin");
-		t_httpUpdate_return ret = ESPhttpUpdate.update("http://192.168.1.3:8080//webduino/ota",Shield::swVersion);
-		//t_httpUpdate_return  ret = ESPhttpUpdate.update("https://server/file.bin");
-
-		switch (ret) {
-		case HTTP_UPDATE_FAILED:
-			Serial.printf("HTTP_UPDATE_FAILD Error (%d): %s", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
-			break;
-
-		case HTTP_UPDATE_NO_UPDATES:
-			Serial.println("HTTP_UPDATE_NO_UPDATES");
-			break;
-
-		case HTTP_UPDATE_OK:
-			Serial.println("HTTP_UPDATE_OK");
-			break;
-		}
+		checkForSWUpdate();
 	}
 
 

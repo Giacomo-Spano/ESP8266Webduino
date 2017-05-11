@@ -16,9 +16,9 @@ List::List()
 
 List::~List()
 {
-	logger.println(tag, ">>~List");
+	//logger.println(tag, ">>~List");
 	//clearAll();
-	logger.println(tag, "<<~List");
+	//logger.println(tag, "<<~List");
 }
 
 void List::init() {
@@ -58,28 +58,28 @@ bool List::add(ObjectClass* elem) {
 
 void List::clearAll() {
 
-	logger.println(tag, ">>clearAll count=" + String(count) + "\n");
+	//logger.println(tag, ">>clearAll count=" + String(count) + "\n");
 
 	ObjectClass* next = first;
 	ObjectClass* cur = first;
 	while (cur != nullptr && count > 0) {
 
-		logger.print(tag, "\t record " + cur->toString());
+		//logger.print(tag, "\t record " + cur->toString());
 		next = cur->next;
 		delete cur;
 		cur = next;
-		logger.print(tag, " deleted\n");
+		//logger.print(tag, " deleted\n");
 	}
 	count = 0;
 	first = nullptr;
 	current = nullptr;
 
-	logger.println(tag, "<<clearAll");
+	//logger.println(tag, "<<clearAll");
 }
 
 void List::show() {
 
-	logger.print(tag, "\n");
+	//logger.print(tag, "\n");
 	logger.println(tag, ">>show count = " + String(count));
 
 
@@ -87,12 +87,11 @@ void List::show() {
 	int i = 0;
 	while (p != nullptr) {
 		i++;
-		//logger.print(tag, "\n\t Elem=");
-		logger.print(tag, "key = " + p->toString() + "\n");
-		//p->show();
+		
+		//logger.print(tag, "key = " + p->toString() + "\n");
 		p = p->next;
 	}
-	logger.println(tag, "<<show");
+	//logger.println(tag, "<<show");
 }
 
 ObjectClass* List::gestLast() {

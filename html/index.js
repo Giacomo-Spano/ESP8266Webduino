@@ -43,7 +43,7 @@ function load() {
     var updateStatusButton = document.getElementById('updateStatusButton').onclick = onUpdateSensorStatusFunction;
     var registerButton = document.getElementById('registerButton').onclick = onRegisterFunction;
 
-    getJson(settingsPath+"&id="+shieldId, refreshFunction);
+    getJson(settingsPath, refreshFunction);
 }
 
 var refreshFunction = function refresh(json) {

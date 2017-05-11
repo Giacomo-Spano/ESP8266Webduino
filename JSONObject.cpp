@@ -179,7 +179,7 @@ bool JSONObject::pushString(String key, String value)
 
 bool JSONObject::pushInteger(String key, int value)
 {
-	logger.print(tag, String("[") + key + String("]:") + value + "(Integer)\n");
+	//logger.print(tag, String("[") + key + String("]:") + value + "(Integer)\n");
 	JSONIntegerValue* obj = new JSONIntegerValue(key, value);
 	map.add(obj);
 	return  true;
