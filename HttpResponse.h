@@ -21,7 +21,7 @@ public:
 	HttpResponse();
 	~HttpResponse();
 	void init(WiFiClient* pClient);
-	void send(const String res, String contentType, String body);
+	void send(const String res, String contentType, bool body);
 	void sendVirtualFile(const String res, String contentType, String fileName);
 	
 	

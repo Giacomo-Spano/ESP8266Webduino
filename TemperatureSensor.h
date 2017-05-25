@@ -26,7 +26,7 @@ private:
 
 public:
 	virtual bool getJSON(JSONObject *jObject);
-	TemperatureSensor(uint8_t pin, bool enabled, String address, String name);
+	TemperatureSensor(int id, uint8_t pin, bool enabled, String address, String name);
 	~TemperatureSensor();
 	virtual void init();
 	virtual bool checkStatusChange();

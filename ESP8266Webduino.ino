@@ -109,7 +109,7 @@ extern void readSettings(JSONObject *json);
 bool updateTime();
 
 // POST request
-String receiveCommand(HttpRequest request, HttpResponse httpResponse);
+bool receiveCommand(HttpRequest request, HttpResponse httpResponse);
 String setRemoteTemperature(HttpRequest request, HttpResponse httpResponse);
 String showPower(HttpRequest request, HttpResponse response);
 String softwareReset(HttpRequest request, HttpResponse response);
@@ -619,46 +619,29 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
 void parseMessageReceived(String topic, String message) {
 
-	String str = String("fromServer/shield/") + Shield::getMACAddress() + String("/registerresponse");
-	//logger.print(tag, "\n\t str=" + str);
-	String serverRequest = "fromServer/shield/" + String(Shield::getShieldId());
+	String str = String("fromServer/shield/") + Shield::getMACAddress();
 
-	if (topic.equals(str))
-	{
-		int id = message.toInt();
-		logger.print(tag, "\n\t received registerresponse id=" + id);
-		if (id > 0) {
-			Shield::setShieldId(id);
-			logger.print(tag, "\n\t Shieldid=" + String(Shield::getShieldId()));
-		}
-		return;
-
-	}
-	else if (topic.equals(serverRequest) &&
-		message.equals("updatesettingstatusrequest")) {
+	if (topic.equals(str + "/updatesettingstatusrequest")) {
 		logger.print(tag, "\n\t received  setting status update request");
-		//String response = shield.getSettingsJson();
 		Command command;
 		command.sendSettingsStatus(shield);
 	}
-	else if (topic.equals(serverRequest) &&
-		message.equals("updatesensorstatusrequest")) {
+	else if (topic.equals(str + "/updatesensorstatusrequest")) {
 		logger.print(tag, "\n\t received sensor status update request");
-		//String response = shield.getSensorsStatusJson();
 		String json = shield.getSensorsStatusJson();
 		Command command;
 		command.sendSensorsStatus(json);
 	}
-	else if (topic.equals(serverRequest + String("/postcommand"))) {
+	else if (topic.equals(str + "/command")) {
 		logger.print(tag, "\n\t received command " + message);
 		//String response = shield.getSensorsStatusJson();
 		shield.receiveCommand(message);
 	}
-	else if (message.equals("start")) {
+	else if (str.equals("startmqtt")) {
 		logger.print(tag, "\n\t START!!!!!!!!!!!!!!!!");
 		Shield::setMQTTMode(true);
 	}
-	else if (message.equals("stop")) {
+	else if (str.equals("stopmqtt")) {
 		logger.print(tag, "\n\t STOP!!!!!!!!!!!!!!!!");
 		Shield::setMQTTMode(false);
 		mqttclient.disconnect();
@@ -681,8 +664,9 @@ void reconnect() {
 			Serial.println("connected");
 			// Once connected, publish an announcement...
 			//mqttclient.publish("send"/*topic.c_str()*/, "hello world");
-			// ... and resubscribe
-			mqttclient.subscribe("fromServer/#"/*"inTopic"*//*topic.c_str()*/);
+			String topic = "fromServer/shield/" + Shield::getMACAddress() + "/#";
+			logger.print(tag, "\n\t Subscribe to topic:" + topic);
+			mqttclient.subscribe(topic.c_str());
 		}
 		else {
 			Serial.print("failed, rc=");
@@ -767,8 +751,8 @@ void setup()
 		JSONObject json;
 		String settings = getSettingsFromServer();
 		loadSensors(settings);
-		writeSettings();
-		writeSensors();
+		//writeSettings();
+		//writeSensors();
 
 		shield.drawString(0, 50, "connected..Start server", 1, ST7735_WHITE);
 
@@ -876,15 +860,15 @@ String softwareReset(HttpRequest request, HttpResponse response) {
 	return "";
 }
 
-String receiveCommand(HttpRequest request, HttpResponse response) {
+bool receiveCommand(HttpRequest request, HttpResponse response) {
 
 	logger.println(tag, F("\n\n\t >>receiveCommand "));
 
 	String str = request.body;
-	String jsonResult = shield.receiveCommand(str);
+	bool result = shield.receiveCommand(str);
 
-	logger.println(tag, "\n\t <<receiveCommand " + jsonResult);
-	return jsonResult;
+	logger.println(tag, "\n\t <<receiveCommand " + String(result));
+	return result;
 }
 
 // imposta temperatura del sensore remoto. Chiamata periodicamente dal server

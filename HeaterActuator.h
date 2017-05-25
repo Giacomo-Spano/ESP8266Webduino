@@ -3,10 +3,11 @@
 #include "Program.h"
 
 class HeaterActuator :
-	public Actuator
+	public Sensor
 {
 private:
 	virtual String getJSONFields();
+
 
 public:
 	virtual bool getJSON(JSONObject * jObject);
@@ -42,12 +43,12 @@ public:
 	static const int MANUALMODE_OFF = 2; // sempre spento
 	static const int MANUALMODE_END = 3; // sempre spento
 
-	HeaterActuator(uint8_t pin, bool enabled, String address, String name);
+	HeaterActuator(int id, uint8_t pin, bool enabled, String address, String name);
 	//HeaterActuator();
 	~HeaterActuator();
 	void updateReleStatus();
 	//virtual String getJSON() override;
-	virtual String sendCommand(String json) override;
+	virtual CommandResponse receiveCommand(String json) override;
 	void setStatus(int status);
 	int getStatus();
 	String getStatusName();

@@ -3,6 +3,9 @@
 #include "ESP8266Webduino.h"
 #include "Shield.h"
 
+extern bool mqtt_publish(String topic, String message);
+
+
 Logger DoorSensor::logger;
 String DoorSensor::tag = "DoorSensor";
 
@@ -13,9 +16,9 @@ bool DoorSensor::getJSON(JSONObject *jObject)
 
 	bool res = Sensor::getJSON(jObject);
 	if (!res) return false;
-	
+
 	res = jObject->pushBool("open", openStatus);
-	
+
 	logger.println(tag, "<<getJSON");
 	return true;
 }
@@ -31,16 +34,12 @@ String DoorSensor::getJSONFields() {
 		json += String(",\"open\":true");
 	else
 		json += String(",\"open\":false");
-	
+
 	logger.println(tag, "<<getJSONFields");
 	return json;
 }
 
-
-
-
-
-DoorSensor::DoorSensor(uint8_t pin, bool enabled, String address, String name) : Sensor(pin, enabled, address, name)
+DoorSensor::DoorSensor(int id, uint8_t pin, bool enabled, String address, String name) : Sensor(id, pin, enabled, address, name)
 {
 	type = "doorsensor";
 
@@ -64,25 +63,30 @@ bool DoorSensor::getOpenStatus() {
 }
 
 bool DoorSensor::checkStatusChange() {
-	
+
 	//logger.print(tag, "\n\t >>checkDoorStatus: ");
 	unsigned long currMillis = millis();
 	unsigned long timeDiff = currMillis - lastCheckStatus;
 	if (timeDiff > checkStatus_interval) {
+		//logger.print(tag, "\n\t >>checkDoorStatus: ");
 		lastCheckStatus = currMillis;
 
 		bool oldStatus = openStatus;
 
-		if (digitalRead(pin) == LOW) {
-			openStatus = true;
-			//logger.print(tag, "\n\t >>>> DOOR OPEN");
+		if (testMode) {
+			openStatus = testOpenStatus;
 		}
 		else {
-			openStatus = false;
-			//logger.print(tag, "\n\t >>>> DOOR CLOSED");
+
+			if (digitalRead(pin) == LOW) {
+				openStatus = true;
+			}
+			else {
+				openStatus = false;
+			}
 		}
 		if (oldStatus != openStatus) {
-			if (openStatus) 
+			if (openStatus)
 				logger.print(tag, "\n\t >>>> DOOR OPEN");
 			else
 				logger.print(tag, "\n\t >>>> DOOR CLOSED");
@@ -95,20 +99,48 @@ bool DoorSensor::checkStatusChange() {
 	return false;
 }
 
-/*String DoorSensor::getJSONFields(int jsontype)
+CommandResponse DoorSensor::receiveCommand(String jsonStr)
 {
-	logger.print(tag, "\n\t>>Door::getJSONFields");
-	String json = "";
+	logger.println(tag, ">>receiveCommand=");
+	CommandResponse response;
 
-	// specific field
-	json += ",\"open\":";
-	if (openStatus)
-		json += "true";
-	else
-		json += "false";
+	JSON json(jsonStr);
+	// actuatorId
+	int actuatorId;
+	if (json.has("actuatorid")) {
+		actuatorId = json.jsonGetInt("actuatorid");
+		logger.print(tag, "\n\t actuatorid=" + String(actuatorId));
+	}
 
-	logger.print(tag, "\n\t<<Door::getJSONFields json=" );
-	return json;
-}*/
+	// command
+	String command = "";
+	if (json.has("command")) {
+		command = json.jsonGetString("command");
+		logger.print(tag, "\n\t command=" + command);
+
+
+		if (command.equals("teststart")) {
+			logger.print(tag, "\n\t test start command");
+			testMode = true;
+			testOpenStatus = openStatus;
+		} else if (command.equals("teststop")) {
+			logger.print(tag, "\n\t test stop command");
+		} if (command.equals("testopen")) {
+			logger.print(tag, "\n\t test open command");
+			testOpenStatus = true;
+		} if (command.equals("testclose")) {
+			logger.print(tag, "\n\t test close command");
+			testMode = false;
+		}
+
+		if (json.has("uuid")) {
+			response.uuid = json.jsonGetString("uuid");
+		}
+		response.result = "success";// response_success;
+	}
+
+	logger.println(tag, "<<receiveCommand res="/* + String(res)*/);
+	return response;
+}
 
 

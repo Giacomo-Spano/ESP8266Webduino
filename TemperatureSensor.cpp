@@ -8,7 +8,7 @@ String TemperatureSensor::tag = "TemperatureSensor";
 
 
 
-TemperatureSensor::TemperatureSensor(uint8_t pin, bool enabled, String address, String name) : Sensor(pin, enabled, address, name)
+TemperatureSensor::TemperatureSensor(int id, uint8_t pin, bool enabled, String address, String name) : Sensor(id,pin, enabled, address, name)
 {
 	type = "temperaturesensor";
 }
@@ -47,6 +47,7 @@ bool TemperatureSensor::getJSON(JSONObject *jObject) {
 
 	return res;
 }
+
 
 String TemperatureSensor::getJSONFields() {
 

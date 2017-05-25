@@ -7,7 +7,8 @@ String HeaterActuator::tag = "HeaterActuator";
 
 char* HeaterActuator::statusStr[] = { "unused", "idle", "program", "manual", "disabled", "restarted", "manualoff" };
 
-HeaterActuator::HeaterActuator(uint8_t pin, bool enabled, String address, String name) : Actuator(pin, enabled, address, name)
+//HeaterActuator::HeaterActuator(uint8_t pin, bool enabled, String address, String name) /*: Actuator(pin, enabled, address, name)*/
+HeaterActuator::HeaterActuator(int id, uint8_t pin, bool enabled, String address, String name) : Sensor(id, pin, enabled, address, name)
 {
 	checkStatus_interval = 10000;
 	lastCheckStatus = 0;
@@ -19,7 +20,7 @@ HeaterActuator::~HeaterActuator()
 {
 }
 
-String HeaterActuator::sendCommand(String jsonStr)
+CommandResponse HeaterActuator::receiveCommand(String jsonStr)
 {
 	JSON json(jsonStr);
 
@@ -91,7 +92,9 @@ String HeaterActuator::sendCommand(String jsonStr)
 	jsonResult += "{";
 	jsonResult += "\"result\": \"success\"";
 	jsonResult += "}";
-	return jsonResult;
+
+	CommandResponse res;
+	return res;
 }
 
 String HeaterActuator::getJSONFields()
@@ -166,7 +169,7 @@ void HeaterActuator::init()
 	//subaddress += MACAddress;
 	
 	sensorname = "Riscaldamento";
-	logger.print(tag, "\n\t >>init HeaterActuator");
+	logger.print(tag, "\n\t <<init HeaterActuator");
 }
 
 bool HeaterActuator::checkStatusChange()

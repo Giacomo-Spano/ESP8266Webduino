@@ -17,6 +17,8 @@
         "${projectRoot}..\\..\\..\\AppData\\Local\\arduino15\\packages\\esp8266\\hardware\\esp8266\\2.3.0\\libraries\\Ethernet\\src",
         "${projectRoot}..\\..\\..\\AppData\\Local\\arduino15\\packages\\esp8266\\hardware\\esp8266\\2.3.0\\libraries\\Wire",
         "${projectRoot}..\\..\\..\\Documents\\Arduino\\libraries\\esp8266-oled-ssd1306",
+        "${projectRoot}..\\..\\..\\AppData\\Local\\arduino15\\packages\\esp8266\\hardware\\esp8266\\2.3.0\\libraries\\ESP8266HTTPClient\\src",
+        "${projectRoot}..\\..\\..\\AppData\\Local\\arduino15\\packages\\esp8266\\hardware\\esp8266\\2.3.0\\libraries\\ESP8266httpUpdate\\src",
         "${projectRoot}..\\..\\..\\AppData\\Local\\arduino15\\packages\\esp8266\\hardware\\esp8266\\2.3.0\\libraries\\ESP8266mDNS",
         "${projectRoot}..\\..\\..\\AppData\\Local\\arduino15\\packages\\esp8266\\hardware\\esp8266\\2.3.0\\libraries\\Ethernet\\src\\utility",
         "${projectRoot}..\\..\\..\\..\\..\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\Common7\\IDE\\Extensions\\bjgs31r1.33a\\Micro Platforms\\visualmicro\\ide\\libraries",

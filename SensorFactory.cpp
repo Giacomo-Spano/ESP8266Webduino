@@ -1,6 +1,6 @@
 #include "SensorFactory.h"
 #include "TemperatureSensor.h"
-#include "HeaterActuator.h"
+#include "HeaterSensor.h"
 #include "DoorSensor.h"
 #include "OnewireSensor.h"
 #include "JSONObject.h"
@@ -19,26 +19,26 @@ SensorFactory::~SensorFactory()
 {
 }
 
-Sensor * SensorFactory::createSensor(String type, uint8_t pin, bool enabled, String address, String name)
+Sensor * SensorFactory::createSensor(int id, String type, uint8_t pin, bool enabled, String address, String name)
 {
 	logger.print(tag, "\n\t >>SensorFactory::createSensor type=" + type);
 
 	Sensor* sensor = nullptr;
 	if (type.equals("temperaturesensor")) {
 		logger.print(tag, "\n\t creating temperature sensor");
-		sensor = new TemperatureSensor(pin, enabled, address, name);
+		sensor = new TemperatureSensor(id, pin, enabled, address, name);
 	}
 	else if (type.equals("heatersensor")) {
 		logger.print(tag, "\n\t creating heatersensor sensor");
-		sensor = new HeaterActuator(pin, enabled, address, name);
+		sensor = new HeaterSensor(id, pin, enabled, address, name);
 	}
 	else if (type.equals("doorsensor")) {
 		logger.print(tag, "\n\t creating doorsensor sensor");
-		sensor = new DoorSensor(pin, enabled, address, name);
+		sensor = new DoorSensor(id, pin, enabled, address, name);
 	}
 	else if (type.equals("onewiresensor")) {
 		logger.print(tag, "\n\t creating onewiresensor sensor");
-		sensor = new OnewireSensor(pin, enabled, address, name);
+		sensor = new OnewireSensor(id, pin, enabled, address, name);
 	}
 
 	logger.println(tag, "createSensor type=" + type);
@@ -50,6 +50,7 @@ Sensor * SensorFactory::createSensor(JSONObject* json)
 	logger.print(tag, "\n");
 	logger.println(tag, "\n\t >>createSensor  json = " + logger.formattedJson(json->toString()));
 
+	int sensorid;
 	String type;
 	String address;
 	uint8_t pin = 0;
@@ -57,13 +58,19 @@ Sensor * SensorFactory::createSensor(JSONObject* json)
 	String name = "";
 		
 	
-	if (!json->has("type") || !json->has("subaddress")) {
+	if (!json->has("type") || !json->has("subaddress") || !json->has("id")) {
 		logger.print(tag, "\n\t invalid address and typ=");
 		return nullptr;
 	}
 	type = json->getString("type");
 	address = json->getString("subaddress");
-		
+	sensorid = json->getInteger("id");
+	
+	if (json->has("pin")) {
+		String strPin = json->getString("pin");
+		pin = Shield::pinFromStr(strPin);
+	}
+
 	if (json->has("pin")) {
 		String strPin = json->getString("pin");
 		pin = Shield::pinFromStr(strPin);
@@ -77,6 +84,7 @@ Sensor * SensorFactory::createSensor(JSONObject* json)
 
 	logger.print(tag, "\n\t type=" + type);
 	logger.print(tag, "\n\t addr=" + address);
+	logger.print(tag, "\n\t sensorid=" + String(sensorid));
 	logger.print(tag, "\n\t pin=" + String(pin));
 	logger.print(tag, "\n\t enabled=" + String(enabled));
 	logger.print(tag, "\n\t name=" + name);
@@ -86,19 +94,19 @@ Sensor * SensorFactory::createSensor(JSONObject* json)
 
 	if (type.equals("temperaturesensor")) {
 		logger.print(tag, "\n\t creating temperature sensor");
-		sensor = new TemperatureSensor(pin, enabled, address, name);
+		sensor = new TemperatureSensor(sensorid,pin, enabled, address, name);
 	}
 	else if (type.equals("heatersensor")) {
 		logger.print(tag, "\n\t creating heatersensor sensor");
-		sensor = new HeaterActuator(pin, enabled, address, name);
+		sensor = new HeaterSensor(sensorid,pin, enabled, address, name);
 	}
 	else if (type.equals("doorsensor")) {
 		logger.print(tag, "\n\t creating doorsensor sensor");
-		sensor = new DoorSensor(pin, enabled, address, name);
+		sensor = new DoorSensor(sensorid,pin, enabled, address, name);
 	}
 	else if (type.equals("onewiresensor")) {
 		logger.print(tag, "\n\t creating onewiresensor sensor");
-		sensor = new OnewireSensor(pin, enabled, address, name);
+		sensor = new OnewireSensor(sensorid,pin, enabled, address, name);
 	}
 
 	sensor->init();

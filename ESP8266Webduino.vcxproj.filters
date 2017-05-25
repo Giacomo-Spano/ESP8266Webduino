@@ -193,6 +193,12 @@
     <ClInclude Include="MyEPROMClass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="HeaterSensor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CommandResponse.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="wol.cpp">
@@ -301,6 +307,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MyEPROMClass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="HeaterSensor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CommandResponse.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

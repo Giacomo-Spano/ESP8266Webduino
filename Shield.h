@@ -51,13 +51,13 @@ private:
 	String oldDate;
 
 protected:
-	String onUpdateSensorListCommand(JSON& json);
-	String onShieldSettingsCommand(JSON& json);
-	String onPowerCommand(JSON& json);
-	String sendRegister();
-	String onResetCommand(JSON& json);
-	String onRebootCommand(JSON& json);
-	String sendUpdateSensorStatus();
+	bool onUpdateSensorListCommand(JSON& json);
+	bool onShieldSettingsCommand(JSON& json);
+	bool onPowerCommand(JSON& json);
+	bool sendRegister();
+	bool onResetCommand(JSON& json);
+	bool onRebootCommand(JSON& json);
+	bool sendUpdateSensorStatus();
 	
 
 	//bool temperatureChanged = false; // indica se la temperatura � cambiata dall'ultima chiamata a flash()
@@ -78,7 +78,7 @@ public:
 	String getSettingsJson();
 	void registerShield();
 	void checkStatus();	
-	String receiveCommand(String jsonStr);		
+	bool receiveCommand(String jsonStr);		
 	
 	static unsigned char MAC_array[6];
 	static char MAC_char[18];
@@ -87,6 +87,7 @@ public:
 	void addSensor(Sensor* pSensor);
 	void clearAllSensors();
 	Sensor* getSensorFromAddress(String addr);
+	Sensor* getSensorFromId(int id);
 
 	static int getShieldId() {
 		return id; 

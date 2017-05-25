@@ -16,7 +16,7 @@ JSON::~JSON()
 
 String JSON::jsonGetString(String key) {
 
-	logger.print(tag, "\n\t>>jsonGetString : " + key);
+	//logger.print(tag, "\n\t>>jsonGetString : " + key);
 
 	key = "\"" + key + "\"";
 	String json = jsonString;
@@ -25,24 +25,24 @@ String JSON::jsonGetString(String key) {
 	if (index < 0) return "";
 
 	json = json.substring(index + key.length());
-	logger.print(tag, "\n\t json=" + json);
+	//logger.print(tag, "\n\t json=" + json);
 
 	index = json.indexOf("\"");
-	logger.print(tag, "\n\t index=" + String(index));
+	//logger.print(tag, "\n\t index=" + String(index));
 	if (index < 0) return "";
 
 	json = json.substring(index + 1);
-	logger.print(tag, "\n\t json=" + json);
+	//logger.print(tag, "\n\t json=" + json);
 
 	if (json.charAt(0) == '"')
 		return "";
 
 	int end = json.indexOf("\"", index);
-	logger.print(tag, "\n\t end=" + String(end));
+	//logger.print(tag, "\n\t end=" + String(end));
 	if (end < 0) return "";
 
 	String value = json.substring(0, end);
-	logger.print(tag, "\n\t value=" + value);
+	//logger.print(tag, "\n\t value=" + value);
 	return value;
 }
 
@@ -77,14 +77,14 @@ String JSON::jsonGetString(String key) {
 
 String JSON::jsonGetArrayString(String key) {
 
-	logger.print(tag, "\n\t>>jsonGetArrayString : " + key);
+	//logger.print(tag, "\n\t>>jsonGetArrayString : " + key);
 	key = "\"" + key + "\"";
 	String json = jsonString;
 	int index = json.indexOf(key);
 	if (index < 0) return "";
 
 	json = json.substring(index + key.length());
-	logger.print(tag, "\n\t keyvalue=" + json);
+	//logger.print(tag, "\n\t keyvalue=" + json);
 
 	int start = json.indexOf('[');
 	if (start == -1)

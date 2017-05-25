@@ -13,7 +13,7 @@
 Logger OnewireSensor::logger;
 String OnewireSensor::tag = "OnewireSensor";
 
-OnewireSensor::OnewireSensor(uint8_t pin, bool enabled, String address, String name) : Sensor(pin, enabled, address, name)
+OnewireSensor::OnewireSensor(int id, uint8_t pin, bool enabled, String address, String name) : Sensor(id, pin, enabled, address, name)
 {
 	logger.print(tag, "\n");
 	logger.println(tag, ">>OnewireSensor");
@@ -123,7 +123,7 @@ void OnewireSensor::beginTemperatureSensors()
 		int id = tempSensorNum + 1;
 		String name = "sensoretemperatura" + String(id);
 		String subaddress = address + "." + id;
-		TemperatureSensor* child = (TemperatureSensor*)SensorFactory::createSensor("temperaturesensor", pin, true, subaddress, name);
+		TemperatureSensor* child = (TemperatureSensor*)SensorFactory::createSensor(0,"temperaturesensor", pin, true, subaddress, name);
 		child->id = id;
 		for (int i = 0; i < 8; i++) {
 			child->sensorAddr[i] = _address[i];
@@ -140,7 +140,7 @@ void OnewireSensor::beginTemperatureSensors()
 	logger.println(tag, "<<beginTemperatureSensors\n");
 }
 
-float OnewireSensor::getTemperature(int index) {
+/*float OnewireSensor::getTemperature(int index) {
 	if (index < 0 || index > maxTempSensors)
 		return -99;
 
@@ -152,7 +152,7 @@ float OnewireSensor::getAvTemperature(int index) {
 		return -99;
 
 	return temperatureSensors[index].avTemperature;
-}
+}*/
 
 bool OnewireSensor::readTemperatures() {
 
@@ -184,7 +184,7 @@ bool OnewireSensor::readTemperatures() {
 		logger.print(tag, String(dallasTemperature));
 		
 		tempSensor->temperature = (((int)(dallasTemperature * 10 + .5)) / 10.0);
-		temperatureSensors[i].temperature = (((int)(dallasTemperature * 10 + .5)) / 10.0);
+		//temperatureSensors[i].temperature = (((int)(dallasTemperature * 10 + .5)) / 10.0);
 		logger.print(tag, "\n\t rounded Temperature  is: ");
 		logger.print(tag, String(tempSensor->temperature));
 
@@ -209,7 +209,7 @@ bool OnewireSensor::readTemperatures() {
 		}
 		average = average / (avTempCounter);
 		tempSensor->avTemperature = (((int)(dallasTemperature * 10 + .5)) / 10.0);
-		temperatureSensors[i].avTemperature = ((int)(average * 100 + .5) / 100.0);
+		//temperatureSensors[i].avTemperature = ((int)(average * 100 + .5) / 100.0);
 
 		logger.print(tag, "\n\tAverage temperature  is: ");
 		logger.print(tag, String(tempSensor->avTemperature));
@@ -236,7 +236,7 @@ String OnewireSensor::getJSONFields() {
 	return json;
 }
 
-void OnewireSensor::addTemperatureSensorsFromJson(JSON sensorJson) {
+/*void OnewireSensor::addTemperatureSensorsFromJson(JSON sensorJson) {
 	// QUETSA CHI LA CHIAMA?? DA ELIMINARE
 
 	if (sensorJson.has("childsensors")) {
@@ -246,7 +246,7 @@ void OnewireSensor::addTemperatureSensorsFromJson(JSON sensorJson) {
 		JSONArray jArrayTempSensor(str);
 		String tempSensor = jArrayTempSensor.getFirst();
 		int n = 0;// tempSensorNum = 0;
-		while (!tempSensor.equals("") && /*tempSensorNum*/n < OnewireSensor::maxTempSensors) {
+		while (!tempSensor.equals("") && n < OnewireSensor::maxTempSensors) {
 			logger.print(tag, "\n\t tempSensor=" + tempSensor);
 			tempSensor.replace("\\", "");// questo serve per correggere un baco. Per qualche motivo
 										 // dalla pagina jscrit arrivano dei caratteri \ in più
@@ -260,7 +260,7 @@ void OnewireSensor::addTemperatureSensorsFromJson(JSON sensorJson) {
 			tempSensor = jArrayTempSensor.getNext();
 		}
 	}
-}
+}*/
 
 bool OnewireSensor::checkStatusChange() {
 
@@ -269,7 +269,7 @@ bool OnewireSensor::checkStatusChange() {
 	//logger.println(tag, "\n\t currMillis="+String(currMillis) + "timeDiff=" + String(timeDiff));
 	if (timeDiff > checkStatus_interval) {
 		logger.print(tag, F("\n\n"));
-		logger.println(tag, F(">>checkStatusChange()::checkTemperatures"));
+		logger.println(tag, ">>checkStatusChange()::checkTemperatures timeDiff:" + String(timeDiff) + " checkStatus_interval:" + String(checkStatus_interval));
 		lastCheckStatus = currMillis;
 		bool temperatureChanged = readTemperatures();
 		if (temperatureChanged)

@@ -17,7 +17,7 @@
 #include "JSON.h"
 #include "JSONArray.h"
 
-class TemperatureSensorOld /*: public Sensor*/ {
+/*class TemperatureSensorOld {
 
 public:
 	String name = "Sensor name";
@@ -42,7 +42,7 @@ public:
 		}
 		return str;
 	}
-};
+};*/
 
 class OnewireSensor :
 	public Sensor
@@ -65,7 +65,7 @@ public:
 	//unsigned long lastCheckTemperature = 0;//-flash_interval;
 
 	//OnewireSensor();
-	OnewireSensor(uint8_t pin, bool enabled, String address, String name);
+	OnewireSensor(int id, uint8_t pin, bool enabled, String address, String name);
 	virtual void loadChildren(JSONArray& jarray);
 	~OnewireSensor();
 	virtual bool checkStatusChange();
@@ -73,7 +73,7 @@ public:
 	void beginTemperatureSensors();
 
 	static const int maxTempSensors = 10; // max num sensori onewire sullo stesso pin
-	TemperatureSensorOld temperatureSensors[maxTempSensors];
+	//TemperatureSensorOld temperatureSensors[maxTempSensors];
 	int tempSensorNum = 0;
 	
 
@@ -83,9 +83,9 @@ public:
 	bool readTemperatures();
 	//virtual String getJSONFields();
 	virtual void init();
-	float getTemperature(int index);
-	float getAvTemperature(int index);
-	void addTemperatureSensorsFromJson(JSON sensorJson);
+	//float getTemperature(int index);
+	//float getAvTemperature(int index);
+	//void addTemperatureSensorsFromJson(JSON sensorJson);
 };
 
 #endif

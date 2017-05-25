@@ -27,7 +27,7 @@ void HttpResponse::init(WiFiClient* pClient)
 
 HttpResponse httpResponse;
 
-void HttpResponse::send(const String res, String contentType, String body)
+void HttpResponse::send(const String res, String contentType, bool body)
 {
 	logger.print(tag, "\n\t >>send");
 
