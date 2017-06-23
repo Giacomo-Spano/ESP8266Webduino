@@ -103,6 +103,11 @@ public:
 	{
 		return String(MAC_char);
 	}
+
+	static String getSWVersion()
+	{
+		return swVersion;
+	}
 		
 	static int getServerPort()
 	{

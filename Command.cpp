@@ -129,6 +129,7 @@ String Command::loadShieldSettings()
 	String jsonevent = "{";
 	jsonevent += "\"event\":\"loadsettings\",";
 	jsonevent += "\"MAC\":\"" + Shield::getMACAddress() + "\"";
+	//jsonevent += "\"swversion\":\"" + Shield::getSWVersion() + "\"";
 	jsonevent += "}";
 
 	logger.print(tag, "\n\t jsonevent=" + jsonevent + "\n");

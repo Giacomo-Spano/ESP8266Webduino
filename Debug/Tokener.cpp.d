@@ -39,5 +39,4 @@ C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Deb
  C:\Users\giaco\Documents\Arduino\libraries\Time/Time.h \
  C:\Users\giaco\Documents\Arduino\libraries\Time/TimeLib.h \
  C:\Users\giaco\Documents\Arduino\libraries\Time/TimeLib.h \
- C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/FS.h \
- C:\Program\ Files\ (x86)\Microsoft\ Visual\ Studio\2017\Community\Common7\IDE\Extensions\bjgs31r1.33a\Micro\ Platforms\default\debuggers\VM_DBG/VM_DBG.h
+ C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/FS.h

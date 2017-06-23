@@ -416,7 +416,7 @@ bool Shield::onPowerCommand(JSON& json)
 String Shield::getJson() { // usata dalla register
 
 	logger.print(tag, "\n\n");
-	logger.println(tag, F(">>getJson"));
+	logger.println(tag, ">>getJson");
 
 	/*JSONObject json;
 	json.pushString("event", "register");
@@ -436,6 +436,7 @@ String Shield::getJson() { // usata dalla register
 	str += "\"shield\": ";
 	str += "{";
 	str += "\"MAC\":\"" + String(MAC_char) + "\"";
+	str += "\"swversion\":\"" + swVersion + "\"";
 	str += ",\"shieldName\":\"" + Shield::getShieldName() + "\"";
 	str += ",\"localIP\":\"" + localIP + "\"";
 	str += ",\"localPort\":\"" + String(Shield::getLocalPort()) + "\"";
@@ -465,7 +466,7 @@ String Shield::getJson() { // usata dalla register
 
 	logger.print(tag, "\n\tstr=" + str + "\n");
 
-	logger.println(tag, F("<<getJson"));
+	logger.println(tag, "<<getJson");
 	return str;
 }
 
@@ -479,7 +480,7 @@ String Shield::getSensorsStatusJson() {
 	
 	String json = "{";
 	json += "\"shieldid\":" + String(id);// shieldid
-	json += ",\"swver\":\"" + Shield::swVersion + "\"";// shieldid
+	json += ",\"swversion\":\"" + Shield::swVersion + "\"";// shieldid
 	json += ",\"power\":\"" + Shield::powerStatus + "\"";// shieldid
 
 	json += ",\"sensors\":[";
