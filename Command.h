@@ -25,6 +25,7 @@ public:
 	String loadShieldSettings();
 	void sendRestartNotification();
 	boolean sendSensorsStatus(String json);
+	boolean requestZoneTemperature(String json);
 	boolean sendSettingsStatus(Shield shield);
 	bool sendLog(String log/*, int shieldid/*, String serverName, int port*/);
 	//boolean sendActuatorStatus(HeaterActuator actuator);

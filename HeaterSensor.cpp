@@ -46,10 +46,10 @@ CommandResponse HeaterSensor::receiveCommand(String jsonStr)
 		logger.print(tag, "\n\t duration=" + String(duration) + " millisecondi");
 	}
 	// remote temperature
-	float remoteTemperature = 0;
+	float rTemperature = 0;
 	if (json.has("temperature")) {
-		remoteTemperature = json.jsonGetFloat("temperature");
-		logger.print(tag, "\n\t temperature=" + String(remoteTemperature));
+		rTemperature = json.jsonGetFloat("temperature");
+		logger.print(tag, "\n\t temperature=" + String(rTemperature));
 	}
 	// target
 	float target = 0;
@@ -57,7 +57,7 @@ CommandResponse HeaterSensor::receiveCommand(String jsonStr)
 		target = json.jsonGetFloat("target");
 		logger.print(tag, "\n\t target=" + String(target));
 	}
-	// scenario
+	/*// scenario
 	int scenario = 0;
 	if (json.has("scenario")) {
 		scenario = json.jsonGetInt("scenario");
@@ -68,23 +68,47 @@ CommandResponse HeaterSensor::receiveCommand(String jsonStr)
 	if (json.has("timeinterval")) {
 		timeInterval = json.jsonGetInt("timeinterval");
 		logger.print(tag, "\n\t timeinterval=" + String(timeInterval));
+	}*/
+	// actionid
+	int actionid = 0;
+	if (json.has("actionid")) {
+		actionid = json.jsonGetInt("actionid");
+		logger.print(tag, "\n\t actionid=" + String(actionid));
 	}
-	// sensor
+	// date
+	String commanddate = "";
+	if (json.has("date")) {
+		commanddate = json.jsonGetString("date");
+		logger.print(tag, "\n\t date=" + commanddate);
+	}
+
+
+	// zone
 	int zone = 0;
-	if (json.has("sensor")) {
+	if (json.has("zone")) {
 		zone = json.jsonGetInt("zone");
 		logger.print(tag, "\n\t sensorId=" + String(zone));
 	}
+	// uuid
+	String uuid = "";
+	if (json.has("uuid")) {
+		uuid = json.jsonGetString("uuid");
+		logger.print(tag, "\n\t uuid=" + uuid);
+	}
+	
 
-
-	logger.print(tag, "\n\t changeProgram param=" + String(remoteTemperature));
+	logger.print(tag, "\n\t changeProgram param=" + String(rTemperature));
 	bool res = changeStatus(command, duration,
-		remoteTemperature,
+		rTemperature,
 		target,
-		scenario,
-		timeInterval,
+		actionid,
+		commanddate,
+		/*scenario,
+		timeInterval,*/
 		zone);
 	CommandResponse response;
+	response.uuid = uuid;
+	response.result = "success";
 
 	logger.println(tag, "<<receiveCommand res=" + String(res));
 	return response;
@@ -115,12 +139,35 @@ String HeaterSensor::getJSONFields()
 		json += ",\"target\":";
 		json += String(getTargetTemperature());
 
-		json += ",\"scenario\":";
-		json += String(activescenario);
+		json += ",\"actionid\":";
+		json += String(activeActionId);
 
-		json += ",\"timeinterval\":";
-		json += String(activeTimeInterval);
+		json += ",\"zoneid\":";
+		json += String(zoneId);
+
+		/*json += ",\"timeinterval\":";
+		json += String(activeTimeInterval);*/
+	} else if (status.equals(STATUS_MANUAL)) {
+
+		json += ",\"remotetemperature\":" + String(getRemoteTemperature());
+
+		json += ",\"duration\":";
+		json += String(programDuration / 1000);
+
+		int remainingTime = programDuration - (millis() - programStartTime);
+		json += ",\"remaining\":";
+		json += String(remainingTime / 1000);
+
+		json += ",\"target\":";
+		json += String(getTargetTemperature());
+
+		json += ",\"zoneid\":";
+		json += String(zoneId);
 	}
+	json += ",\"lastcommanddate\":\"";
+	json += String(lastCommandDate);
+	json += "\"";
+
 	logger.print(tag, "\n\t <<HeaterActuator::getJSONFields json=" + json);
 	return json;
 }
@@ -159,6 +206,11 @@ bool HeaterSensor::checkStatusChange()
 
 	bool sendStatus = false;
 
+	/*if (remoteTemperatureUpdate()) {
+		sendStatus = true;
+		logger.print(tag, "\n\n\t HEATER::REMOTE TEMPERATURE TIMEOUT \n\n");
+	}*/
+
 	// controlla se il programma attivo è finito.
 	if (programEnded()) {
 		sendStatus = true;
@@ -180,7 +232,7 @@ bool HeaterSensor::checkStatusChange()
 	if (statusChanged()) {
 
 		logger.print(tag, "\n\n\t HEATER::STATUS CHANGED \n\n");
-		saveOldStatus();
+		//saveOldStatus();
 		sendStatus = true;
 	}
 
@@ -189,7 +241,7 @@ bool HeaterSensor::checkStatusChange()
 
 void HeaterSensor::setTargetTemperature(float target)
 {
-	logger.print(tag, "\n\t >>setTargetTemperature " + String(target));
+	logger.print(tag, "\n\t >>HeaterSensor::setTargetTemperature " + String(target));
 	targetTemperature = target;
 }
 
@@ -197,10 +249,10 @@ float HeaterSensor::getTargetTemperature() {
 	return targetTemperature;
 }
 
-void HeaterSensor::setRemoteTemperature(float temp)
+void HeaterSensor::setRemoteTemperature(float rtemp)
 {
-	logger.print(tag, "\n\t remoteTemperature" + String(remoteTemperature));
-	remoteTemperature = temp;
+	logger.print(tag, "\n\t HeaterSensor::setRemoteTemperature rtemp=" + String(rtemp));
+	remoteTemperature = rtemp;
 	last_RemoteSensor = millis();
 	logger.print(tag, ",last_RemoteSensor=" + String(last_RemoteSensor));
 }
@@ -213,17 +265,9 @@ bool HeaterSensor::programEnded()
 {
 	unsigned long currMillis = millis();
 
-	if (status.equals(STATUS_KEEPTEMPERATURE)) {
+	if (status.equals(STATUS_KEEPTEMPERATURE) || status.equals(STATUS_MANUAL)) {
 
-		/*if (sensorRemote && (currMillis - last_RemoteSensor) > remoteSensorTimeout) {
-			// ferma il programma se è passato troppo tempo dall'ultimo aggiornamento ricevuto dal server
-			logger.println(tag, "REMOTE SENSOR TIMEOUT");
-			// è inutile mandare un sendstatus perchè tanto cambia lo stato dopo e verrebbe inviato due volte
-			remoteTemperature = 0;
-			setStatus(Program::STATUS_IDLE);
-			return true;
-		}
-		else */
+		// ferma il programma se è passato troppo tempo dall'ultimo aggiornamento ricevuto dal server
 		if (currMillis - programStartTime > programDuration) {
 			logger.println(tag, "END PROGRAM");
 			// � iniutile mandare un sendstatus perch� tanto cambia lo stato dopo e verrebbe inviato due volte
@@ -231,6 +275,36 @@ bool HeaterSensor::programEnded()
 			updateReleStatus();
 			//enableRele(false);
 			return true;
+		} /*else if (currMillis - las > programDuration) {
+			logger.println(tag, "END PROGRAM");
+			// � iniutile mandare un sendstatus perch� tanto cambia lo stato dopo e verrebbe inviato due volte
+			setStatus(STATUS_OFF);
+			updateReleStatus();
+			//enableRele(false);
+			return true;
+		}*/
+	}
+	return false;
+}
+
+bool HeaterSensor::remoteTemperatureUpdate()
+{
+	
+	if (status.equals(STATUS_MANUAL)) {
+		
+		unsigned long currMillis = millis();
+		if (currMillis - last_RemoteSensor > remoteTemperatureTimeout) {
+			logger.println(tag, "REMOTE TEMPERATURE TIMEOUT");
+			setStatus(STATUS_OFF);
+			updateReleStatus();
+			//enableRele(false);
+			return true;
+		}
+
+		if (currMillis - last_RemoteSensor > remoteTemperatureRefreshTimeout) {
+			logger.println(tag, "REMOTE TEMPERATURE REFRESH TIMEOUT");
+			requestZoneTemperatureUpdate();
+			return false;
 		}
 	}
 	return false;
@@ -238,7 +312,7 @@ bool HeaterSensor::programEnded()
 
 void HeaterSensor::updateReleStatus() {
 
-	logger.print(tag, "\n\n\t>>updateReleStatus");
+	logger.print(tag, "\n\n\t>>updateReleStatus" + String(remoteTemperature));
 
 	logger.print(tag, "\n\t ConsumptionStartTime=" + String(ConsumptionStartTime));
 	logger.print(tag, "\n\t totalConsumptionTime=" + String(totalConsumptionTime));
@@ -246,6 +320,8 @@ void HeaterSensor::updateReleStatus() {
 	logger.print(tag, "\n\t targetTemperature=" + String(targetTemperature));
 	logger.print(tag, "\n\t scenario=" + String(activescenario));
 	logger.print(tag, "\n\t timeinterval=" + String(activeTimeInterval));
+	logger.print(tag, "\n\t scenario=" + String(activeActionId));
+	logger.print(tag, "\n\t timeinterval=" + lastCommandDate);
 	logger.print(tag, "\n\t zoneid=" + String(zoneId));
 	logger.print(tag, "\n\t remoteTemperature=" + String(remoteTemperature));
 	logger.print(tag, "\n\n");
@@ -256,9 +332,17 @@ void HeaterSensor::updateReleStatus() {
 		enableRele(false);
 
 	}
-	else if (status.equals(STATUS_KEEPTEMPERATURE)) {
-		logger.print(tag, "\n\t STATUS OFF");
-		enableRele(false);
+	else if (status.equals(STATUS_MANUAL)) {
+		logger.print(tag, "\n\t STATUS MANUAL");
+		if (remoteTemperature < targetTemperature) {
+
+			logger.print(tag, F("-LOW TEMPERATURE"));
+			enableRele(true);
+		}
+		else {
+			logger.print(tag, F("-HIGH TEMPERATURE"));
+			enableRele(false);
+		}
 	}
 	else if (status.equals(STATUS_KEEPTEMPERATURE)) {
 
@@ -277,54 +361,81 @@ void HeaterSensor::updateReleStatus() {
 	logger.print(tag, "\n\t <<updateReleStatus\n");
 }
 
-bool HeaterSensor::changeStatus(String command, long duration, float remotetemperature, float target, int scenario, int timeinterval, int zone) {
+bool HeaterSensor::changeStatus(String command, long duration, float rtemp, float target, int actionid, String commanddate,/*int scenario, int timeinterval, */int zone) {
 
-	logger.print(tag, F("\n\t >>HeaterActuator::changeStatus"));
+	logger.print(tag, F("\n\t >>HeaterSensor::changeStatus"));
 
-	logger.print(tag, "\n\t status=" + status);
+	logger.print(tag, String("\n\t status=") + status);
 	logger.print(tag, String("\n\t command=") + command);
 	logger.print(tag, String("\n\t duration=") + String(duration));
-	logger.print(tag, String("\n\t remotetemperature=") + String(remotetemperature));
+	logger.print(tag, String("\n\t remotetemperature=") + String(rtemp));
 	logger.print(tag, String("\n\t target=") + String(target));
-	logger.print(tag, String("\n\t scenario=") + String(scenario));
-	logger.print(tag, String("\n\t timeinterval=") + String(timeinterval));
+	logger.print(tag, String("\n\t actionid=") + String(actionid));
+	logger.print(tag, String("\n\t commanddate=") + String(commanddate));
+	/*logger.print(tag, String("\n\t scenario=") + String(scenario));
+	logger.print(tag, String("\n\t timeinterval=") + String(timeinterval));*/
 	logger.print(tag, String("\n\t zone=") + String(zone));
 
 
 	if (!enabled) {
+		logger.print(tag, F("\n\t sensor not enabled "));
 		return false;
 	}
 	if (command.equals(command_KeepTemperature)) {
 
-		logger.print(tag, F("\n\t keeptemperature "));
+		logger.print(tag, F("\n\t command keeptemperature "));
 		setRemoteTemperature(remoteTemperature);
 		setTargetTemperature(target);
 		setStatus(STATUS_KEEPTEMPERATURE);
 		programDuration = duration;
 		programStartTime = millis();
+		activeActionId = actionid;
+		zoneId = zone;
+		lastCommandDate = commanddate;
 
 	}
 	else if (command.equals(command_Off)) {
 
-		logger.print(tag, F("\n\t off "));
+		logger.print(tag, F("\n\t command off "));
 		setStatus(STATUS_OFF);
 		enableRele(false);
+		lastCommandDate = commanddate;
 
 	}
-	else if (command.equals(command_sendTempareture)) {
+	else if (command.equals(command_Manual)) {
 
-		logger.print(tag, F("\n\t off "));
+		logger.print(tag, F("\n\t command manual "));
 		setRemoteTemperature(remoteTemperature);
-		enableRele(false);
+		setTargetTemperature(target);
+		setStatus(STATUS_MANUAL);
+		programDuration = duration;
+		programStartTime = millis();
+		zoneId = zone;
+		//enableRele(false);
+		lastCommandDate = commanddate;
 
+
+	}
+	else if (command.equals(command_sendTemperature)) {
+
+		logger.print(tag, F("\n\t command sendtemperature "));
+		logger.print(tag, String("\n\t remotetemperature=") + String(rtemp));
+		setRemoteTemperature(rtemp);
+		enableRele(false);
+		lastCommandDate = commanddate;
+
+	}
+	else {
+		logger.print(tag, F("\n\t invalid command "));
 	}
 	updateReleStatus();
-	logger.print(tag, F("\n\t <<HeaterActuator::changeStatus"));
+	logger.print(tag, F("\n\t <<HeaterSensor::changeStatus"));
+	return true;
 }
 
 void HeaterSensor::setStatus(String status)
 {
-	oldStatus = status;
+	oldStatus = this->status;
 	this->status = status;
 }
 
@@ -385,11 +496,31 @@ bool HeaterSensor::releStatusChanged() {
 	return false;
 }
 
-void  HeaterSensor::saveOldStatus() {
+/*void  HeaterSensor::saveOldStatus() {
 	oldStatus = status;
-}
+}*/
 
 void  HeaterSensor::saveOldReleStatus() {
 	oldReleStatus = releStatus;
+}
+
+bool HeaterSensor::requestZoneTemperatureUpdate()
+{
+	logger.print(tag, "\n");
+	logger.println(tag, ">> requestZoneTemperatureUpdate");
+
+	Command command;
+	logger.print(tag, "\t REQUEST ZONE TEMPERATURE\n");
+
+	String json = "{";
+	json += "\"shieldid\":" + String(Shield::getShieldId());// shieldid
+	json += ",\"id\":" + String(sensorid);// shieldid
+	json += ",\"zoneid\":" + String(zoneId);
+	json += "}";
+
+	bool res = command.requestZoneTemperature(json);
+	logger.println(tag, "<< requestZoneTemperatureUpdate\n");
+
+	return res;
 }
 

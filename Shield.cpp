@@ -19,7 +19,7 @@ Logger Shield::logger;
 String Shield::tag = "Shield";
 
 String Shield::lastRestartDate = "";
-String Shield::swVersion = "1.02";
+String Shield::swVersion = "1.03";
 int Shield::id = 0; //// inizializzato a zero perch� viene impostato dalla chiamata a registershield
 
 // default shield setting
@@ -71,7 +71,7 @@ Sensor* Shield::getSensorFromAddress(String addr) {
 Sensor* Shield::getSensorFromId(int id) { /// sidsogna aggiungere anche richerca nei child
 	logger.println(tag, ">>getSensorFromId " + String(id));
 	for (int i = 0; i < sensorList.count; i++) {
-		
+
 		Sensor* sensor = (Sensor*)sensorList.get(i);
 
 		//logger.print(tag, "\n\t >>i=" + String(i));
@@ -81,7 +81,7 @@ Sensor* Shield::getSensorFromId(int id) { /// sidsogna aggiungere anche richerca
 			//logger.println(tag, "\n\t found sensor " + String(sensor->sensorid) + "." + sensor->sensorname);
 			return sensor;
 		}
-			
+
 	}
 	logger.println(tag, "\n\t <<getSensorFromId: sensornotfound");
 	return nullptr;
@@ -135,14 +135,14 @@ bool Shield::onUpdateSensorListCommand(JSON& json) {
 		logger.print(tag, "\n\t str=" + str);
 		JSONArray jArray(str);
 		String item = jArray.getFirst();
-		
+
 
 
 		SensorFactory factory;
 		clearAllSensors(); // serve per inizializzare
 		int i = 0;
 		while (!item.equals("")) {
-		
+
 			logger.print(tag, "\n\n\t SENSOR: #" + String(i++));
 			logger.print(tag, " =" + item);
 
@@ -235,9 +235,9 @@ bool Shield::receiveCommand(String jsonStr) {
 				CommandResponse result = sensor->receiveCommand(jsonStr);
 
 				//if (result.result.equals("success"/*response_success*/)) {
-					String topic = "toServer/response/" + result.uuid + "/success";
-					bool res = mqtt_publish(topic, getSensorsStatusJson());
-					return true;
+				String topic = "toServer/response/" + result.uuid + "/success";
+				bool res = mqtt_publish(topic, getSensorsStatusJson());
+				return true;
 				//}
 
 
@@ -245,11 +245,11 @@ bool Shield::receiveCommand(String jsonStr) {
 
 				//bool res = mqtt_publish(topic, String(json));
 
-				
+
 			}
 		}
 		/*else if (heaterEnabled ) { // se arriva direttamente dalla scheda non c'� actuatorid
-			
+
 			logger.print(tag, "\n\t ++heater command");
 
 			String result = phearterActuator->sendCommand(jsonStr);
@@ -326,7 +326,7 @@ bool Shield::onShieldSettingsCommand(JSON& json)
 	result += ",\"mqttport\": " + String(getMQTTPort());
 	result += ",\"servername\": \"" + getServerName() + "\"";
 	result += ",\"serverport\": " + String(getServerPort());
-	
+
 	result += "}";*/
 
 	logger.print(tag, "\n\t<<onShieldSettingsCommand");
@@ -342,7 +342,7 @@ bool Shield::sendRegister()
 	String json = getJson();
 	command.registerShield(json);
 
-	
+
 	return true;
 }
 
@@ -368,6 +368,8 @@ bool Shield::sendUpdateSensorStatus()
 
 	return res;
 }
+
+
 
 void Shield::registerShield()
 {
@@ -408,7 +410,7 @@ bool Shield::onPowerCommand(JSON& json)
 			res = true;
 		}
 	}
-	
+
 	logger.print(tag, "\n\t<< onPowerCommand");
 	return true;
 }
@@ -477,7 +479,7 @@ String Shield::getSensorsStatusJson() {
 	logger.println(tag, F(">>getSensorsStatusJson"));
 
 	sensorList.show();
-	
+
 	String json = "{";
 	json += "\"shieldid\":" + String(id);// shieldid
 	json += ",\"swversion\":\"" + Shield::swVersion + "\"";// shieldid
@@ -589,7 +591,7 @@ void Shield::checkSensorsStatus()
 	bool sensorStatusChanged = false;
 
 	for (int i = 0; i < sensorList.count; i++) {
-		
+
 		Sensor* sensor = (Sensor*)sensorList.get(i);
 		if (!sensor->enabled)
 			continue;
@@ -617,7 +619,7 @@ void Shield::checkSensorsStatus()
 
 	if (sensorStatusChanged) {
 		Command command;
-		
+
 		logger.println(tag, "\t >>checkSensorsStatus() SEND SENSOR STATUS UPDATE\n");
 
 		String json = getSensorsStatusJson();

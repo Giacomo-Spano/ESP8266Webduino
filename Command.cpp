@@ -211,6 +211,25 @@ boolean Command::sendSensorsStatus(String json)
 	return res;
 }
 
+boolean Command::requestZoneTemperature(String json)
+{
+	logger.print(tag, "\n");
+	logger.println(tag, F(">>Command::requestZoneTemperature"));
+
+	if (Shield::getShieldId() == 0) {
+		logger.print(tag, F("\n\tID NON VALIDO"));
+		return false;
+	}
+
+	bool res = false;
+	if (Shield::getMQTTmode() == true) {
+		String topic = "toServer/shield/" + String(Shield::getShieldId()) + String("/requestzonetemperature");
+		res = mqtt_publish(topic, String(json));
+	}
+
+	logger.println(tag, F("<<Command::requestZoneTemperature\n"));
+	return res;
+}
 boolean Command::sendSettingsStatus(Shield shield)
 {
 	logger.println(tag, F("\n\t >>sendSettingsStatus"));

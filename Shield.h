@@ -59,6 +59,7 @@ protected:
 	bool onRebootCommand(JSON& json);
 	bool sendUpdateSensorStatus();
 	
+	
 
 	//bool temperatureChanged = false; // indica se la temperatura � cambiata dall'ultima chiamata a flash()
 	void checkSensorsStatus();	
