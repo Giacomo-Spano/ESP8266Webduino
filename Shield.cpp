@@ -19,15 +19,15 @@ Logger Shield::logger;
 String Shield::tag = "Shield";
 
 String Shield::lastRestartDate = "";
-String Shield::swVersion = "1.03";
+String Shield::swVersion = "1.10";
 int Shield::id = 0; //// inizializzato a zero perch� viene impostato dalla chiamata a registershield
 
 // default shield setting
 //String Shield::networkSSID = "TP-LINK_3BD796";
 //String Shield::networkPassword = "giacomocasa";
 int Shield::localPort = 80;
-String Shield::serverName = "192.168.1.3";
-String Shield::mqttServer = "192.168.1.3";
+String Shield::serverName = "192.168.1.33";
+String Shield::mqttServer = "192.168.1.33";
 int Shield::mqttPort = 1883;
 int Shield::serverPort = 8080;
 String Shield::shieldName = "shieldName";
@@ -69,19 +69,13 @@ Sensor* Shield::getSensorFromAddress(String addr) {
 }
 
 Sensor* Shield::getSensorFromId(int id) { /// sidsogna aggiungere anche richerca nei child
-	logger.println(tag, ">>getSensorFromId " + String(id));
+	logger.print(tag, "\n\t >>getSensorFromId " + String(id));
 	for (int i = 0; i < sensorList.count; i++) {
 
 		Sensor* sensor = (Sensor*)sensorList.get(i);
-
-		//logger.print(tag, "\n\t >>i=" + String(i));
-		//logger.print(tag, + " " + String(sensor->sensorid) + "." + sensor->sensorname);
-
 		if (sensor->sensorid == id) {
-			//logger.println(tag, "\n\t found sensor " + String(sensor->sensorid) + "." + sensor->sensorname);
 			return sensor;
 		}
-
 	}
 	logger.println(tag, "\n\t <<getSensorFromId: sensornotfound");
 	return nullptr;
@@ -489,7 +483,7 @@ String Shield::getSensorsStatusJson() {
 	for (int i = 0; i < sensorList.count; i++) {
 		Sensor* sensor = (Sensor*)sensorList.get(i);
 
-		logger.println(tag, "\n\n\t SENSOR=" + sensor->sensorname);
+		//logger.println(tag, "\n\n\t SENSOR=" + sensor->sensorname);
 
 		if (i != 0)
 			json += ",";
@@ -500,7 +494,7 @@ String Shield::getSensorsStatusJson() {
 
 		json += sensor->getJSON();
 
-		logger.println(tag, "\n\n\t END SENSOR=" + sensor->sensorname);
+		//logger.println(tag, "\n\n\t END SENSOR=" + sensor->sensorname);
 	}
 	json += "]";
 	json += "}";

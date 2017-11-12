@@ -77,6 +77,8 @@ int EPROM_Table_Schema_Version = 8;
 Logger logger;
 String sensorNames = "";
 
+
+bool serverNotFoundError = false;
 const int maxjsonLength = 1000;
 
 String tag = "Webduino";
@@ -180,28 +182,39 @@ void writeSettings() {
 	logger.print(tag, "\n\t serverport = " + String(serverport));
 	json.pushInteger("serverport", serverport);
 
+	// mqtt server name
+	String mqttServer = Shield::getMQTTServer();
+	logger.print(tag, "\n\t mqttServer = " + mqttServer);
+	json.pushString("mqttserver", mqttServer);
+
+	// mqtt server port
+	int mqttport = Shield::getServerPort();
+	logger.print(tag, "\n\t mqttport = " + String(mqttport));
+	json.pushInteger("mqttport", mqttport);
+
 	// shieldName name
 	String shieldname = Shield::getShieldName();
 	logger.print(tag, "\n\t shieldname = " + shieldname);
 	json.pushString("shieldname", shieldname);
 
 	MyEPROMClass eprom;
-	logger.print(tag, "\n" + logger.formattedJson(json.toString()));
+	//logger.print(tag, "\n" + logger.formattedJson(json.toString()));
 	eprom.writeJSON(SETTINGS_ADDR, &json);
 	
 	logger.println(tag, "<<writeSettings\n");
 }
 
-String getSettingsFromServer() {
+bool getSettingsFromServer(String *settings) {
 
 	//logger.print(tag, "\n");
 	logger.println(tag, ">>getSettingsFromServer");
 
 	Command command;
-	String settings = command.loadShieldSettings();	
+	//String settings;
+	return command.loadShieldSettings(settings);
 
-	logger.println(tag, "<<getSettingsFromServer settings=" + settings);
-	return settings;
+	//logger.println(tag, "<<getSettingsFromServer settings=");
+	//return settings;
 }
 
 void readSettings(JSONObject *json) {
@@ -303,7 +316,7 @@ void writeSensors() {
 		Sensor* sensor = (Sensor*)shield.sensorList.get(i);
 		JSONObject json2;
 		sensor->getJSON(&json2);
-		logger.print(tag, "\n" + logger.formattedJson(json2.toString()));
+		//logger.print(tag, "\n" + logger.formattedJson(json2.toString()));
 
 		index += eprom.writeJSON(index, &json2);
 	}
@@ -358,6 +371,29 @@ bool loadSensors(String settings) {
 			String name = json.getString("name");
 			Shield::setShieldName(name);
 		}
+
+		if (json.has("server")) {
+			String name = json.getString("server");
+			Shield::setServerName(name);
+
+			logger.print(tag, "\n\tDEBUG shieldName=");
+			logger.print(tag, Shield::getServerName());
+		}
+
+		if (json.has("serverport")) {
+			int port = json.getInteger("serverport");
+			Shield::setServerPort(port);
+		}
+
+		if (json.has("mqttserver")) {
+			String name = json.getString("mqttserver");
+			Shield::setMQTTServer(name);
+		}
+
+		if (json.has("mqttport")) {
+			int port = json.getInteger("mqttport");
+			Shield::setMQTTPort(port);
+		}
 	}
 	else {
 		logger.println(tag, "error -ID MISSING");
@@ -387,9 +423,9 @@ bool loadSensors(String settings) {
 		}
 
 	}
-
-	return true;
 	logger.println(tag, "<<loadSensors\n");
+	return true;
+	
 }
 
 void readSensors() {
@@ -632,6 +668,13 @@ void parseMessageReceived(String topic, String message) {
 		Command command;
 		command.sendSensorsStatus(json);
 	}
+	else if (topic.equals(str + "/reboot")) {
+		logger.print(tag, "\n\t received reboot request");
+		ESP.restart();
+		/*String json = shield.getSensorsStatusJson();
+		Command command;
+		command.sendSensorsStatus(json);*/
+	}
 	else if (topic.equals(str + "/command")) {
 		logger.print(tag, "\n\t received command " + message);
 		//String response = shield.getSensorsStatusJson();
@@ -719,7 +762,7 @@ void setup()
 	shield.drawString(0, 0, "restarting..", 1, ST7735_WHITE);
 
 	// Initialising the UI will init the display too.
-	String str = "\n\nstarting.... Versione 2.0";
+	String str = "\n\nstartingx.... Versione ";
 	str += Shield::swVersion;
 	logger.print(tag, str);
 
@@ -749,59 +792,66 @@ void setup()
 		//checkOTA();
 
 		JSONObject json;
-		String settings = getSettingsFromServer();
-		loadSensors(settings);
-		//writeSettings();
-		//writeSensors();
+		String settings;
+		bool res = getSettingsFromServer(&settings);
 
-		shield.drawString(0, 50, "connected..Start server", 1, ST7735_WHITE);
+		if (!res) {
+			logger.println(tag, "\n\n\tIMPOSSIBILE TROVARE IL SERVER\n");
+			serverNotFoundError = true;
+		}
+		else {
+			//writeEPROM();
 
-		// Start the server
-		server.begin();
-		logger.print(tag, "Server started");
-		shield.drawString(0, 60, "server started", 1, ST7735_WHITE);
+			loadSensors(settings);
 
-		shield.localIP = WiFi.localIP().toString();
-		// Print the IP address
-		logger.println(tag, shield.localIP);
 
-		wdt_disable();
-		wdt_enable(WDTO_8S);
+			writeEPROM();
+			//writeSettings();
+			//writeSensors();
 
-		//readSensors();
+			shield.drawString(0, 50, "connected..Start server", 1, ST7735_WHITE);
 
-		//shield.drawString(50, 70, String(shield.MAC_char), 1, ST7735_RED);
-		//shield.drawString(60, 80, "DONE", 1, ST7735_WHITE);
-		//shield.addActuators();
+			// Start the server
+			server.begin();
+			logger.print(tag, "Server started");
+			shield.drawString(0, 60, "server started", 1, ST7735_WHITE);
 
-		IPAddress ipaddrgoogle;	
-		Serial.println("\n");
-		WiFi.hostByName(googleServerName, ipaddrgoogle);
-		Serial.print(googleServerName);
-		Serial.print(": ");
-		Serial.println(ipaddrgoogle);
-		
-		IPAddress ipaddr;
-		WiFi.hostByName(giacomohomeServerName, ipaddr);
-		Serial.print(giacomohomeServerName);
-		Serial.print(": ");
-		Serial.println(ipaddr);
+			shield.localIP = WiFi.localIP().toString();
+			// Print the IP address
+			logger.println(tag, shield.localIP);
 
-		IPAddress ipaddr2;
-		WiFi.hostByName(giacomoboxServerName, ipaddr2);
-		Serial.print(giacomoboxServerName);
-		Serial.print(": ");
-		Serial.println(ipaddr2);
-		
-		char ipaddress[255];
-		sprintf(ipaddress,"%d.%d.%d.%d\n", ipaddr[0], ipaddr[1], ipaddr[2], ipaddr[3]);
-		Serial.print("ipaddres= ");
-		Serial.println(ipaddress);
+			wdt_disable();
+			wdt_enable(WDTO_8S);
 
-		mqttclient.init(&client);
-		mqttclient.setServer(Shield::getServerName(), 1883);
-		mqttclient.setCallback(callback);
-		reconnect();
+			IPAddress ipaddrgoogle;
+			Serial.println("\n");
+			WiFi.hostByName(googleServerName, ipaddrgoogle);
+			Serial.print(googleServerName);
+			Serial.print(": ");
+			Serial.println(ipaddrgoogle);
+
+			IPAddress ipaddr;
+			WiFi.hostByName(giacomohomeServerName, ipaddr);
+			Serial.print(giacomohomeServerName);
+			Serial.print(": ");
+			Serial.println(ipaddr);
+
+			IPAddress ipaddr2;
+			WiFi.hostByName(giacomoboxServerName, ipaddr2);
+			Serial.print(giacomoboxServerName);
+			Serial.print(": ");
+			Serial.println(ipaddr2);
+
+			char ipaddress[255];
+			sprintf(ipaddress, "%d.%d.%d.%d\n", ipaddr[0], ipaddr[1], ipaddr[2], ipaddr[3]);
+			Serial.print("ipaddres= ");
+			Serial.println(ipaddress);
+
+			mqttclient.init(&client);
+			mqttclient.setServer(Shield::getServerName(), 1883);			
+			mqttclient.setCallback(callback);
+			reconnect();
+		}
 		
 	}
 	else {
@@ -1103,6 +1153,11 @@ void checkForSWUpdate() {
 void loop()
 {
 	//ArduinoOTA.handle();  // questa chiamata deve essere messa in loop()
+	if (serverNotFoundError) {
+		delay(5000);
+		ESP.restart();
+		return;
+	}
 
 	if (checkHTTPUpdate) {
 		checkHTTPUpdate = false;

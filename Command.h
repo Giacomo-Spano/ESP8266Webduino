@@ -22,7 +22,7 @@ public:
 	Command();
 	~Command();
 	void registerShield(String json);
-	String loadShieldSettings();
+	bool loadShieldSettings(String *result);
 	void sendRestartNotification();
 	boolean sendSensorsStatus(String json);
 	boolean requestZoneTemperature(String json);

@@ -77,8 +77,8 @@ public:
 	//Program programSettings;
 private:
 	String status = STATUS_OFF;
-	String oldStatus = status;
-
+	String oldStatus = STATUS_OFF;
+	
 	bool releStatus = false;
 	bool oldReleStatus = false;
 	float targetTemperature = 0.0;

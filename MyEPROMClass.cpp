@@ -55,21 +55,31 @@ int MyEPROMClass::writeInt(int index, int value)
 
 int MyEPROMClass::writeJSON(int index, JSONObject *json)
 {
+
+
 	logger.print(tag, "\n\t >>writeJSON index=" + String(index));
 	
 	int startIndex = index;
 
-	logger.print(tag, "\n\t str =" + json->toString());
+	String str = json->toString();
 
-	if (index < 0 || (index + json->toString().length()) > epromSize) return 0;
+	logger.print(tag, "\n\t str =" + str/*json->toString()*/);
 
-	index += writeInt(index, json->toString().length());
+	if (index < 0 || (index + str.length()/*json->toString().length()*/) > epromSize) return 0;
+
+	index += writeInt(index, str.length()/*json->toString().length()*/);
 	
-	logger.print(tag, "\n\t len=" + String(json->toString().length()));
-	for (int i = 0; i < json->toString().length(); ++i)
+	logger.print(tag, "\n\t len=" + String(str.length()/*json->toString().length())*/));
+
+	/// qui c'è un bug. Se json è troppo grande va tutto in errore
+
+	logger.print(tag, "\n\t loop:");
+	for (int i = 0; i < str.length()/*json->toString().length()*/; ++i)
 	{
-		EEPROM.write(index++, json->toString().charAt(i));
-		//if (i > maxjsonLength) break;
+		//logger.print(tag, json->toString().charAt(i));
+
+		EEPROM.write(index++, str.charAt(i)/*json->toString().charAt(i)*/);
+		
 	}
 
 	EEPROM.commit();

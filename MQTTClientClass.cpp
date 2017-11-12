@@ -27,7 +27,7 @@ PubSubClient & MQTTClientClass::setServer(String domain, uint16_t port)
 	WiFi.hostByName(domain.c_str(), ipaddr);
 	Serial.print(domain);
 	Serial.print(": ");
-	Serial.println(ipaddr);
+	Serial.println(port,DEC);
 
 	return client->setServer(ipaddr, port);
 }

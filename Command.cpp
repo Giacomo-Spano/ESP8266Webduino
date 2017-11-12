@@ -121,7 +121,7 @@ void Command::registerShield(String json)
 	logger.println(tag, F("<<registerShield\n"));
 }
 
-String Command::loadShieldSettings()
+bool Command::loadShieldSettings(String *result)
 {
 	logger.print(tag, F("\n"));
 	logger.println(tag, F(">> loadShieldSettings\n"));
@@ -135,19 +135,15 @@ String Command::loadShieldSettings()
 	logger.print(tag, "\n\t jsonevent=" + jsonevent + "\n");
 		
 	HttpHelper hplr;
-	String result;
+	//String result;
 	logger.print(tag, "\n\t serverName=" + Shield::getServerName() + "**");
 	logger.print(tag, "\n\t serverPort=" + String(Shield::getServerPort()));
-	boolean res = hplr.post(Shield::getServerName(), Shield::getServerPort(), "/webduino/shield", jsonevent, &result);
+	boolean res = hplr.post(Shield::getServerName(), Shield::getServerPort(), "/webduino/shield", jsonevent, result);
 
-	/*for (int i = 0; i < result.length(); i++) {
-		int c = result[i];
-		logger.print(tag, "|"+ String(i) + ":" + String(c) + ":" + String(result[i]));
-	}*/
+	
+	logger.println(tag, "<<loadShieldSettings\n result=" + *result);
 
-	logger.println(tag, "<<loadShieldSettings\n result=" + result);
-
-	return result;
+	return res;
 }
 
 int Command::timeSync()
@@ -191,14 +187,14 @@ boolean Command::sendSensorsStatus(String json)
 		return false;
 	}
 
-	logger.println(tag, F("..calling shield.getSensorsStatusJson()\n"));
+	//logger.println(tag, F("..calling shield.getSensorsStatusJson()\n"));
 	//String json = shield.getSensorsStatusJson();
-	logger.println(tag, F("..returning from call shield.getSensorsStatusJson()\n"));
+	//logger.println(tag, F("..returning from call shield.getSensorsStatusJson()\n"));
 
-	logger.println(tag, F("..calling logger.formattedJson(json)\n"));
-	logger.print(tag, F("\n\tjson="));
-	logger.print(tag, logger.formattedJson(json));
-	logger.println(tag, F("..returning from call logger.formattedJson(json)\n"));
+	//logger.println(tag, F("..calling logger.formattedJson(json)\n"));
+	//logger.print(tag, F("\n\tjson="));
+	//logger.print(tag, logger.formattedJson(json));
+	//logger.println(tag, F("..returning from call logger.formattedJson(json)\n"));
 
 
 	bool res = false;

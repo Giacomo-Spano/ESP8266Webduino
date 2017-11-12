@@ -45,8 +45,8 @@ String Sensor::toString()
 }
 
 bool Sensor::getJSON(JSONObject *jObject) {
-	logger.print(tag, "\n");
-	logger.println(tag, ">>getJSON");
+	//logger.print(tag, "\n");
+	//logger.println(tag, ">>getJSON");
 	
 	jObject->pushString("type", type);
 	jObject->pushString("name", sensorname);
@@ -74,13 +74,13 @@ bool Sensor::getJSON(JSONObject *jObject) {
 		logger.println(tag, "\n\t child sensors JSON added\n");
 	}
 
-	logger.println(tag, "<<getJSON");
+	//logger.println(tag, "<<getJSON");
 	return true;
 }
 
 String Sensor::getJSONFields() {
 
-	logger.println(tag, ">>getJSONFields");
+	//logger.println(tag, ">>getJSONFields");
 
 	String json = "";
 	json += "\"type\":\"" + type + "\",";
@@ -98,14 +98,14 @@ String Sensor::getJSONFields() {
 	json += "\"addr\":\"" + address + "\"";
 	
 
-	logger.println(tag, ">>getJSONFields" + json);
+	//logger.println(tag, ">>getJSONFields" + json);
 	return json;
 }
 
 String Sensor::getChildren() {
 
-	logger.print(tag, "\n");
-	logger.println(tag, ">>getChildren child num=" + String(childsensors.length()));
+	//logger.print(tag, "\n");
+	//logger.println(tag, ">>getChildren child num=" + String(childsensors.length()));
 
 	String json = "";
 	if (childsensors.length() > 0) {
@@ -120,14 +120,14 @@ String Sensor::getChildren() {
 		}
 		json += "]";
 	}
-	logger.println(tag, "<<getChildren" + json);
+	//logger.println(tag, "<<getChildren" + json);
 	return json;
 }
 
 String Sensor::getJSON() {
 
-	logger.print(tag, "\n");
-	logger.println(tag, ">>getJSON");
+	//logger.print(tag, "\n");
+	//logger.println(tag, ">>getJSON");
 
 	String json = "{";	
 	json += getJSONFields();
@@ -135,7 +135,7 @@ String Sensor::getJSON() {
 	json += getChildren();	
 	json += "}";
 
-	logger.println(tag, "<<getJSON " + json);
+	//logger.println(tag, "<<getJSON " + json);
 	return json;
 }
 

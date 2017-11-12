@@ -18,7 +18,7 @@ OnewireSensor::OnewireSensor(int id, uint8_t pin, bool enabled, String address, 
 	logger.print(tag, "\n");
 	logger.println(tag, ">>OnewireSensor");
 
-	checkStatus_interval = 15000;
+	checkStatus_interval = 60000;
 	lastCheckStatus = 0;
 
 	type = "onewiresensor";
@@ -57,14 +57,14 @@ void OnewireSensor::loadChildren(JSONArray& jarray) {
 
 bool OnewireSensor::getJSON(JSONObject * jObject) {
 
-	logger.print(tag, "\n");
-	logger.println(tag, ">>getJSON");
+	//logger.print(tag, "\n");
+	//logger.println(tag, ">>getJSON");
 
 	bool res = Sensor::getJSON(jObject);
 	if (!res) return false;
 
 
-	logger.println(tag, "<<getJSON");
+	//logger.println(tag, "<<getJSON");
 	return true;
 }
 
@@ -226,13 +226,13 @@ bool OnewireSensor::readTemperatures() {
 
 String OnewireSensor::getJSONFields() {
 
-	logger.println(tag, ">>getJSONFields");
+	//logger.println(tag, ">>getJSONFields");
 	String json = "";
 	json += Sensor::getJSONFields();
 
 	// specific field
 
-	logger.println(tag, "<<getJSONField");
+	//logger.println(tag, "<<getJSONField");
 	return json;
 }
 
@@ -277,7 +277,7 @@ bool OnewireSensor::checkStatusChange() {
 		else
 			logger.println(tag, "temperatura NON cambiata");
 		logger.print(tag, F("\n\n"));
-		logger.println(tag, F(">>checkStatusChange()::checkTemperatures"));
+		logger.println(tag, F("<<checkStatusChange()::checkTemperatures"));
 		return temperatureChanged;
 	}
 

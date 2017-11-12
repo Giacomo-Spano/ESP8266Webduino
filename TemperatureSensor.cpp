@@ -51,7 +51,7 @@ bool TemperatureSensor::getJSON(JSONObject *jObject) {
 
 String TemperatureSensor::getJSONFields() {
 
-	logger.println(tag, ">>getJSONFields");
+	//logger.println(tag, ">>getJSONFields");
 	String json = "";
 	json += Sensor::getJSONFields();
 
@@ -65,7 +65,7 @@ String TemperatureSensor::getJSONFields() {
 	json += ",\"avtemperature\": ";
 	json += String(avTemperature);
 
-	logger.println(tag, "<<getJSONField" + json);
+	//logger.println(tag, "<<getJSONField" + json);
 	return json;
 }
 
