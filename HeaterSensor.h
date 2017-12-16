@@ -47,7 +47,7 @@ public:
 	~HeaterSensor();
 	
 	void updateReleStatus();
-	bool changeStatus(String command, long duration, float remotetemperature, float target, int actionid, String commanddate,/*int scenario, int timeinterval,*/ int zone);
+	bool changeStatus(String command, long duration, float remotetemperature, float target, int actionid, String commanddate, String enddate, int zone);
 	
 	CommandResponse receiveCommand(String json);
 
@@ -72,7 +72,7 @@ public:
 	time_t getRemaininTime();
 	
 	time_t programStartTime = 0;
-	time_t programDuration = 30000;
+	time_t programDuration = 3; // durata programma espressa in secondi
 
 	//Program programSettings;
 private:
@@ -85,9 +85,16 @@ private:
 	float remoteTemperature = 0;
 	int zoneId = 0; 
 	int activescenario = -1;
+
+	int remainingSeconds = 0;
+	int oldRemainingSeconds = 0;
+
+
 	int activeTimeInterval = -1;
 	int activeActionId = -1;
 	String lastCommandDate;
+	String lastTemperatureUpdate;
+	String endDate;
 	unsigned long totalConsumptionTime = 0;
 	unsigned long lastConsumptionEnableTime = 0;
 	unsigned long ConsumptionStartTime;

@@ -14,6 +14,8 @@ HeaterActuator::HeaterActuator(int id, uint8_t pin, bool enabled, String address
 	lastCheckStatus = 0;
 
 	type = "heatersensor";
+
+	lastTemperatureUpdate = "";
 }
 
 HeaterActuator::~HeaterActuator()
@@ -68,6 +70,12 @@ CommandResponse HeaterActuator::receiveCommand(String jsonStr)
 		remoteTemperature = json.jsonGetFloat("temperature");
 		logger.print(tag, "\n\t temperature=" + String(remoteTemperature));
 	}
+	// lastTemperatureUpdate
+	String lastTempUpdate = json.jsonGetString("lasttemperatureupdate");
+	if (json.has("date")) {
+		lastTemperatureUpdate = json.jsonGetString("date");
+		logger.print(tag, "\n\t lasttemperatureupdate=" + lastTempUpdate);
+	}
 	// sensor
 	int program = 0;
 	if (json.has("program")) {
@@ -85,6 +93,7 @@ CommandResponse HeaterActuator::receiveCommand(String jsonStr)
 	changeProgram(command, duration,
 		!localSensor,
 		remoteTemperature,
+		lastTempUpdate,
 		sensorId,
 		target, program, timerange);	
 	// result
@@ -105,6 +114,7 @@ String HeaterActuator::getJSONFields()
 	json += Sensor::getJSONFields();
 
 	json += ",\"remotetemperature\":" + String(getRemoteTemperature());
+	json += ",\"lasttemperatureupdate\":\"" + lastTemperatureUpdate + "\"";
 	json += ",\"status\":\"" + String(statusStr[getStatus()]) + "\"";
 	json += ",\"relestatus\":" + String((getReleStatus()) ? "true" : "false");
 
@@ -220,11 +230,12 @@ float HeaterActuator::getTargetTemperature() {
 	return targetTemperature;
 }
 
-void HeaterActuator::setRemote(float temp)
+void HeaterActuator::setRemote(float temp,String lastTempUpdate)
 {
 	logger.print(tag, "\n\t remoteTemperature" + String(remoteTemperature));
 	remoteTemperature = temp;
 	last_RemoteSensor = millis();
+	lastTemperatureUpdate = lastTempUpdate;
 	logger.print(tag, ",last_RemoteSensor=" + String(last_RemoteSensor));
 }
 
@@ -354,7 +365,7 @@ void HeaterActuator::updateReleStatus() {
 	logger.print(tag, "\n\t <<updateReleStatus\n");
 }
 
-void HeaterActuator::changeProgram(String command, long duration, bool sensorRemote, float remotetemperature, int sensorId, float target, int program, int timerange) {
+void HeaterActuator::changeProgram(String command, long duration, bool sensorRemote, float remotetemperature, String lastTempUpdate, int sensorId, float target, int program, int timerange) {
 
 	logger.print(tag, F("\n\t >>HeaterActuator::changeProgram"));
 
@@ -372,7 +383,7 @@ void HeaterActuator::changeProgram(String command, long duration, bool sensorRem
 	setSensorRemote(sensorRemote, sensorId);
 	float temp = remotetemperature;
 	//logger.print(tag, String("\n\t x1 remotetemperature=") + String(temp));
-	setRemote(temp);
+	setRemote(temp,lastTempUpdate);
 	//logger.print(tag, String("\n\t x2 remotetemperature=") + String(temp));
 	setTargetTemperature(target);
 

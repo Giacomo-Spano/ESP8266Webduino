@@ -55,7 +55,7 @@ public:
 	void setReleStatus(int status);
 	int getReleStatus();
 	void enableRele(boolean on);
-	void setRemote(float temp);
+	void setRemote(float temp, String lastTempUpdate);
 	bool statusChanged();
 	bool releStatusChanged();
 	void saveOldReleStatus();
@@ -74,7 +74,7 @@ public:
 	int getActiveProgram();
 	int getActiveTimeRange();
 	void setLocalTemperature(float temperature);
-	void changeProgram(String command, long duration, bool sensorRemote, float remotetemperature, int sensorId, float target, int program, int timerange);
+	void changeProgram(String command, long duration, bool sensorRemote, float remotetemperature, String lastTempUpdate, int sensorId, float target, int program, int timerange);
 	virtual String getSensorAddress();
 
 	time_t programStartTime = 0;
@@ -98,6 +98,7 @@ private:
 	unsigned long ConsumptionStartTime;
 	float localAvTemperature = 0;
 	float oldLocalAvTemperature = 0;	
+	String lastTemperatureUpdate;
 };
 
 
