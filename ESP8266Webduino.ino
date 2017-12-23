@@ -474,6 +474,7 @@ void initEPROM()
 	byte id = EEPROM.read(ID_ADDR); // read the first byte from the EEPROM
 	if (id == EEPROM_ID)
 	{
+		//saveCredentials(CREDENTIAL_ADDR);
 		readEPROM();
 	}
 	else
@@ -526,6 +527,29 @@ void setupAP(void) {
 	}
 	st += "</ul>";
 	delay(100);
+
+	logger.println(tag, "input SSID");
+	bool readInput = true;
+	while (readInput) {			
+		while (Serial.available()) {
+			siid = Serial.readString();
+			readInput = false;
+		}
+	}
+	logger.println(tag, siid);
+
+	logger.println(tag, "input pass");
+	readInput = true;
+	while (readInput) {
+		while (Serial.available()) {
+			pass = Serial.readString();
+			readInput = false;
+		}
+	}
+	logger.println(tag, pass);
+
+	saveCredentials(CREDENTIAL_ADDR);
+
 	String ssidName = String(ssidAP);
 	for (int i = 0; i < sizeof(shield.MAC_array); ++i) {
 		if (i > 0)
@@ -1152,6 +1176,13 @@ void checkForSWUpdate() {
 
 void loop()
 {
+	String prova = "";
+	if (Serial.available()) {
+		logger.println(tag, "\n\n\n\-----------READINPUT--------\n\n");
+		prova = Serial.readString();
+		logger.println(tag, prova);
+	}
+
 	//ArduinoOTA.handle();  // questa chiamata deve essere messa in loop()
 	if (serverNotFoundError) {
 		delay(5000);
