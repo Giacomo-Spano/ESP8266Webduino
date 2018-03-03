@@ -1,15 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26403.7
+VisualStudioVersion = 15.0.27130.2026
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ESP8266Webduino", "ESP8266Webduino.vcxproj", "{C5F80730-F44F-4478-BDAE-6634EFC2CA88}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowsFormsApplication1", "..\WindowsFormsApplication1\WindowsFormsApplication1.csproj", "{AFC3944E-ACB1-4120-9980-820515F5CACC}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "testwifi", "..\testwifi\testwifi.vcxproj", "{279A191C-DC4E-4B2A-BAAB-99214E99104B}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mqttclient", "..\..\..\Documents\Arduino\mqttclient\mqttclient.vcxproj", "{CAD7D5E6-4CC7-4BED-BCF1-26E4E923F4B2}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "testwifi", "..\..\..\Documents\Arduino\testwifi\testwifi.vcxproj", "{279A191C-DC4E-4B2A-BAAB-99214E99104B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -41,16 +41,6 @@ Global
 		{AFC3944E-ACB1-4120-9980-820515F5CACC}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{AFC3944E-ACB1-4120-9980-820515F5CACC}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{AFC3944E-ACB1-4120-9980-820515F5CACC}.Release|Win32.ActiveCfg = Release|Any CPU
-		{279A191C-DC4E-4B2A-BAAB-99214E99104B}.Debug|Any CPU.ActiveCfg = Debug|Win32
-		{279A191C-DC4E-4B2A-BAAB-99214E99104B}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
-		{279A191C-DC4E-4B2A-BAAB-99214E99104B}.Debug|Mixed Platforms.Build.0 = Debug|Win32
-		{279A191C-DC4E-4B2A-BAAB-99214E99104B}.Debug|Win32.ActiveCfg = Debug|Win32
-		{279A191C-DC4E-4B2A-BAAB-99214E99104B}.Debug|Win32.Build.0 = Debug|Win32
-		{279A191C-DC4E-4B2A-BAAB-99214E99104B}.Release|Any CPU.ActiveCfg = Release|Win32
-		{279A191C-DC4E-4B2A-BAAB-99214E99104B}.Release|Mixed Platforms.ActiveCfg = Release|Win32
-		{279A191C-DC4E-4B2A-BAAB-99214E99104B}.Release|Mixed Platforms.Build.0 = Release|Win32
-		{279A191C-DC4E-4B2A-BAAB-99214E99104B}.Release|Win32.ActiveCfg = Release|Win32
-		{279A191C-DC4E-4B2A-BAAB-99214E99104B}.Release|Win32.Build.0 = Release|Win32
 		{CAD7D5E6-4CC7-4BED-BCF1-26E4E923F4B2}.Debug|Any CPU.ActiveCfg = Debug|Win32
 		{CAD7D5E6-4CC7-4BED-BCF1-26E4E923F4B2}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
 		{CAD7D5E6-4CC7-4BED-BCF1-26E4E923F4B2}.Debug|Mixed Platforms.Build.0 = Debug|Win32
@@ -61,8 +51,21 @@ Global
 		{CAD7D5E6-4CC7-4BED-BCF1-26E4E923F4B2}.Release|Mixed Platforms.Build.0 = Release|Win32
 		{CAD7D5E6-4CC7-4BED-BCF1-26E4E923F4B2}.Release|Win32.ActiveCfg = Release|Win32
 		{CAD7D5E6-4CC7-4BED-BCF1-26E4E923F4B2}.Release|Win32.Build.0 = Release|Win32
+		{279A191C-DC4E-4B2A-BAAB-99214E99104B}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{279A191C-DC4E-4B2A-BAAB-99214E99104B}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{279A191C-DC4E-4B2A-BAAB-99214E99104B}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{279A191C-DC4E-4B2A-BAAB-99214E99104B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{279A191C-DC4E-4B2A-BAAB-99214E99104B}.Debug|Win32.Build.0 = Debug|Win32
+		{279A191C-DC4E-4B2A-BAAB-99214E99104B}.Release|Any CPU.ActiveCfg = Release|Win32
+		{279A191C-DC4E-4B2A-BAAB-99214E99104B}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{279A191C-DC4E-4B2A-BAAB-99214E99104B}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{279A191C-DC4E-4B2A-BAAB-99214E99104B}.Release|Win32.ActiveCfg = Release|Win32
+		{279A191C-DC4E-4B2A-BAAB-99214E99104B}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {38C755B7-5B4D-4CB9-9835-0FD34498E47D}
 	EndGlobalSection
 EndGlobal

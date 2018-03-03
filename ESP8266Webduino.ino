@@ -1,3 +1,7 @@
+#include <ESP8266WiFi.h>          //ESP8266 Core WiFi Library (you most likely already have this in your sketch)
+#include <DNSServer.h>            //Local DNS Server used for redirecting all requests to the configuration portal
+#include <ESP8266WebServer.h>     //Local WebServer used to serve the configuration portal
+#include <WiFiManager.h>      
 
 
 #include <PubSubClient.h>
@@ -16,6 +20,8 @@
 #include "HttpRequest.h"
 #include "ESP8266Webduino.h"
 #include <ESP8266WiFi.h>
+
+
 
 #include "MQTTClientClass.h"
 #include "MyEPROMClass.h"
@@ -248,9 +254,10 @@ void readSettings(JSONObject *json) {
 	logger.print(tag, "\n\t servername=" + servername);
 	Shield::setServerName(servername);	
 	// serverport
-	int serverport = 0;
+	int serverport = 9090;
 	if (json->has("serverport"))
 		serverport = json->getInteger("serverport");
+	//serverport = 8080;
 	logger.print(tag, "\n\t serverport=" + String(serverport));
 	Shield::setServerPort(serverport);
 
@@ -359,7 +366,7 @@ void readEPROM() {
 bool loadSensors(String settings) {
 
 	logger.print(tag, "\n\n");
-	logger.println(tag, ">>loadSensors settings=" + logger.formattedJson(settings));
+	logger.print(tag, ">>loadSensors settings=" + settings/*logger.formattedJson(settings)*/);
 	
 	JSONObject json(settings);	
 
@@ -600,6 +607,27 @@ void checkOTA()
 }
 
 bool testWifi() {
+	Serial.begin(115200);
+	// put your setup code here, to run once:
+	WiFiManager wifiManager;
+
+	// Uncomment and run it once, if you want to erase all the stored information
+	//wifiManager.resetSettings();
+
+	//first parameter is name of access point, second is the password
+	//wifiManager.autoConnect("AP-NAME", "passwd");
+
+	//wifiManager.autoConnect("AP-NAME");
+	//or if you want to use and auto generated name from 'ESP' and the esp's Chip ID use
+	wifiManager.autoConnect();
+
+	// if you get here you have connected to the WiFi
+	Serial.println("Connected.");
+
+	return true;
+}
+
+bool _testWifi() {
 
 	Serial.println();
 	Serial.println();
@@ -611,15 +639,11 @@ bool testWifi() {
 
 	WiFi.disconnect();
 	delay(100);
+	
+	/*siid = "TP-LINK_3D88";
+	pass = "giacomobox";
+	saveCredentials(CREDENTIAL_ADDR);*/
 
-	//delay(2000);
-	//WiFi.begin(networkSSID, networkPassword);
-	//logger.print(tag, "\n\t WiFi.siid=" + WiFi.SSID());
-	//logger.print(tag, "\n\t WiFi.pass=" + WiFi.RSSI());
-
-
-	/*String pass = Shield::getNetworkSSID();
-	String siid = Shield::getNetworkSSID();*/
 	logger.print(tag, "\nCONNECTING\n");
 	logger.print(tag, "siid=" + siid);
 	logger.print(tag, "--" + pass);
@@ -809,6 +833,10 @@ void setup()
 	
 	//shield.drawString(0, 80, "init onewire", 1, ST7735_WHITE);
 	//shield.drawString(0, 40, "connecting to WiFi", 1, ST7735_WHITE);
+
+	// Abilita il watchdog
+	ESP.wdtDisable();
+	//while (1) {};
 	
 	// Connect to WiFi network
 	if (testWifi()) {
@@ -910,6 +938,7 @@ void setup()
 	logger.print(tag, "\n\t <<setup");*/
 	shield.sensorList.show();
 
+	//Shield::setMQTTMode(false);
 	logger.println(tag, "<<setup");
 }
 
@@ -1176,6 +1205,13 @@ void checkForSWUpdate() {
 
 void loop()
 {
+
+	ESP.wdtFeed();
+
+	/*for (;;) {
+		;
+	}*/
+
 	String prova = "";
 	if (Serial.available()) {
 		logger.println(tag, "\n\n\n\-----------READINPUT--------\n\n");

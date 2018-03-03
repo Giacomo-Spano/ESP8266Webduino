@@ -19,7 +19,7 @@ Logger Shield::logger;
 String Shield::tag = "Shield";
 
 String Shield::lastRestartDate = "";
-String Shield::swVersion = "1.11";
+String Shield::swVersion = "1.13";
 int Shield::id = 0; //// inizializzato a zero perch� viene impostato dalla chiamata a registershield
 
 // default shield setting
@@ -201,17 +201,28 @@ bool Shield::receiveCommand(String jsonStr) {
 			return result;
 		}
 		else if (command.equals("reboot")) {
-			logger.print(tag, "\n\t ++reset");
+			logger.print(tag, "\n\t ++reboot");
 			result = onRebootCommand(json);
 			logger.print(tag, "\n\t <<onRebootCommand result=" + String(result));
 			return result;
 		}
 		else if (command.equals("updatesensorstatus")) {
-			logger.print(tag, "\n\t ++reset");
-			String json = getSensorsStatusJson();
-			result = sendUpdateSensorStatus();
-			logger.print(tag, "\n\t <<sendupdatesensorstatus result=" + String(result));
-			return result;
+			logger.print(tag, "\n\t ++updatesensorstatus");
+			
+			// uuid
+			String uuid = "";
+			if (json.has("uuid")) {
+				uuid = json.jsonGetString("uuid");
+				logger.print(tag, "\n\t uuid=" + uuid);
+			}
+			else {
+				logger.print(tag, "\n\t uuid NOT FOUND!");
+			}
+			String topic = "toServer/response/" + uuid + "/success";
+			bool res = mqtt_publish(topic, getSensorsStatusJson());
+			logger.print(tag, "\n\t <<sendupdatesensorstatus " + uuid);
+			return res;
+			
 		}
 		else if (command.equals("register")) {
 			logger.print(tag, "\n\t ++register");
@@ -219,7 +230,10 @@ bool Shield::receiveCommand(String jsonStr) {
 			logger.print(tag, "\n\t <<sendCommand result=" + String(result));
 			return result;
 		}
-		else if (json.has("actuatorid")) {
+		else if (json.has("actuatorid")) { // se contiene "actuatorid" vuole dire che
+											// è un comando diretto ad un sensore e quindi
+											// chiama la sensor->receivecommand
+
 			logger.print(tag, "\n\t ++actuator command");
 			int id = json.jsonGetInt("actuatorid");
 			Sensor* sensor = getSensorFromId(id);
@@ -228,37 +242,17 @@ bool Shield::receiveCommand(String jsonStr) {
 				logger.print(tag, "\n\t addr=" + String(sensor->address));
 				CommandResponse result = sensor->receiveCommand(jsonStr);
 
-				//if (result.result.equals("success"/*response_success*/)) {
-				String topic = "toServer/response/" + result.uuid + "/success";
-				bool res = mqtt_publish(topic, getSensorsStatusJson());
-				return true;
-				//}
-
-
-				//logger.print(tag, "\n\t<<Shield::receiveCommand result=" + String(result));
-
-				//bool res = mqtt_publish(topic, String(json));
-
-
-			}
+				if (result.result.equals("success")) {
+					String topic = "toServer/response/" + result.uuid + "/success";
+					bool res = mqtt_publish(topic, /*getSensorsStatusJson()*/sensor->getJSON());
+					return res;
+				}
+				else {
+					return false;
+				}
+			}			
 		}
-		/*else if (heaterEnabled ) { // se arriva direttamente dalla scheda non c'� actuatorid
-
-			logger.print(tag, "\n\t ++heater command");
-
-			String result = phearterActuator->sendCommand(jsonStr);
-			logger.print(tag, "\n\t<<Shield::receiveCommand result=" + String(result));
-			return result;
-		}*/
 	}
-
-	/*logger.println(tag, "\n\t command not valid");
-	String result = "";
-	result += "{";
-	result += "\"result\": \"failed\"";
-	result += "}";
-	logger.println(tag, "\n\t<<receiveCommand result=" + String(result));
-	return result;*/
 	return false;
 }
 

@@ -59,18 +59,6 @@ CommandResponse HeaterSensor::receiveCommand(String jsonStr)
 		target = json.jsonGetFloat("target");
 		logger.print(tag, "\n\t target=" + String(target));
 	}
-	/*// scenario
-	int scenario = 0;
-	if (json.has("scenario")) {
-		scenario = json.jsonGetInt("scenario");
-		logger.print(tag, "\n\t scenario=" + String(scenario));
-	}
-	// scenario time interval
-	int timeInterval = 0;
-	if (json.has("timeinterval")) {
-		timeInterval = json.jsonGetInt("timeinterval");
-		logger.print(tag, "\n\t timeinterval=" + String(timeInterval));
-	}*/
 	// actionid
 	int actionid = 0;
 	if (json.has("actionid")) {
@@ -101,9 +89,9 @@ CommandResponse HeaterSensor::receiveCommand(String jsonStr)
 	if (json.has("uuid")) {
 		uuid = json.jsonGetString("uuid");
 		logger.print(tag, "\n\t uuid=" + uuid);
+	} else {
+		logger.print(tag, "\n\t NO uuid FOUND!");
 	}
-	
-
 	logger.print(tag, "\n\t changeProgram param=" + String(rTemperature));
 	bool res = changeStatus(command, duration,
 		rTemperature,
@@ -465,6 +453,8 @@ bool HeaterSensor::changeStatus(String command, long duration, float rtemp, floa
 	}
 	else {
 		logger.print(tag, F("\n\t invalid command "));
+		logger.print(tag, F("\n\t <<HeaterSensor::changeStatus failed"));
+		return false;
 	}
 
 	logger.print(tag, "\n\t --HeaterSensor::changeStatus status=" + status);
