@@ -13,6 +13,7 @@
 #include "TFTDisplay.h"
 #include "DoorSensor.h"
 #include "OnewireSensor.h"
+#include "HornSensor.h"
 
 class Shield
 {	
@@ -27,6 +28,8 @@ protected:
 	static String shieldName;
 
 	static bool mqttMode;
+	static bool configMode;
+	static bool resetSettings;
 
 public:
 	static String swVersion;
@@ -54,7 +57,7 @@ protected:
 	bool onUpdateSensorListCommand(JSON& json);
 	bool onShieldSettingsCommand(JSON& json);
 	bool onPowerCommand(JSON& json);
-	bool sendRegister();
+	//bool sendRegister();
 	bool onResetCommand(JSON& json);
 	bool onRebootCommand(JSON& json);
 	bool sendUpdateSensorStatus();
@@ -76,8 +79,9 @@ public:
 	void init();
 	String getJson();
 	String getSensorsStatusJson();
+	bool _getSensorsStatusJson(char* payload);
 	String getSettingsJson();
-	void registerShield();
+	//void registerShield();
 	void checkStatus();	
 	bool receiveCommand(String jsonStr);		
 	
@@ -262,6 +266,30 @@ public:
 		logger.print(tag, "\n\t>> setMQTTMode");
 		mqttMode = enabled;
 		logger.print(tag, "\n\t<< setMQTTMode=" + String(mqttMode));
+	}
+
+	static bool getConfigMode()
+	{
+		return configMode;
+	}
+
+	static void setConfigMode(bool enabled)
+	{
+		logger.print(tag, "\n\t>> setConfigMode");
+		configMode = enabled;
+		logger.print(tag, "\n\t<< setConfigMode=" + String(configMode));
+	}
+
+	static bool getResetSettings()
+	{
+		return resetSettings;
+	}
+
+	static void setResetSettings(bool enabled)
+	{
+		logger.print(tag, "\n\t>> setResetSettings");
+		resetSettings = enabled;
+		logger.print(tag, "\n\t<< setResetSettings=" + String(resetSettings));
 	}
 
 	static String getMQTTServer()

@@ -44,7 +44,7 @@ String Sensor::toString()
 	return str;
 }
 
-bool Sensor::getJSON(JSONObject *jObject) {
+bool Sensor::getJSON(JSONObject *jObject) { // non usato. Usa getjsonfield
 	//logger.print(tag, "\n");
 	//logger.println(tag, ">>getJSON");
 	
@@ -91,7 +91,7 @@ String Sensor::getJSONFields() {
 		json += "true,";
 	else
 		json += "false,";
-	json += "\"pin\":\"" + Shield::getStrPin(pin) + "\",";
+	//json += "\"pin\":\"" + Shield::getStrPin(pin) + "\",";
 	if (testMode) {
 		json += "\"testmode\":true,";
 	}

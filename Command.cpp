@@ -4,6 +4,8 @@
 #include "JSONObject.h"
 
 extern bool mqtt_publish(String topic, String message);
+extern bool _mqtt_publish(char* topic, char* payload);
+
 
 //extern const char* statusStr[];
 time_t serverTime = 11111111;
@@ -121,7 +123,7 @@ void Command::registerShield(String json)
 	logger.println(tag, F("<<registerShield\n"));
 }
 
-bool Command::loadShieldSettings(String *result)
+/*bool Command::loadShieldSettings(String *result)
 {
 	logger.print(tag, F("\n"));
 	logger.println(tag, F(">> loadShieldSettings\n"));
@@ -144,7 +146,27 @@ bool Command::loadShieldSettings(String *result)
 	logger.println(tag, "<<loadShieldSettings\n result=" + *result);
 
 	return res;
+}*/
+
+
+bool Command::requestShieldSettings(String *result)
+{
+	logger.print(tag, F("\n"));
+	logger.println(tag, F(">> requestShieldSettings\n"));
+
+	bool res = false;
+	if (Shield::getMQTTmode() == true) {
+		String topic = "toServer/loadsettings";// +Shield::getMACAddress();
+		String json = Shield::getMACAddress();
+		res = mqtt_publish(topic, String(json));
+
+		//logger.print(tag, "\n\t json=" + *result + "\n");
+	}
+
+	logger.println(tag, F("<<sendSensorsStatus\n"));
+	return res;
 }
+
 
 int Command::timeSync()
 {
@@ -177,7 +199,7 @@ int Command::timeSync()
 }
 
 
-boolean Command::sendSensorsStatus(String json)
+/*boolean Command::sendSensorsStatus(String json)
 {
 	logger.print(tag, "\n");
 	logger.println(tag, F(">>sendSensorsStatus"));
@@ -187,16 +209,6 @@ boolean Command::sendSensorsStatus(String json)
 		return false;
 	}
 
-	//logger.println(tag, F("..calling shield.getSensorsStatusJson()\n"));
-	//String json = shield.getSensorsStatusJson();
-	//logger.println(tag, F("..returning from call shield.getSensorsStatusJson()\n"));
-
-	//logger.println(tag, F("..calling logger.formattedJson(json)\n"));
-	//logger.print(tag, F("\n\tjson="));
-	//logger.print(tag, logger.formattedJson(json));
-	//logger.println(tag, F("..returning from call logger.formattedJson(json)\n"));
-
-
 	bool res = false;
 	if (Shield::getMQTTmode() == true) {
 		String topic = "toServer/shield/" + String(Shield::getShieldId()) + String("/sensorsupdate");
@@ -204,6 +216,34 @@ boolean Command::sendSensorsStatus(String json)
 	}
 
 	logger.println(tag, F("<<sendSensorsStatus\n"));
+	return res;
+}*/
+
+boolean Command::_sendSensorsStatus(char* json)
+{
+	logger.print(tag, "\n");
+	logger.println(tag, F(">>_sendSensorsStatus"));
+
+	if (Shield::getShieldId() == 0) {
+		logger.print(tag, F("\n\tID NON VALIDO"));
+		return false;
+	}
+
+	bool res = false;
+	if (Shield::getMQTTmode() == true) {
+		String topic = "toServer/shield/" + String(Shield::getShieldId()) + String("/sensorsupdate");
+		//res = mqtt_publish(topic, String(json));
+
+		int count = 0;
+		char stopic[50];
+		for (int i = 0; i < topic.length(); i++) {
+			stopic[count++] = topic.charAt(i);
+		}
+
+		res = _mqtt_publish(stopic, json);
+	}
+
+	logger.println(tag, F("<<_sendSensorsStatus\n"));
 	return res;
 }
 

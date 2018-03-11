@@ -59,19 +59,19 @@ bool HttpHelper::post(String host, int port, String path, String param, String *
 		data += "\r\n";
 
 		client.print(data);
-		//Serial.println(F("post data sent"));
-		//Serial.println(data);
+		Serial.println(F("post data sent"));
+		Serial.println(data);
 		
-		delay(300);
+		delay(600);
 
 		// Read all the lines of the reply from server and print them to Serial
 		while (client.available()){
-			//Serial.println("client.available");
+			Serial.println("client.available");
 			*result = client.readStringUntil('\n');
 			//Serial.print(line);
 		}
-		//Serial.println(*result);
-		//Serial.println("received answer - closing connection");
+		Serial.println(*result);
+		Serial.println("received answer - closing connection");
 		//delay(1000);
 		
 	}

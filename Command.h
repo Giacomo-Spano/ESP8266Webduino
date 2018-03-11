@@ -22,9 +22,10 @@ public:
 	Command();
 	~Command();
 	void registerShield(String json);
-	bool loadShieldSettings(String *result);
+	bool requestShieldSettings(String *result);
 	void sendRestartNotification();
-	boolean sendSensorsStatus(String json);
+	//boolean sendSensorsStatus(String json);
+	boolean _sendSensorsStatus(char* json);
 	boolean requestZoneTemperature(String json);
 	boolean sendSettingsStatus(Shield shield);
 	bool sendLog(String log/*, int shieldid/*, String serverName, int port*/);
