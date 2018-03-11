@@ -21,7 +21,7 @@ Logger Shield::logger;
 String Shield::tag = "Shield";
 
 String Shield::lastRestartDate = "";
-String Shield::swVersion = "1.28";
+String Shield::swVersion = "1.31";
 int Shield::id = 0; //// inizializzato a zero perch� viene impostato dalla chiamata a registershield
 
 // default shield setting
@@ -225,14 +225,19 @@ bool Shield::receiveCommand(String jsonStr) {
 
 			
 			String topic = "toServer/response/" + uuid + "/success";
-			char stopic[50];
-			for (int i = 0; i < topic.length(); i++)
+			bool res = mqtt_publish(topic, getSensorsStatusJson());
+			/*char stopic[200];
+			int i;
+			for (int i = 0; i < topic.length(); i++) {
 				stopic[i] = topic.charAt(i);
-						
-			char payload[1000];
-			bool res = _getSensorsStatusJson(payload);
-			res = _mqtt_publish(stopic, payload);			
+			}
+			stopic[i] = '\0';
 			
+						
+			char payload[600];
+			bool res = _getSensorsStatusJson(payload);
+			res = _mqtt_publish(stopic, payload);*/
+
 			logger.print(tag, "\n\t <<sendupdatesensorstatus " + uuid);
 			return res;
 			
@@ -471,27 +476,17 @@ String Shield::getJson() { // usata dalla register
 
 bool Shield::_getSensorsStatusJson(char *payload) {
 
+	Serial.println(ESP.getFreeHeap());
+
 	logger.print(tag, "\n\n");
 	logger.println(tag, F(">>_getSensorsStatusJson"));
 
 	sensorList.show();
 
 	sprintf(payload, "{\"shieldid\":%d,\"swversion\":\"%s\",\"sensors\":[", id, Shield::swVersion.c_str());
-
-	/*String json = "{";
-	json += "\"shieldid\":" + String(id);// shieldid
-	json += ",\"swversion\":\"" + Shield::swVersion + "\"";// shieldid
-														   //json += ",\"power\":\"" + Shield::powerStatus + "\"";// shieldid
-
-	json += ",\"sensors\":[";*/
-
+		
 	int payloadcount = strlen(payload);
-
-	//int payloadcount = 0;
-	/*for (int i = 0; i < json.length(); i++) {
-		payload[payloadcount++] = json.charAt(i);
-	}*/
-
+		
 	for (int i = 0; i < sensorList.count; i++) {
 		Sensor* sensor = (Sensor*)sensorList.get(i);
 		
@@ -535,16 +530,10 @@ String Shield::getSensorsStatusJson() {
 	for (int i = 0; i < sensorList.count; i++) {
 		Sensor* sensor = (Sensor*)sensorList.get(i);
 
-		//logger.println(tag, "\n\n\t SENSOR=" + sensor->sensorname);
-
+	
 		if (i != 0)
 			json += ",";
-
-		/*JSONObject jObject;
-		sensor->getJSON(&jObject);
-		json += jObject.toString();*/
-
-	
+			
 		json += sensor->getJSON();
 
 		logger.println(tag, "\n\n\t json length=" + String(json.length()));

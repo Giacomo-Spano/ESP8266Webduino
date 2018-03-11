@@ -179,7 +179,7 @@ void writeSettings() {
 	// server name
 	String serverName = Shield::getServerName();
 	logger.print(tag, "\n\t serverName = " + serverName);
-	json.pushString("servername", serverName);
+	json.pushString("server", serverName);
 
 	// server port
 	int serverport = Shield::getServerPort();
@@ -272,7 +272,8 @@ void readSettings(JSONObject *json) {
 	logger.print(tag, "\n\t resetsettings=" + String(resetsettings));
 	Shield::setResetSettings(resetsettings);
 
-	
+	Shield::setServerName("giacomohome.ddns.net");
+	//Shield::setServerName("192.168.1.3");
 	/*Shield::setServerName("giacomohome.ddns.net");
 	Shield::setServerPort(8080);
 	Shield::setMQTTServer("giacomohome.ddns.net");
@@ -1094,16 +1095,18 @@ void processNextPage() {
 bool _mqtt_publish(char* topic, char* payload) {
 
 	logger.print(tag, "\n");
-	logger.println(tag, ">>_mqtt_publish payload");
+	logger.println(tag, ">>_mqtt_publish \n");
 
-	//logger.println(tag, topic);
-	//logger.println(tag, payload);
+	logger.print(tag, "topic:");
+	logger.print(tag, topic);
+	logger.print(tag, "\npayload:");
+	logger.print(tag, payload);
 
 	if (strlen(payload) >= MQTT_MAX_PACKET_SIZE) {
 		logger.print(tag, "\n\t payload TOO BIG!!!\n");
 	}
 
-	logger.print(tag, "\n Message: [" + String(topic) + String("] ") + payload);
+	//logger.print(tag, "\n Message: [" + String(topic) + String("] ") + payload);
 	bool res = mqttclient.publish(topic, payload);
 	// qui bisognerebbe aggiungere qualche logica per gestire errore
 	if (res)
