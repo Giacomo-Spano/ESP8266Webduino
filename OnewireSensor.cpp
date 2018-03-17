@@ -47,6 +47,11 @@ void OnewireSensor::loadChildren(JSONArray& jarray) {
 			logger.print(tag, "\n\t name=" + name);
 			sensor->sensorname = name;
 		}
+		if (json.has("id")) {
+			int sensorid = json.getInteger("id");
+			logger.print(tag, "\n\t sensorid=" + sensorid);
+			sensor->sensorid = sensorid;
+		}
 		jsonChild = jarray.getNext();
 	}
 

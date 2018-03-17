@@ -272,11 +272,12 @@ void readSettings(JSONObject *json) {
 	logger.print(tag, "\n\t resetsettings=" + String(resetsettings));
 	Shield::setResetSettings(resetsettings);
 
-	Shield::setServerName("giacomohome.ddns.net");
-	//Shield::setServerName("192.168.1.3");
-	/*Shield::setServerName("giacomohome.ddns.net");
+	//Shield::setServerName("giacomohome.ddns.net");
+	// Shield::setMQTTServer("giacomohome.ddns.net");
+	/*Shield::setServerName("192.168.1.3");
+	Shield::setMQTTServer("192.168.1.3");
+
 	Shield::setServerPort(8080);
-	Shield::setMQTTServer("giacomohome.ddns.net");
 	Shield::setMQTTPort(1883);*/
 	//writeSettings();
 
@@ -874,6 +875,9 @@ void setup()
 			
 	shield.sensorList.show();
 
+	Command command;
+	command.sendShieldStatus(shield.getJson());
+
 	ESP.wdtDisable();
 	logger.println(tag, "<<setup");
 }
@@ -1124,8 +1128,10 @@ bool mqtt_publish(String topic, String message) {
 	logger.print(tag, "\n");
 	logger.println(tag, ">>mqtt_publish");
 
-	logger.println(tag, topic);
-	logger.println(tag, message);
+	logger.print(tag, "\n\ttopic: ");
+	logger.print(tag, topic);
+	logger.print(tag, "\n\tmessage" + String(message.length()) + " :");
+	logger.print(tag, message);
 
 	logger.print(tag, "\n Message: [" + topic + String("] ") + message);
 	bool res = mqttclient.publish(topic.c_str(), message.c_str());

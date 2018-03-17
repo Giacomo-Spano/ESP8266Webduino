@@ -121,7 +121,7 @@ String HeaterSensor::getJSONFields()
 
 	if (status.equals(STATUS_KEEPTEMPERATURE)) {
 
-		json += ",\"remotetemperature\":" + String(getRemoteTemperature());
+		json += ",\"remotetemp\":" + String(getRemoteTemperature());
 
 		json += ",\"duration\":";
 		json += String(programDuration);
@@ -144,7 +144,7 @@ String HeaterSensor::getJSONFields()
 		json += "\"";
 	} else if (status.equals(STATUS_MANUAL)) {
 
-		json += ",\"remotetemperature\":" + String(getRemoteTemperature());
+		json += ",\"remotetemp\":" + String(getRemoteTemperature());
 
 		json += ",\"duration\":";
 		json += String(programDuration);
@@ -163,11 +163,11 @@ String HeaterSensor::getJSONFields()
 		json += String(endDate);
 		json += "\"";
 	}
-	json += ",\"lastcommanddate\":\"";
+	json += ",\"lastcmnd\":\"";
 	json += String(lastCommandDate);
 	json += "\"";
 
-	json += ",\"lasttemperatureupdate\":\"";
+	json += ",\"lasttemp\":\"";
 	json += String(lastTemperatureUpdate);
 	json += "\"";
 

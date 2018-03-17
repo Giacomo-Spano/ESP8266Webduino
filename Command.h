@@ -24,6 +24,8 @@ public:
 	void registerShield(String json);
 	bool requestShieldSettings(String *result);
 	void sendRestartNotification();
+	boolean sendSensorStatus(String json);
+	boolean sendShieldStatus(String json);
 	//boolean sendSensorsStatus(String json);
 	boolean _sendSensorsStatus(char* json);
 	boolean requestZoneTemperature(String json);

@@ -12,20 +12,20 @@ String DoorSensor::tag = "DoorSensor";
 bool DoorSensor::getJSON(JSONObject *jObject)
 {
 	//logger.print(tag, "\n");
-	logger.println(tag, ">>DoorSensor::getJSON");
+	//logger.println(tag, ">>DoorSensor::getJSON");
 
 	bool res = Sensor::getJSON(jObject);
 	if (!res) return false;
 
 	res = jObject->pushBool("open", openStatus);
 
-	logger.println(tag, "<<DoorSensor::getJSON");
+	//logger.println(tag, "<<DoorSensor::getJSON");
 	return true;
 }
 
 String DoorSensor::getJSONFields() {
 
-	logger.println(tag, ">>DoorSensor::getJSONFields");
+	//logger.println(tag, ">>DoorSensor::getJSONFields");
 	String json = "";
 	json += Sensor::getJSONFields();
 
@@ -35,7 +35,7 @@ String DoorSensor::getJSONFields() {
 	else
 		json += String(",\"open\":false");
 
-	logger.println(tag, "<<DoorSensor::getJSONFields");
+	//logger.println(tag, "<<DoorSensor::getJSONFields");
 	return json;
 }
 

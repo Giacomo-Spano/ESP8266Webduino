@@ -40,6 +40,7 @@ public:
 	unsigned long lastCheckStatus;// = 0;//-flash_interval;
 	
 	String getChildren();
+	Sensor* getSensorFromId(int id);
 
 	virtual bool getJSON(JSONObject *jObject);
 	virtual String getJSONFields();	

@@ -11,21 +11,21 @@ String HornSensor::tag = "HornSensor";
 
 bool HornSensor::getJSON(JSONObject *jObject)
 {
-	logger.print(tag, "\n");
-	logger.println(tag, ">>HornSensor::getJSON");
+	//logger.print(tag, "\n");
+	//logger.println(tag, ">>HornSensor::getJSON");
 
 	bool res = Sensor::getJSON(jObject);
 	if (!res) return false;
 
 	//res = jObject->pushBool("alarmactive", alarmActive);
 
-	logger.println(tag, "<<HornSensor::getJSON");
+	//logger.println(tag, "<<HornSensor::getJSON");
 	return true;
 }
 
 String HornSensor::getJSONFields() {
 
-	logger.println(tag, ">>HornSensor::getJSONFields");
+	//logger.println(tag, ">>HornSensor::getJSONFields");
 	String json = "";
 	json += Sensor::getJSONFields();
 
@@ -35,7 +35,7 @@ String HornSensor::getJSONFields() {
 	else
 		json += String(",\"alarmactive\":false");
 
-	logger.println(tag, "<<HornSensor::getJSONFields");
+	//logger.println(tag, "<<HornSensor::getJSONFields");
 	return json;
 }
 

@@ -56,14 +56,14 @@ String TemperatureSensor::getJSONFields() {
 	json += Sensor::getJSONFields();
 
 	// specific field
-	json += String(",\"id\":");
+	/*json += String(",\"id\":");
 	json += String(id) + "";
 	json += ",\"phisicaladdr\":";
-	json += "\"" + getPhisicalAddress() + "\"";
-	json += ",\"temperature\": ";
+	json += "\"" + getPhisicalAddress() + "\"";*/
+	json += ",\"temp\": ";
 	json += String(temperature);
-	json += ",\"avtemperature\": ";
-	json += String(avTemperature);
+	/*json += ",\"avtemperature\": ";
+	json += String(avTemperature);*/
 
 	//logger.println(tag, "<<getJSONField" + json);
 	return json;

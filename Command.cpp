@@ -156,7 +156,7 @@ bool Command::requestShieldSettings(String *result)
 
 	bool res = false;
 	if (Shield::getMQTTmode() == true) {
-		String topic = "toServer/loadsettings";// +Shield::getMACAddress();
+		String topic = "toServer/shield/loadsettings";// +Shield::getMACAddress();
 		String json = Shield::getMACAddress();
 		res = mqtt_publish(topic, String(json));
 
@@ -197,6 +197,37 @@ int Command::timeSync()
 	logger.print(tag, F("\n\t <<timeSync failed\n"));
 	return 0;
 }
+
+boolean Command::sendSensorStatus(String json)
+{
+	logger.print(tag, "\n");
+	logger.println(tag, F(">>sendSensorStatus"));
+		
+	bool res = false;
+	if (Shield::getMQTTmode() == true) {
+		String topic = "toServer/shield/sensor/update";
+		res = mqtt_publish(topic, String(json));
+	}
+
+	logger.println(tag, F("<<sendSensorStatus\n"));
+	return res;
+}
+
+boolean Command::sendShieldStatus(String json)
+{
+	logger.print(tag, "\n");
+	logger.println(tag, F(">>sendShieldStatus"));
+
+	bool res = false;
+	if (Shield::getMQTTmode() == true) {
+		String topic = "toServer/shield/update";
+		res = mqtt_publish(topic, String(json));
+	}
+
+	logger.println(tag, F("<<sendShieldStatus\n"));
+	return res;
+}
+
 
 
 /*boolean Command::sendSensorsStatus(String json)
@@ -239,6 +270,7 @@ boolean Command::_sendSensorsStatus(char* json)
 		for (int i = 0; i < topic.length(); i++) {
 			stopic[count++] = topic.charAt(i);
 		}
+		stopic[count++] = '\0';
 
 		res = _mqtt_publish(stopic, json);
 	}

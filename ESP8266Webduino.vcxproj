@@ -109,7 +109,6 @@
     <ClInclude Include="ESPDisplay.h" />
     <ClInclude Include="ESP8266Webduino.h" />
     <ClInclude Include="ESPWebServer.h" />
-    <ClInclude Include="HeaterActuator.h" />
     <ClInclude Include="HeaterSensor.h" />
     <ClInclude Include="HornSensor.h" />
     <ClInclude Include="html.h" />
@@ -153,7 +152,6 @@
     <ClCompile Include="DoorSensor.cpp" />
     <ClCompile Include="ESPDisplay.cpp" />
     <ClCompile Include="ESPWebServer.cpp" />
-    <ClCompile Include="HeaterActuator.cpp" />
     <ClCompile Include="HeaterSensor.cpp" />
     <ClCompile Include="HornSensor.cpp" />
     <ClCompile Include="HtmlFileClass.cpp" />
