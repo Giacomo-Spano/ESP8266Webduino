@@ -603,6 +603,7 @@ bool testWifi() {
 	wifiManager.setSaveConfigCallback(saveConfigCallback);
 
 	// Uncomment and run it once, if you want to erase all the stored information
+	//wifiManager.resetSettings();
 	if (Shield::getResetSettings()) {
 		wifiManager.resetSettings();
 		Shield::setResetSettings(false);
