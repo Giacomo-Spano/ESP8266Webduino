@@ -114,6 +114,7 @@ void initEPROM();
 void readEPROM();
 extern void writeEPROM();
 extern void resetEPROM();
+extern void resetWiFiManagerSettings();
 extern void writeSettings();
 extern void readSettings(JSONObject *json);
 
@@ -167,6 +168,12 @@ void resetEPROM() {
 
 	EEPROM.commit();
 	logger.println(tag, "\n\t <<resetEPROM");
+}
+
+void resetWiFiManagerSettings() {
+	logger.print(tag, "\n\n\t >>resetWiFiManagerSettings");
+	wifiManager.resetSettings();
+	logger.println(tag, "\n\t <<resetWiFiManagerSettings");
 }
 
 void writeSettings() {
@@ -717,6 +724,12 @@ void parseMessageReceived(String topic, String message) {
 		Command command;
 		command.sendSensorsStatus(json);*/
 	}
+	else if (topic.equals(str + "/resetsettings")) {
+		logger.print(tag, "\n\t received resetsettings request");
+		Shield::setResetSettings(true);
+		writeEPROM();
+		ESP.restart();
+	}
 	else if (topic.equals(str + "/command")) {
 		logger.print(tag, "\n\t received command " + message);
 		//String response = shield.getSensorsStatusJson();
@@ -726,10 +739,10 @@ void parseMessageReceived(String topic, String message) {
 		logger.print(tag, "\n\t CONFIG MODE!!!!!!!!!!!!!!!!");
 		Shield::setConfigMode(true);
 	}
-	else if (str.equals("resetsettings")) {
+	else if (str.equals("reset")) {
 		logger.print(tag, "\n\t RESET SETTINGS!!!!!!!!!!!!!!!!");
 		Shield::setResetSettings(true);
-		writeEPROM();
+		resetEPROM();
 		ESP.restart();
 	}
 	else if (str.equals("startmqtt")) {

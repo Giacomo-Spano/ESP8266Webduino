@@ -11,6 +11,7 @@
 
 extern void writeEPROM();
 extern void resetEPROM();
+extern void resetWiFiManagerSettings();
 //extern String siid;
 //extern String pass;
 
@@ -21,7 +22,7 @@ Logger Shield::logger;
 String Shield::tag = "Shield";
 
 String Shield::lastRestartDate = "";
-String Shield::swVersion = "1.35";
+String Shield::swVersion = "1.40";
 int Shield::id = 0; //// inizializzato a zero perch� viene impostato dalla chiamata a registershield
 
 // default shield setting
@@ -434,6 +435,7 @@ bool Shield::sendUpdateSensorStatus()
 bool Shield::onResetCommand(JSON& json)
 {
 	logger.print(tag, "\n\t>> onResetCommand");
+	resetWiFiManagerSettings();
 	resetEPROM(); // scrive 0 nel primo settore della EPROM per azzerare tutto
 
 	return true;
@@ -667,11 +669,12 @@ void Shield::checkSensorsStatus()
 		//logger.print(tag, "\n\t sensor->name: " + String(sensor->sensorname));
 		bool res = sensor->checkStatusChange();
 
-		if (res) {
+		if (res || sensor->lastUpdateStatusFailed) {
 			sensorStatusChanged = true;
 
 			Command command;
-			command.sendSensorStatus(sensor->getJSON());
+			bool res = command.sendSensorStatus(sensor->getJSON());
+			sensor->lastUpdateStatusFailed = !res;
 		}
 
 	}

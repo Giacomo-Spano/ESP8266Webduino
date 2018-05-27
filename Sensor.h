@@ -33,6 +33,7 @@ public:
 	String address;
 
 	bool testMode = false;
+	bool lastUpdateStatusFailed = false;
 	
 
 	int checkStatus_interval = 0;	// il valore corretto per ogni tipo di sensore
