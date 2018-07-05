@@ -17,7 +17,7 @@ bool DoorSensor::getJSON(JSONObject *jObject)
 	bool res = Sensor::getJSON(jObject);
 	if (!res) return false;
 
-	res = jObject->pushBool("open", openStatus);
+	//res = jObject->pushBool("open", openStatus);
 
 	//logger.println(tag, "<<DoorSensor::getJSON");
 	return true;
@@ -30,12 +30,12 @@ String DoorSensor::getJSONFields() {
 	json += Sensor::getJSONFields();
 
 	// specific field
-	if (openStatus)
+	/*if (openStatus)
 		json += String(",\"open\":true");
 	else
-		json += String(",\"open\":false");
+		json += String(",\"open\":false");*/
 
-	//logger.println(tag, "<<DoorSensor::getJSONFields");
+		//logger.println(tag, "<<DoorSensor::getJSONFields");
 	return json;
 }
 
@@ -58,89 +58,55 @@ void DoorSensor::init()
 	logger.print(tag, "\n\t <<init DoorSensor");
 }
 
-bool DoorSensor::getOpenStatus() {
-	return openStatus;
-}
-
 bool DoorSensor::checkStatusChange() {
 
-	//logger.print(tag, "\n\t >>checkDoorStatus: ");
 	unsigned long currMillis = millis();
 	unsigned long timeDiff = currMillis - lastCheckStatus;
 	if (timeDiff > checkStatus_interval) {
-		//logger.print(tag, "\n\t >>checkDoorStatus: ");
 		lastCheckStatus = currMillis;
+		String oldStatus = status;
 
-		bool oldStatus = openStatus;
-
-		if (testMode) {
-			openStatus = testOpenStatus;
+		if (digitalRead(pin) == LOW) {
+			status = STATUS_DOOROPEN;
 		}
 		else {
-
-			if (digitalRead(pin) == LOW) {
-				openStatus = true;
-			}
-			else {
-				openStatus = false;
-			}
+			status = STATUS_DOORCLOSED;
 		}
-		if (oldStatus != openStatus) {
-			if (openStatus)
+
+		if (!status.equals(status)) {
+			if (status.equals(STATUS_DOOROPEN))
 				logger.print(tag, "\n\t >>>> DOOR OPEN");
-			else
+			else if (status.equals(STATUS_DOORCLOSED))
 				logger.print(tag, "\n\t >>>> DOOR CLOSED");
 			return true;
-		}
-		else {
-			return false;
 		}
 	}
 	return false;
 }
 
-CommandResponse DoorSensor::receiveCommand(String jsonStr)
+bool DoorSensor::receiveCommand(String command, int id, String uuid, String json)
 {
+	bool res = Sensor::receiveCommand(command, id, uuid, json);
 	logger.println(tag, ">>receiveCommand=");
-	CommandResponse response;
+	logger.print(tag, "\n\t command=" + command);
 
-	JSON json(jsonStr);
-	// actuatorId
-	int actuatorId;
-	if (json.has("actuatorid")) {
-		actuatorId = json.jsonGetInt("actuatorid");
-		logger.print(tag, "\n\t actuatorid=" + String(actuatorId));
+	/*if (command.equals("teststart")) {
+		logger.print(tag, "\n\t test start command");
+		testMode = true;
+		testOpenStatus = openStatus;
 	}
-
-	// command
-	String command = "";
-	if (json.has("command")) {
-		command = json.jsonGetString("command");
-		logger.print(tag, "\n\t command=" + command);
-
-
-		if (command.equals("teststart")) {
-			logger.print(tag, "\n\t test start command");
-			testMode = true;
-			testOpenStatus = openStatus;
-		} else if (command.equals("teststop")) {
-			logger.print(tag, "\n\t test stop command");
-		} if (command.equals("testopen")) {
-			logger.print(tag, "\n\t test open command");
-			testOpenStatus = true;
-		} if (command.equals("testclose")) {
-			logger.print(tag, "\n\t test close command");
-			testMode = false;
-		}
-
-		if (json.has("uuid")) {
-			response.uuid = json.jsonGetString("uuid");
-		}
-		response.result = "success";// response_success;
+	else if (command.equals("teststop")) {
+		logger.print(tag, "\n\t test stop command");
 	}
+	else if (command.equals("testopen")) {
+		logger.print(tag, "\n\t test open command");
+		testOpenStatus = true;
+	}
+	else if (command.equals("testclose")) {
+		logger.print(tag, "\n\t test close command");
+		testMode = false;
+	}*/
 
 	logger.println(tag, "<<receiveCommand res="/* + String(res)*/);
-	return response;
+	return res;
 }
-
-

@@ -31,7 +31,12 @@ protected:
 	static bool configMode;
 	static bool resetSettings;
 
+	
+	
+
 public:
+	int checkHealth_timeout = 15*60*1000;
+	unsigned long lastCheckHealth;
 	static String swVersion;
 	static const int shieldNameLen = 30;
 	static const int serverNameLen = 30;

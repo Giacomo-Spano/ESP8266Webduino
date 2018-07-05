@@ -22,11 +22,10 @@ private:
 	static Logger logger;
 
 	virtual String getJSONFields();
-	bool openStatus = false;
-	bool testOpenStatus;
-
-public:
 	
+public:
+	const String STATUS_DOOROPEN = "dooropen";
+	const String STATUS_DOORCLOSED = "doorclosed";
 
 	DoorSensor(int id, uint8_t pin, bool enabled, String address, String name);
 	~DoorSensor();
@@ -34,10 +33,7 @@ public:
 	virtual void init();	
 	virtual bool getJSON(JSONObject *jObject);
 	virtual bool checkStatusChange();
-	virtual CommandResponse receiveCommand(String json);
-
-	bool getOpenStatus();
-
+	bool receiveCommand(String command, int id, String uuid, String json);
 };
 #endif
 

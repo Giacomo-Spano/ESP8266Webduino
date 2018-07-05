@@ -76,49 +76,25 @@ bool HornSensor::checkStatusChange() {
 	return false;
 }
 
-CommandResponse HornSensor::receiveCommand(String jsonStr)
+bool HornSensor::receiveCommand(String command, int id, String uuid, String json)
 {
+	bool res = Sensor::receiveCommand(command, id, uuid, json);
 	logger.println(tag, ">>receiveCommand=");
-	CommandResponse response;
+	logger.print(tag, "\n\t command=" + command);
 
-	JSON json(jsonStr);
-	// actuatorId
-	int actuatorId;
-	if (json.has("actuatorid")) {
-		actuatorId = json.jsonGetInt("actuatorid");
-		logger.print(tag, "\n\t actuatorid=" + String(actuatorId));
+	if (command.equals("teststart")) {
+		logger.print(tag, "\n\t test start command");
 	}
-
-	// command
-	String command = "";
-	if (json.has("command")) {
-		command = json.jsonGetString("command");
-		logger.print(tag, "\n\t command=" + command);
-
-
-		if (command.equals("teststart")) {
-			logger.print(tag, "\n\t test start command");
-			testMode = true;
-			testOpenStatus = alarmActive;
-		}
-		else if (command.equals("teststop")) {
-			logger.print(tag, "\n\t test stop command");
-		} if (command.equals("testopen")) {
-			logger.print(tag, "\n\t test open command");
-			testOpenStatus = true;
-		} if (command.equals("testclose")) {
-			logger.print(tag, "\n\t test close command");
-			testMode = false;
-		}
-
-		if (json.has("uuid")) {
-			response.uuid = json.jsonGetString("uuid");
-		}
-		response.result = "success";// response_success;
+	else if (command.equals("teststop")) {
+		logger.print(tag, "\n\t test stop command");
 	}
-
+	else if (command.equals("testopen")) {
+		logger.print(tag, "\n\t test open command");
+	}
+	else if (command.equals("testclose")) {
+		logger.print(tag, "\n\t test close command");
+	}
 	logger.println(tag, "<<receiveCommand res="/* + String(res)*/);
-	return response;
+	return res;
 }
-
 

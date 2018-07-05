@@ -150,6 +150,10 @@ unsigned long lastSendLog = 0;
 const int SendLog_interval = 10000;// 10 secondi
 unsigned long lastTimeSync = 0;
 const int timeSync_interval = 60000 * 15;// *12;// 60 secondi * 15 minuti
+unsigned long lastCommandFailed = 0;
+const int commandFailed_interval = 60000 * 30;// *12;// 60 secondi * 15 minuti
+unsigned long lastReboot = 0;
+const int reboot_interval = 3600000 * 24;// 24 ore
 
 extern int __bss_end;
 extern void *__brkval;
@@ -710,6 +714,17 @@ void parseMessageReceived(String topic, String message) {
 		Command command;
 		command._sendSensorsStatus(payload);
 	}
+	/*else if (topic.equals(str + "/checkhealth")) {
+		logger.print(tag, "\n\t received checkhealth request");
+
+		JSON json(message);
+		if (json.has("uuid")) {
+			String uuid = json.jsonGetString("uuid");
+			String topic = "toServer/response/" + uuid + "/success";
+			bool res = mqtt_publish(topic, shield.getJson());
+			shield.lastCheckHealth = millis();
+		}
+	}*/
 	else if (topic.equals(str + "/settings")) {
 		logger.print(tag, "\n\t received shield settings\n" + message + "\n");
 		
@@ -819,6 +834,9 @@ void setup()
 	Serial.begin(115200);
 	delay(10);
 
+	lastReboot = millis();
+	shield.lastCheckHealth = millis();
+
 	Logger::init();
 	logger.print(tag, "\n\t >>setup");
 	logger.print(tag, "\n\n *******************RESTARTING************************");
@@ -845,7 +863,7 @@ void setup()
 	
 	initEPROM();
 	
-	// Abilita il watchdog
+	// disabilita il watchdog sw e abilita quello hw
 	ESP.wdtDisable();
 	
 	// Connect to WiFi network
@@ -892,7 +910,9 @@ void setup()
 	Command command;
 	command.sendShieldStatus(shield.getJson());
 
-	ESP.wdtDisable();
+	//ESP.wdtDisable();
+	updateTime();
+
 	logger.println(tag, "<<setup");
 }
 
@@ -1127,10 +1147,12 @@ bool _mqtt_publish(char* topic, char* payload) {
 	//logger.print(tag, "\n Message: [" + String(topic) + String("] ") + payload);
 	bool res = mqttclient.publish(topic, payload);
 	// qui bisognerebbe aggiungere qualche logica per gestire errore
-	if (res)
+	if (res) {
 		logger.print(tag, "\n\t payload sent\n");
-	else
+	} else {
+		lastCommandFailed = millis();
 		logger.print(tag, "\n\t payload NOT sent!!!\n");
+	}
 
 	logger.println(tag, "<<_mqtt_publish payload\n");
 	return res;
@@ -1150,10 +1172,13 @@ bool mqtt_publish(String topic, String message) {
 	logger.print(tag, "\n Message: [" + topic + String("] ") + message);
 	bool res = mqttclient.publish(topic.c_str(), message.c_str());
 	// qui bisognerebbe aggiungere qualche logica per gestire errore
-	if (res)
-		logger.print(tag, "\n\t message sent\n");
-	else
-		logger.print(tag, "\n\t message NOT sent!!!\n");
+	if (res) {
+		logger.print(tag, "\n\t payload sent\n");
+	}
+	else {
+		lastCommandFailed = millis();
+		logger.print(tag, "\n\t payload NOT sent!!!\n");
+	}
 
 	logger.println(tag, "<<mqtt_publish\n");
 	return res;
@@ -1192,6 +1217,8 @@ void checkForSWUpdate() {
 void loop()
 {
 	ESP.wdtFeed();
+
+	//for(;;) {}
 	
 	String prova = "";
 	if (Serial.available()) {
@@ -1200,25 +1227,27 @@ void loop()
 		logger.println(tag, prova);
 	}
 
-	//ArduinoOTA.handle();  // questa chiamata deve essere messa in loop()
-	/*if (mqttServerNotFoundError) {
-		delay(5000);
+	unsigned long currMillis = millis();
+	if (currMillis - lastReboot > reboot_interval) {
+		logger.println(tag, "\n\n\n\-----------lastReboot TIMEOUT REBOOT--------\n\n");
 		ESP.restart();
-		return;
-	}*/
+	}
+
+
+	currMillis = millis();
+	if (currMillis - shield.lastCheckHealth > shield.checkHealth_timeout) {
+		logger.println(tag, "\n\n\n\-----------CHECK HEALTH TIMEOUT REBOOT--------\n\n");
+		ESP.restart();
+	}
 
 	if (checkHTTPUpdate) {
 		ESP.wdtFeed();
 		checkHTTPUpdate = false;
 		checkForSWUpdate();
 	}
-
 	
-
-
 	wdt_enable(WDTO_8S);
-
-
+	
 	if (Shield::getConfigMode()) {
 
 		logger.println(tag, "start config mode....");
@@ -1227,19 +1256,18 @@ void loop()
 			Serial.println("failed to connect and hit timeout");
 			delay(3000);
 			//reset and try again, or maybe put it to deep sleep
+			logger.println(tag, "\n\n\n\-----------failed to connect and hit timeout REBOOT--------\n\n");
 			ESP.reset();
 			delay(5000);
 		}
 		Shield::setConfigMode(false);
 		logger.println(tag, "end config mode...");
 	}
+	
 
-
-
+	// questo serve per controllare se ikl client mqtt è connesso
+	// ma in qualche caso secondo me non funziona
 	if (Shield::getMQTTmode()) {
-
-		//logger.println(tag, "debug");
-		
 		if (!client.connected()) {
 			reconnect();
 		}
@@ -1253,15 +1281,21 @@ void loop()
 
 	shield.checkStatus();
 
-
-	unsigned long currMillis = millis();
+	// questo si potrebbe eliminare, tanto dl'ora non è usata
+	/*currMillis = millis();
 	if (currMillis - lastTimeSync > timeSync_interval) {
 		updateTime();
+	}*/
+
+	currMillis = millis();
+	if (lastCommandFailed > 0 && currMillis - lastCommandFailed > commandFailed_interval) {
+		logger.println(tag, "\n\n\n\-----------lastCommandFailed TIMEOUT REBOOT--------\n\n");
+		ESP.restart();
 	}
+
 
 	//#ifdef dopo
 	if (Shield::getMQTTmode()) {
-
 		/*unsigned long currMillis = millis();
 		unsigned long timeDiff = currMillis - lastFlash;
 		if (timeDiff > flash_interval) {
@@ -1285,6 +1319,8 @@ void loop()
 
 }
 
+
+// questa funzione non è usata
 bool updateTime() {
 	logger.println(tag, "\n");
 	logger.println(tag, ">>updateTime");

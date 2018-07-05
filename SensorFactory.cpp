@@ -4,6 +4,7 @@
 #include "DoorSensor.h"
 #include "OnewireSensor.h"
 #include "HornSensor.h"
+#include "RFIDSensor.h"
 #include "JSONObject.h"
 #include "Shield.h"
 //#include "Util.h"
@@ -44,6 +45,10 @@ Sensor * SensorFactory::createSensor(int id, String type, uint8_t pin, bool enab
 	else if (type.equals("hornsensor")) {
 		logger.print(tag, "\n\t creating hornsensor sensor");
 		sensor = new HornSensor(id, pin, enabled, address, name);
+	}
+	else if (type.equals("rfidsensor")) {
+		logger.print(tag, "\n\t creating hornsensor sensor");
+		sensor = new RFIDSensor(id, pin, enabled, address, name);
 	}
 
 	logger.println(tag, "createSensor type=" + type);
@@ -116,6 +121,13 @@ Sensor * SensorFactory::createSensor(JSONObject* json)
 	else if (type.equals("hornsensor")) {
 		logger.print(tag, "\n\t creating doorsensor sensor");
 		sensor = new HornSensor(sensorid, pin, enabled, address, name);
+	}
+	else if (type.equals("rfidsensor")) {
+		logger.print(tag, "\n\t creating doorsensor sensor");
+		sensor = new RFIDSensor(sensorid, pin, enabled, address, name);
+	}
+	else {
+		return nullptr;
 	}
 
 	sensor->init();

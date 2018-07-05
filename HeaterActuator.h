@@ -48,7 +48,7 @@ public:
 	~HeaterActuator();
 	void updateReleStatus();
 	//virtual String getJSON() override;
-	virtual CommandResponse receiveCommand(String json) override;
+	bool receiveCommand(String command, int id, String uuid, String json);
 	void setStatus(int status);
 	int getStatus();
 	String getStatusName();

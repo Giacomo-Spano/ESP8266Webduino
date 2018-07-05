@@ -34,7 +34,7 @@ public:
 	virtual void init();
 	virtual bool getJSON(JSONObject *jObject);
 	virtual bool checkStatusChange();
-	virtual CommandResponse receiveCommand(String json);
+	bool receiveCommand(String command, int id, String uuid, String json);
 
 	bool getAlarmActiveStatus();
 

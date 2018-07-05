@@ -57,6 +57,11 @@ C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Rel
  C:\Users\giaco\Documents\Arduino\libraries\DallasTemperature/DallasTemperature.h \
  C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\JSON.h \
  C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\HornSensor.h \
+ C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\RFIDSensor.h \
+ C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\libraries\SPI/SPI.h \
+ C:\Users\giaco\Documents\Arduino\libraries\MFRC522\src/MFRC522.h \
+ C:\Users\giaco\Documents\Arduino\libraries\MFRC522\src/require_cpp11.h \
+ C:\Users\giaco\Documents\Arduino\libraries\MFRC522\src/deprecated.h \
  C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\Shield.h \
  C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\HeaterActuator.h \
  C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\ESPDisplay.h \
@@ -69,5 +74,4 @@ C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Rel
  C:\Users\giaco\Documents\Arduino\libraries\Adafruit-GFX-Library-master/Adafruit_GFX.h \
  C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\cores\esp8266/Print.h \
  C:\Users\giaco\Documents\Arduino\libraries\Adafruit-GFX-Library-master/gfxfont.h \
- C:\Users\giaco\Documents\Arduino\libraries\Adafruit_ST7735/Adafruit_ST7735.h \
- C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\libraries\SPI/SPI.h
+ C:\Users\giaco\Documents\Arduino\libraries\Adafruit_ST7735/Adafruit_ST7735.h

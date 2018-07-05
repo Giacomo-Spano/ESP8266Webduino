@@ -49,7 +49,8 @@ public:
 	void updateReleStatus();
 	bool changeStatus(String command, long duration, float remotetemperature, float target, int actionid, String commanddate, String enddate, int zone);
 	
-	CommandResponse receiveCommand(String json);
+	//CommandResponse receiveCommand(int actuatorId, String uuid, String json);
+	bool receiveCommand(String command, int id, String uuid, String json);
 
 
 	void setStatus(String status);
@@ -76,7 +77,7 @@ public:
 
 	//Program programSettings;
 private:
-	String status = STATUS_OFF;
+	//String status = STATUS_OFF;
 	String oldStatus = STATUS_OFF;
 	
 	bool releStatus = false;

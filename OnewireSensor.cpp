@@ -129,15 +129,17 @@ void OnewireSensor::beginTemperatureSensors()
 		String name = "sensoretemperatura" + String(id);
 		String subaddress = address + "." + id;
 		TemperatureSensor* child = (TemperatureSensor*)SensorFactory::createSensor(0,"temperaturesensor", pin, true, subaddress, name);
-		child->id = id;
-		for (int i = 0; i < 8; i++) {
-			child->sensorAddr[i] = _address[i];
+		if (child != nullptr) {
+			child->id = id;
+			for (int i = 0; i < 8; i++) {
+				child->sensorAddr[i] = _address[i];
+			}
+
+			childsensors.add(child);
+			tempSensorNum++;
+
+			childsensors.show();
 		}
-
-		childsensors.add(child);
-		tempSensorNum++;
-
-		childsensors.show();
 	}
 	oneWirePtr->reset_search();
 

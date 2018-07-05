@@ -20,25 +20,16 @@ HeaterSensor::~HeaterSensor()
 {
 }
 
-CommandResponse HeaterSensor::receiveCommand(String jsonStr)
+
+bool HeaterSensor::receiveCommand(String command, int id, String uuid, String jsonStr)
 {
+	bool res = Sensor::receiveCommand(command, id, uuid, jsonStr);
+	if (res) // se è true vuol dire che è stato inviato il comando base
+		return true;
+
 	logger.print(tag, "\n\n\t >>receiveCommand=");
 
 	JSON json(jsonStr);
-
-	// actuatorId
-	int actuatorId;
-	if (json.has("actuatorid")) {
-		actuatorId = json.jsonGetInt("actuatorid");
-		logger.print(tag, "\n\t actuatorid=" + String(actuatorId));
-	}
-
-	// command
-	String command = "";
-	if (json.has("command")) {
-		command = json.jsonGetString("command");
-		logger.print(tag, "\n\t command=" + command);
-	}
 	// duration
 	int duration = 0;
 	if (json.has("duration")) {
@@ -84,28 +75,18 @@ CommandResponse HeaterSensor::receiveCommand(String jsonStr)
 		zone = json.jsonGetInt("zone");
 		logger.print(tag, "\n\t sensorId=" + String(zone));
 	}
-	// uuid
-	String uuid = "";
-	if (json.has("uuid")) {
-		uuid = json.jsonGetString("uuid");
-		logger.print(tag, "\n\t uuid=" + uuid);
-	} else {
-		logger.print(tag, "\n\t NO uuid FOUND!");
-	}
+
 	logger.print(tag, "\n\t changeProgram param=" + String(rTemperature));
-	bool res = changeStatus(command, duration,
+	res = changeStatus(command, duration,
 		rTemperature,
 		target,
 		actionid,
 		commanddate,
 		enddate,
 		zone);
-	CommandResponse response;
-	response.uuid = uuid;
-	response.result = "success";
-
+	
 	logger.println(tag, "<<receiveCommand res=" + String(res));
-	return response;
+	return res;
 }
 
 String HeaterSensor::getJSONFields()
@@ -116,7 +97,7 @@ String HeaterSensor::getJSONFields()
 	json += Sensor::getJSONFields();
 
 
-	json += ",\"status\":\"" + status + "\"";
+	//json += ",\"status\":\"" + status + "\"";
 	json += ",\"relestatus\":" + String((getReleStatus()) ? "true" : "false");
 
 	if (status.equals(STATUS_KEEPTEMPERATURE)) {

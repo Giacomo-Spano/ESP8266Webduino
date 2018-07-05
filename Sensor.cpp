@@ -5,6 +5,9 @@
 Logger Sensor::logger;
 String Sensor::tag = "Sensor";
 
+extern bool mqtt_publish(String topic, String message);
+extern bool _mqtt_publish(char* topic, char* payload);
+
 Sensor::Sensor(int id, uint8_t pin, bool enabled, String address, String name)
 {
 	this->sensorid = id;
@@ -86,6 +89,7 @@ String Sensor::getJSONFields() {
 	//json += "\"type\":\"" + type + "\",";
 	//json += "\"name\":\"" + sensorname + "\",";
 	json += "\"sensorid\":" + String(sensorid) + ",";
+	json += "\"status\":\"" + status + "\",";
 	/*json += "\"enabled\":";
 	if (enabled)
 		json += "true,";
@@ -154,6 +158,9 @@ String Sensor::getJSON() {
 	//logger.println(tag, ">>getJSON");
 
 	String json = "{";
+	
+	
+
 	json += getJSONFields();
 	// child sensors
 	json += getChildren();
@@ -175,8 +182,20 @@ bool Sensor::checkStatusChange()
 {
 }
 
-CommandResponse Sensor::receiveCommand(String json)
+bool Sensor::receiveCommand(String command, int id, String uuid, String json)
 {
-	CommandResponse response;
-	return response;
+	if (command.equals("requestsensorstatus")) {// richiesta stato di un singolo sensore
+		logger.print(tag, "\n\t ++requestsensorstatus");
+		logger.print(tag, "\n\t sensorname=" + sensorname);
+		return sendCommandResponse(uuid, getJSON());
+	}
+	return false;
 }
+
+bool Sensor::sendCommandResponse(String uuid, String response)
+{
+	logger.print(tag, "\n\t sendCommandResponse uuid=" + uuid + "response" + response);
+	String topic = "toServer/response/" + uuid + "/success";
+	return mqtt_publish(topic, response);
+}
+

@@ -22,7 +22,7 @@ Logger Shield::logger;
 String Shield::tag = "Shield";
 
 String Shield::lastRestartDate = "";
-String Shield::swVersion = "1.40";
+String Shield::swVersion = "1.48";
 int Shield::id = 0; //// inizializzato a zero perch� viene impostato dalla chiamata a registershield
 
 // default shield setting
@@ -45,6 +45,7 @@ String Shield::powerStatus = "on"; // da aggiungere
 Shield::Shield()
 {
 	//phearterActuator = new HeaterActuator(0, true, "heaterxxxx", "heater");
+	lastCheckHealth = 0;
 }
 
 Shield::~Shield()
@@ -196,25 +197,25 @@ bool Shield::receiveCommand(String jsonStr) {
 
 		bool result = false;
 		String command = json.jsonGetString("command");
-		if (command.equals("updatesensorlist")) {
+		if (command.equals("updatesensorlist")) { // ???
 			logger.print(tag, "\n\t ++updatesensorlist");
 			result = onUpdateSensorListCommand(json);
 			logger.print(tag, "\n\t <<sendCommand result=" + String(result));
 			return result;
 		}
-		else if (command.equals("shieldsettings")) {
+		else if (command.equals("shieldsettings")) { // risposta a loadsettting
 			logger.print(tag, "\n\t ++shieldsettings");
 			result = onShieldSettingsCommand(json);
 			logger.print(tag, "\n\t <<sendCommand result=" + String(result));
 			return result;
 		}
-		else if (command.equals("power")) {
+		else if (command.equals("power")) { // ??
 			logger.print(tag, "\n\t ++power");
 			result = onPowerCommand(json);
 			logger.print(tag, "\n\t <<sendCommand result=" + String(result));
 			return result;
 		}
-		else if (command.equals("reset")) {
+		else if (command.equals("reset")) { // che differenza c'è tra reboot e reset?
 			logger.print(tag, "\n\t ++reset");
 			result = onResetCommand(json);
 			logger.print(tag, "\n\t <<sendCommand result=" + String(result));
@@ -222,13 +223,13 @@ bool Shield::receiveCommand(String jsonStr) {
 			logger.print(tag, "\n\t <<onRebootCommand result=" + String(result));
 			return result;
 		}
-		else if (command.equals("reboot")) {
+		else if (command.equals("reboot")) { // che differenza c'è tra reboot e reset?
 			logger.print(tag, "\n\t ++reboot");
 			result = onRebootCommand(json);
 			logger.print(tag, "\n\t <<onRebootCommand result=" + String(result));
 			return result;
 		}
-		else if (command.equals("updatesensorstatus")) {
+		else if (command.equals("updatesensorstatus")) { // questo può essere eliminato??
 			// richiesta stato di tutti i sensori
 			logger.print(tag, "\n\t ++updatesensorstatus");
 			
@@ -262,16 +263,46 @@ bool Shield::receiveCommand(String jsonStr) {
 			return res;
 			
 		}
+		if (command.equals("checkhealth")) {
+			logger.print(tag, "\n\t ++checkhealth");
+
+			// uuid
+			String uuid = "";
+			if (json.has("uuid")) {
+				uuid = json.jsonGetString("uuid");
+				logger.print(tag, "\n\t uuid=" + uuid);
+			}
+			else {
+				logger.print(tag, "\n\t uuid NOT FOUND!");
+				return false;
+			}
+
+			lastCheckHealth = millis();
+			String topic = "toServer/response/" + uuid + "/success";
+
+			bool res = mqtt_publish(topic, getJson());
+
+			logger.print(tag, "\n\t --checkhealth " + uuid);
+			return res;
+		}
 		/*else if (command.equals("register")) {
 			logger.print(tag, "\n\t ++register");
 			bool result = sendRegister();
 			logger.print(tag, "\n\t <<sendCommand result=" + String(result));
 			return result;
 		}*/
-		else if (command.equals("requestsensorstatus") && json.has("uuid")) {
-			// richiesta stato di un singolo sensore
-										   
-			logger.print(tag, "\n\t ++requestsensorstatus");
+		else if (json.has("actuatorid") /*command.equals("requestsensorstatus")*/ && json.has("uuid")) {
+			
+			int id = json.jsonGetInt("actuatorid");
+			String uuid = json.jsonGetString("uuid");
+			Sensor* sensor = getSensorFromId(id);
+			if (sensor != nullptr) {				
+				String topic = "toServer/response/" + uuid + "/success";
+				bool res = mqtt_publish(topic, sensor->getJSON());
+				return sensor->receiveCommand(command,id,uuid, jsonStr);
+			}
+
+			/*logger.print(tag, "\n\t ++requestsensorstatus");
 			int id = json.jsonGetInt("actuatorid");
 			Sensor* sensor = getSensorFromId(id);
 			if (sensor != nullptr) {
@@ -282,9 +313,9 @@ bool Shield::receiveCommand(String jsonStr) {
 				bool res = mqtt_publish(topic, sensor->getJSON());
 				return res;
 				
-			}
+			}*/
 		}
-		else if (json.has("actuatorid")) { // se contiene "actuatorid" vuole dire che
+		/*else if (json.has("actuatorid")) { // se contiene "actuatorid" vuole dire che
 											// è un comando diretto ad un sensore e quindi
 											// chiama la sensor->receivecommand
 
@@ -298,14 +329,14 @@ bool Shield::receiveCommand(String jsonStr) {
 
 				if (result.result.equals("success")) {
 					String topic = "toServer/response/" + result.uuid + "/success";
-					bool res = mqtt_publish(topic, /*getSensorsStatusJson()*/sensor->getJSON());
+					bool res = mqtt_publish(topic, sensor->getJSON());
 					return res;
 				}
 				else {
 					return false;
 				}
 			}			
-		}
+		}*/
 		
 	}
 	return false;
@@ -474,7 +505,8 @@ String Shield::getJson() {
 	
 	str += "\"MAC\":\"" + String(MAC_char) + "\"";
 	str += ",\"swversion\":\"" + swVersion + "\"";
-	//str += ",\"shieldName\":\"" + Shield::getShieldName() + "\"";
+	str += ",\"lastreboot\":\"" + lastRestartDate + "\"";
+	str += ",\"lastcheckhealth\":\"" + String(lastCheckHealth) + "\"";
 	str += ",\"localIP\":\"" + localIP + "\"";
 	str += ",\"localPort\":\"" + String(Shield::getLocalPort()) + "\"";
 
@@ -669,8 +701,15 @@ void Shield::checkSensorsStatus()
 		//logger.print(tag, "\n\t sensor->name: " + String(sensor->sensorname));
 		bool res = sensor->checkStatusChange();
 
-		if (res || sensor->lastUpdateStatusFailed) {
+		unsigned long currMillis = millis();
+		unsigned long timeDiff = currMillis - sensor->lastUpdateStatus;
+
+		// Invia il comando se è cambiato lo stato del sensore
+		// oppure se l’ultimo invio è fallito 
+		// oppure se è passato il timeout dall’ultimo invio
+		if (res || sensor->lastUpdateStatusFailed || timeDiff > sensor->updateStatus_interval) {
 			sensorStatusChanged = true;
+			sensor->lastUpdateStatus = millis();
 
 			Command command;
 			bool res = command.sendSensorStatus(sensor->getJSON());
