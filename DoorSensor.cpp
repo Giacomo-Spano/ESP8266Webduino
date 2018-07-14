@@ -63,6 +63,7 @@ bool DoorSensor::checkStatusChange() {
 	unsigned long currMillis = millis();
 	unsigned long timeDiff = currMillis - lastCheckStatus;
 	if (timeDiff > checkStatus_interval) {
+		//logger.print(tag, "\n\t >>>> checkStatusChange - timeDiff > checkStatus_interval");
 		lastCheckStatus = currMillis;
 		String oldStatus = status;
 
@@ -73,7 +74,7 @@ bool DoorSensor::checkStatusChange() {
 			status = STATUS_DOORCLOSED;
 		}
 
-		if (!status.equals(status)) {
+		if (!status.equals(oldStatus)) {
 			if (status.equals(STATUS_DOOROPEN))
 				logger.print(tag, "\n\t >>>> DOOR OPEN");
 			else if (status.equals(STATUS_DOORCLOSED))

@@ -3,6 +3,8 @@
 
 
 extern Logger logger;
+extern bool _mqtt_publish(char* topic, char* payload);
+
 
 String Logger::tag = "Logger";
 String Logger::logFileName = "/log/log.txt";
@@ -18,14 +20,14 @@ Logger::~Logger()
 }
 
 /*void Logger::println(String tag, String txt) {
-	
+
 	//if (line.equals("")) {
 	if (line.length() == 0 && txt != NULL && !txt.equals("")) {
 		line += getHeader(tag);
 	}
 	line += txt;
 	Serial.println(line);
-	
+
 	if (!truncated) {
 
 		if (toBeSent.length() > maxLogbuffer) {
@@ -34,8 +36,8 @@ Logger::~Logger()
 		}
 		else {
 			toBeSent += line + "\n";
-		}		
-	}	
+		}
+	}
 	line = "";
 }*/
 
@@ -52,36 +54,58 @@ void Logger::print(String tag, String txt) {
 	//line += txt;
 	Serial.print(txt);
 
-	if (logFile.size() > 100000) {
+	/*if (logFile.size() > 100000) {
 
 		logFile.close();
-		
+
 		SPIFFS.remove("/log/log1.txt");
-		
-		if (SPIFFS.rename(logFileName, "/log/log1.txt")) {
+
+		if (SPIFFS.rename(logFileName, "/log/log2.txt")) {
 			Serial.println("file : " + logFileName + " renamed \n");
 		}
 
-		logFile = SPIFFS.open(logFileName, "w");
+		logFile = SPIFFS.open("/log/log.txt", "a+");
 		logFile.println("----------------log restarted-----------");
 		//logFile.println(txt);
+	}*/
+	//logFile.println(txt);
+
+
+	//logFileName = "/log/log.txt";
+
+	//logFile = SPIFFS.open(logFileName, "a+");
+	if (!logFile) {
+		//Serial.println("file open failed - file does not exit");
+
+		/*logFile = SPIFFS.open(logFileName, "w+");
+		if (!logFile) {
+		Serial.println("file creation failed");
+		}*/
 	}
-	logFile.println(txt);
-	
+	else {
+		//Serial.println("logFile: " + logFileName + " opened\n");
+
+		//logFile.seek(0,SeekEnd);
+		//int l = logFile.println(txt);
+		//Serial.println("written: " + String(l));
+		//logFile.close();
+		//logFile.readBytes
+	}
+
 }
 
 /*void Logger::print(String tag, String txt) {
 
 	if (line.equals("") && txt != NULL && !txt.equals("")) {
 		line += getHeader(tag);
-	}	
+	}
 	Serial.print(txt);
 	line += txt;
 }*/
 
 void Logger::print(String tag, char* buffer) {
 	String str = String(buffer);
-	print(tag,str);
+	print(tag, str);
 }
 
 void Logger::println(String tag, char* buffer) {
@@ -111,8 +135,8 @@ bool Logger::send() {
 		//Serial.print("toBeSent = ");
 		//Serial.println(toBeSent);
 
-		String substr = toBeSent.substring(0, Command::maxLogSize-1);
-		
+		String substr = toBeSent.substring(0, Command::maxLogSize - 1);
+
 		//Serial.print("SEND LOG PACKET ");
 		//Serial.print(packetcounter++,DEC);
 		//Serial.print(":");
@@ -129,14 +153,14 @@ bool Logger::send() {
 			Serial.println("PACKET NOT SENT");
 
 		}
-	}	
+	}
 }
 
 String Logger::getHeader(String tag) {
 
 	String date = Logger::getStrDate();
 	String header = String(ESP.getFreeHeap()) + " " + date + " " + tag + ": ";
-	
+
 	return header;
 }
 
@@ -164,6 +188,51 @@ String Logger::getStrTimeDate() {
 	return date;
 }
 
+void Logger::sendLogToServer() {
+
+	Serial.println("\n >>Logger::sendLogToServer\n\n\n");
+	/*String str = "prova invio testo";
+	HttpHelper hplr;
+	Shield shield;
+	String postResult;
+	boolean res = hplr.post(Shield::getServerName(), Shield::getServerPort(), "/webduino/log", str, &postResult);*/
+
+
+	String fileName = "/log/log.txt";
+	Serial.println("\nopening " + fileName);
+	// open the file in read mode
+	File file = SPIFFS.open(logFileName, "r");
+	if (!file) {
+		Serial.println("\nfile open failed - file does not exit");
+	}
+	else {
+		String topic = "toServer/shield/log" + String(Shield::getShieldId());
+		int count = 0;
+		char stopic[50];
+		for (int i = 0; i < topic.length(); i++) {
+			stopic[count++] = topic.charAt(i);
+		}
+		stopic[count++] = '\0';
+		
+		const int size = 256;
+		char payload[size];
+		Serial.println("logFile: " + fileName + " opened\n");
+		int len = 0;
+		
+		String str;
+		while (file.available()) {
+			str = file.readStringUntil('\n');
+			Serial.print(str);
+			//payload[size - 1] = '\0';
+			//bool res = _mqtt_publish(stopic, payload);
+		}	
+
+		Serial.println("\n <<Logger::sendLogToServer\n\n\n");
+	}
+}
+
+
+
 void Logger::init() {
 
 	Serial.println("\n\n******INIT LOG*******");
@@ -171,60 +240,45 @@ void Logger::init() {
 	// always use this to "mount" the filesystem
 	bool result = SPIFFS.begin();
 	Serial.println("SPIFFS opened: " + result);
-
-
-	/*Dir dir = SPIFFS.openDir("/log");
-	while (dir.next()) {
-
-		Serial.println(dir.fileName());
-		File f = dir.openFile("r");
-		Serial.println(f.size());
-	}
-
-
-	String filename = "/log/log.txt";
-	File f = SPIFFS.open(filename, "r");
-	if (f) { // file  exixt
-		Serial.println("filename: " + filename + " exist\n");
-		f.close();
-
-		SPIFFS.remove("/log/log1.txt");
-		if (SPIFFS.rename(filename, "/log/log1.txt"))
-			Serial.println("file : " + filename + " renamed: \n");
-	}*/
-
 	
-	Dir dir2 = SPIFFS.openDir("/log");
+
+	/*Dir dir2 = SPIFFS.openDir("/log");
+	Serial.println("dir /log");
 	while (dir2.next()) {
 
-		Serial.println(dir2.fileName());
+		Serial.print(dir2.fileName());
+		Serial.print(" size ");
 		File f = dir2.openFile("r");
-		Serial.println(f.size());
-	}
-
-	
+		Serial.print(f.size());
+		Serial.println(" bytes");
+		f.close();
+	}*/
 
 
 	logFileName = "/log/log.txt";
 	Serial.println("opening " + logFileName);
 	// open the file in write mode
-	logFile = SPIFFS.open(logFileName, "w+");
+	logFile = SPIFFS.open(logFileName, "a+");
 	if (!logFile) {
 		Serial.println("file open failed - file does not exit");
 
-		logFile = SPIFFS.open(logFileName, "w+");
+		/*logFile = SPIFFS.open(logFileName, "w+");
 		if (!logFile) {
-			Serial.println("file creation failed");
-		}
+		Serial.println("file creation failed");
+		}*/
 	}
 	else {
 		Serial.println("logFile: " + logFileName + " opened\n");
 
-		logFile.seek(logFile.size(), SeekSet);
+		//logFile.seek(logFile.size(), SeekSet);
+		logFile.seek(0, SeekEnd);
 		// now write two lines in key/value style with  end-of-line characters
 		logFile.println(Logger::getStrDate());
-		logFile.println("inizioxx");
-	}	
+		int l = logFile.println("inizioxx00");
+		Serial.println("written: " + String(l));
+		logFile.close();
+		//logFile.readBytes
+	}
 	//logFile.close();
 }
 

@@ -868,11 +868,15 @@ void setup()
 	
 	// Connect to WiFi network
 	if (testWifi()) {
+
+		
 			
 		mqttclient.init(&client);
 		mqttclient.setServer(Shield::getMQTTServer(), Shield::getMQTTPort());
 		mqttclient.setCallback(callback);
 		reconnect();
+		
+		Logger::sendLogToServer();
 
 		JSONObject json;
 		String settings;
@@ -1328,7 +1332,7 @@ bool updateTime() {
 	unsigned long currMillis = millis();
 	Command command;
 	lastTimeSync = currMillis;
-	command.timeSync();
+	//command.timeSync();
 
 	logger.println(tag, "<<updateTime");
 	return true;
