@@ -202,6 +202,12 @@
     <ClInclude Include="RFIDSensor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="IRSensor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IRReceiveSensor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="wol.cpp">
@@ -319,6 +325,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="RFIDSensor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="IRSensor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="IRReceiveSensor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

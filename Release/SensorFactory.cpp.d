@@ -62,8 +62,23 @@ C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Rel
  C:\Users\giaco\Documents\Arduino\libraries\MFRC522\src/MFRC522.h \
  C:\Users\giaco\Documents\Arduino\libraries\MFRC522\src/require_cpp11.h \
  C:\Users\giaco\Documents\Arduino\libraries\MFRC522\src/deprecated.h \
+ C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\IRSensor.h \
+ C:\Users\giaco\Documents\Arduino\libraries\IRremoteESP8266\src/IRremoteESP8266.h \
+ C:\Users\giaco\Documents\Arduino\libraries\IRremoteESP8266\src/IRsend.h \
+ C:\Users\giaco\Documents\Arduino\libraries\IRremoteESP8266\src/IRremoteESP8266.h \
+ C:\Users\giaco\Documents\Arduino\libraries\IRremoteESP8266\src/ir_Daikin.h \
+ C:\Users\giaco\Documents\Arduino\libraries\IRremoteESP8266\src/IRrecv.h \
+ C:\Users\giaco\Documents\Arduino\libraries\IRremoteESP8266\src/IRsend.h \
+ C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\IRReceiveSensor.h \
+ C:\Users\giaco\Documents\Arduino\libraries\IRremoteESP8266\src/IRrecv.h \
+ C:\Users\giaco\Documents\Arduino\libraries\IRremoteESP8266\src/IRutils.h \
+ C:\Users\giaco\Documents\Arduino\libraries\IRremoteESP8266\src/ir_Fujitsu.h \
+ C:\Users\giaco\Documents\Arduino\libraries\IRremoteESP8266\src/ir_Gree.h \
+ C:\Users\giaco\Documents\Arduino\libraries\IRremoteESP8266\src/ir_Haier.h \
+ C:\Users\giaco\Documents\Arduino\libraries\IRremoteESP8266\src/ir_Kelvinator.h \
+ C:\Users\giaco\Documents\Arduino\libraries\IRremoteESP8266\src/ir_Midea.h \
+ C:\Users\giaco\Documents\Arduino\libraries\IRremoteESP8266\src/ir_Toshiba.h \
  C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\Shield.h \
- C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\HeaterActuator.h \
  C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\ESPDisplay.h \
  C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.3.0\libraries\Wire/Wire.h \
  C:\Users\giaco\Documents\Arduino\libraries\esp8266-oled-ssd1306/SSD1306.h \

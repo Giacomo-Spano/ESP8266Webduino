@@ -5,6 +5,8 @@
 #include "OnewireSensor.h"
 #include "HornSensor.h"
 #include "RFIDSensor.h"
+#include "IRSensor.h"
+#include "IRReceiveSensor.h"
 #include "JSONObject.h"
 #include "Shield.h"
 //#include "Util.h"
@@ -47,8 +49,16 @@ Sensor * SensorFactory::createSensor(int id, String type, uint8_t pin, bool enab
 		sensor = new HornSensor(id, pin, enabled, address, name);
 	}
 	else if (type.equals("rfidsensor")) {
-		logger.print(tag, "\n\t creating hornsensor sensor");
+		logger.print(tag, "\n\t creating rfidsensor sensor");
 		sensor = new RFIDSensor(id, pin, enabled, address, name);
+	}
+	else if (type.equals("irsensor")) {
+		logger.print(tag, "\n\t creating irsensor sensor");
+		sensor = new IRSensor(id, pin, enabled, address, name);
+	}
+	else if (type.equals("irreceivesensor")) {
+		logger.print(tag, "\n\t creating irreceivesensor sensor");
+		sensor = new IRReceiveSensor(id, pin, enabled, address, name);
 	}
 
 	logger.println(tag, "createSensor type=" + type);
@@ -123,8 +133,16 @@ Sensor * SensorFactory::createSensor(JSONObject* json)
 		sensor = new HornSensor(sensorid, pin, enabled, address, name);
 	}
 	else if (type.equals("rfidsensor")) {
-		logger.print(tag, "\n\t creating doorsensor sensor");
+		logger.print(tag, "\n\t creating rfidsensor sensor");
 		sensor = new RFIDSensor(sensorid, pin, enabled, address, name);
+	}
+	else if (type.equals("irsensor")) {
+		logger.print(tag, "\n\t creating irsensor sensor");
+		sensor = new IRSensor(sensorid, pin, enabled, address, name);
+	}
+	else if (type.equals("irreceivesensor")) {
+		logger.print(tag, "\n\t creating irreceivesensor sensor");
+		sensor = new IRReceiveSensor(sensorid, pin, enabled, address, name);
 	}
 	else {
 		return nullptr;

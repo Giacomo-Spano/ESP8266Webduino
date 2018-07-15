@@ -2,7 +2,6 @@
 #include "DoorSensor.h"
 #include "HornSensor.h"
 #include "Logger.h"
-#include "HeaterActuator.h"
 #include "Command.h"
 #include "ESP8266Webduino.h"
 #include "JSONArray.h"
@@ -580,7 +579,9 @@ void Shield::checkSensorsStatus()
 		// Invia il comando se è cambiato lo stato del sensore
 		// oppure se l’ultimo invio è fallito 
 		// oppure se è passato il timeout dall’ultimo invio
-		if (res || sensor->lastUpdateStatusFailed || timeDiff > sensor->updateStatus_interval) {
+		if (res || /*sensor->lastUpdateStatusFailed ||*/ timeDiff > sensor->updateStatus_interval) {
+				// eliminato reinvio su LasUpdateStatusFailed perchè va in loop infinito
+
 			sensorStatusChanged = true;
 			sensor->lastUpdateStatus = millis();
 

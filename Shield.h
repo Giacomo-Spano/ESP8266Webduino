@@ -5,7 +5,6 @@
 #include "Actuator.h"
 #include "Sensor.h"
 #include "List.h"
-#include "HeaterActuator.h"
 #include "JSON.h"
 #include <OneWire.h>
 #include <DallasTemperature.h>
