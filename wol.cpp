@@ -2,6 +2,11 @@
 // 
 // 
 
+
+#ifdef ESP8266
+
+#ifdef dopo
+
 #include "wol.h"
 
 
@@ -74,3 +79,6 @@ void wol::inviaMagicPacket()
 
 wol WOL;
 
+#endif
+
+#endif

@@ -3,6 +3,8 @@
 #ifndef _ESP8266WEBDUINO_h
 #define _ESP8266WEBDUINO_h
 
+#define ESP8266
+
 #if defined(ARDUINO) && ARDUINO >= 100
 	#include "arduino.h"
 #else

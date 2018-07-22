@@ -1,9 +1,9 @@
-#include <Dhcp.h>
-#include <Dns.h>
-#include <Ethernet.h>
+//#include <Dhcp.h>
+//#include <Dns.h>
+/*#include <Ethernet.h>
 #include <EthernetClient.h>
 #include <EthernetServer.h>
-#include <EthernetUdp.h>
+#include <EthernetUdp.h>*/
 
 // wol.h
 
@@ -16,7 +16,14 @@
 #include "WProgram.h"
 #endif
 
+#ifdef ESP8266
+
+
+
 #include <EthernetUDP.h> // Arduino 1.0 UDP library
+
+
+
 
 class wol
 {
@@ -38,6 +45,9 @@ public:
 };
 
 extern wol WOL;
+
+
+#endif // ESP8266
 
 #endif
 

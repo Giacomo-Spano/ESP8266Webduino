@@ -21,7 +21,7 @@ Logger Shield::logger;
 String Shield::tag = "Shield";
 
 String Shield::lastRestartDate = "";
-String Shield::swVersion = "1.50";
+String Shield::swVersion = "1.52";
 int Shield::id = 0; //// inizializzato a zero perch� viene impostato dalla chiamata a registershield
 
 // default shield setting
@@ -75,29 +75,27 @@ Sensor* Shield::getSensorFromAddress(String addr) {
 
 Sensor* Shield::getSensorFromId(int id) { /// sidsogna aggiungere anche richerca nei child
 	logger.print(tag, "\n\t >>getSensorFromId " + String(id));
+	logger.print(tag, "\n\t sensorList.count= " + String(sensorList.count));
 	for (int i = 0; i < sensorList.count; i++) {
-		/*logger.print(tag, "\n\t sendor id= " + String(id));
-
+		logger.print(tag, "\n\t i= " + String(i));		
 		Sensor* sensor = (Sensor*)sensorList.get(i);
-		logger.print(tag, "\n\t sensor id= " + String(sensor->sensorid));
-
-		return sensor->getSensorFromId(id);*/
-		
-		Sensor* sensor = (Sensor*)sensorList.get(i);
+		logger.print(tag, "\n\t sensor->sensoorid= " + String(sensor->sensorid));
+		logger.print(tag, " sensor->sensorname= " + sensor->sensorname);
 		if (sensor->sensorid == id) {
+			logger.print(tag, "\n\t sensor found " + sensor->sensorname);
 			return sensor;
 		}
-
+		logger.print(tag, "\n\t childsensors.length()= " + String(sensor->childsensors.length()));
 		for (int k = 0; k < sensor->childsensors.length(); k++) {
-			logger.print(tag, "\n\t k= " + String(k));
+			logger.print(tag, "\n\t child k= " + String(k));
 			Sensor* child = (Sensor*)sensor->childsensors.get(k);
 			logger.print(tag, "\n\t childsensors= " + String(child->sensorid));
-			logger.print(tag, "\n\t name= " + String(child->sensorname));
-			if (child->sensorid == id)
+			logger.print(tag, " name= " + String(child->sensorname));
+			if (child->sensorid == id) {
+				logger.print(tag, "\n\t sensor child found " + child->sensorname);
 				return (Sensor*)child;
-
+			}
 		}
-
 	}
 	logger.println(tag, "\n\t <<getSensorFromId: sensornotfound");
 	return nullptr;

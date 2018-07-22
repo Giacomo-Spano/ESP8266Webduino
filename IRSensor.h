@@ -11,9 +11,12 @@
 #include <Arduino.h>
 #include "Logger.h"
 #include "CommandResponse.h"
+
+#ifdef ESP8266
 #include <IRremoteESP8266.h>
 #include <IRsend.h>
 #include <ir_Daikin.h>
+#endif
 
 class IRSensor :
 	public Sensor
@@ -23,8 +26,11 @@ private:
 	static Logger logger;
 
 	virtual String getJSONFields();
+#ifdef ESP8266
 	IRsend *pirsend;
 	IRDaikinESP *pdaikinir;
+#endif
+	bool sendCode(String codetype, uint64_t code, int bit);
 
 	bool sendDaikin();
 	bool sendSamsungTv();

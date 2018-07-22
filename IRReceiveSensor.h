@@ -11,11 +11,13 @@
 #include <Arduino.h>
 #include "Logger.h"
 #include "CommandResponse.h"
+
+#ifdef ESP8266
 #include <IRremoteESP8266.h>
-
-
 #include <IRrecv.h>
 #include <IRutils.h>
+#endif
+
 #if DECODE_AC
 #include <ir_Daikin.h>
 #include <ir_Fujitsu.h>
@@ -36,14 +38,33 @@ private:
 	virtual String getJSONFields();
 	
 	// Use turn on the save buffer feature for more complete capture coverage.
-	IRrecv *pirrecv;
-	decode_results results;  // Somewhere to store the results
+#ifdef ESP8266
+	//static IRrecv irrecv;
+	//static IRrecv* _pirrecv;
+	//static decode_results _results;  // Somewhere to store the results
+	//static String _type;
+	//static String _code;
+	//static String _bit;
+	//static int _lastIrSensorIdreceiving;
+	unsigned long startMillis = 0;
+	//static bool received;
+	
+	String codetype;
+	String code;
+	String bit;
+	String receivedcommanduuid;
+#endif
 	void dumpACInfo(decode_results *results);
+	//static void receiveLoopCallback();
 	void receive();
+	IRrecv* pirrecv;
+	decode_results results;  // Somewhere to store the results
 	
 public:
-	//const String STATUS_DOOROPEN = "dooropen";
-	//const String STATUS_DOORCLOSED = "doorclosed";
+	const String STATUS_RECEIVINGIRCODE = "receiving";
+	const String STATUS_RECEIVONEIRCODE = "receiveone";
+	const String STATUS_RESPONSERECEIVEONEIRCODE = "responsereceiveone";
+	const String STATUS_RECEIVEDIRCODE = "received";
 
 	IRReceiveSensor(int id, uint8_t pin, bool enabled, String address, String name);
 	~IRReceiveSensor();

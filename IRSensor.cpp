@@ -2,7 +2,10 @@
 #include "Util.h"
 #include "ESP8266Webduino.h"
 #include "Shield.h"
+
+#ifdef ESP8266
 #include <IRremoteESP8266.h>
+#endif
 
 #include "DoorSensor.h"
 #include "Util.h"
@@ -40,12 +43,13 @@ void IRSensor::init()
 {
 	logger.print(tag, "\n\t >>init IRSensor");
 	
+#ifdef ESP8266
 	pirsend = new IRsend(pin);
 	pirsend->begin();
 	
 	pdaikinir = new IRDaikinESP(pin);
 	pdaikinir->begin();
-	
+#endif // ESP8266	
 	
 	logger.print(tag, "\n\t <<init IRSensor");
 }
@@ -77,8 +81,6 @@ bool IRSensor::checkStatusChange() {
 	return false;
 }
 
-
-
 // Reverse the order of bits in a byte
 // Example: 01000000 -> 00000010
 unsigned char ReverseByte(unsigned char b)
@@ -98,10 +100,14 @@ unsigned long GenNECXCode(unsigned char p_Device, unsigned char p_SubDevice, uns
 	return((ReverseDevice << 24) | (ReverseSubDevice << 16) | (ReverseFunction << 8) | ((~ReverseFunction) & 0xFF));
 }
 
-
-bool IRSensor::receiveCommand(String command, int id, String uuid, String json)
+uint64_t StrToHex(const char* str)
 {
-	bool res = Sensor::receiveCommand(command, id, uuid, json);
+	return (uint64_t)strtoull(str, 0, 16);
+}
+
+bool IRSensor::receiveCommand(String command, int id, String uuid, String jsonStr)
+{
+	bool res = Sensor::receiveCommand(command, id, uuid, jsonStr);
 	logger.println(tag, ">>receiveCommand=");
 	logger.print(tag, "\n\t command=" + command);
 	//int SAMSUNG_BITS = 32;
@@ -109,9 +115,47 @@ bool IRSensor::receiveCommand(String command, int id, String uuid, String json)
 	if (command.equals("send")) {
 		logger.print(tag, "\n\t send command");
 
-		
-		sendHarmanKardonDisc();
-		sendSamsungTv();
+		String codetype, code;
+		uint64_t value;
+		int bit;
+		JSON json(jsonStr);
+		if (json.has("codetype")) {
+			codetype = json.jsonGetString("codetype");
+			logger.print(tag, "\n\t codetype=" + codetype);
+		}
+		else {
+			return false;
+		}
+		if (json.has("code")) {
+			code = json.jsonGetString("code");
+			logger.print(tag, "\n\t code=" + code);
+
+			//code = "0x" + code;
+			while (code.length() < 16)
+				code = "0" + code;
+			logger.print(tag, "\n\t code=" + code);
+
+			uint8_t copy[16];
+			for (int i = 0; i < 16; i++) {
+				copy[i] = code.charAt(i);
+			}
+
+			value = StrToHex(code.c_str());
+		}
+		else {
+			return false;
+		}
+		if (json.has("bit")) {
+			bit = json.jsonGetInt("bit");
+			logger.print(tag, "\n\t bit=" + String(bit));
+		}
+		else {
+			return false;
+		}
+				
+		sendCode(codetype, value, bit);
+		//sendHarmanKardonDisc();
+		//sendSamsungTv();
 		//sendRobotClean();
 		//sendRobotHome();
 		//sendDaikin();
@@ -122,19 +166,40 @@ bool IRSensor::receiveCommand(String command, int id, String uuid, String json)
 	return res;
 }
 
+
+
+bool IRSensor::sendCode(String codetype, uint64_t code, int bit) {
+
+	Serial.println("sendCode");
+#ifdef ESP8266
+
+	pirsend->sendNEC(code, bit);  // Send a raw data capture at 38kHz.
+									//pirsend->sendPronto(harmapoweronProntoCode, 76);
+									//pirsend->sendRaw(HK_DISC_rawData, 40, 19);  // Send a raw data capture at 38kHz.
+									//delay(15000);
+#endif
+	Serial.println("HarmanKardonDisc sent");
+	return true;
+}
+
+
 bool IRSensor::sendSamsungTv() {
+
+#ifdef ESP8266
 	Serial.println("sendSamsungTv");
 	#define SAMSUNG_POWER_ON  GenNECXCode(7,7,153)
 	#define SAMSUNG_Channel_Up  GenNECXCode(7,7,18)
 	pirsend->sendSAMSUNG(SAMSUNG_Channel_Up, 32);
 	delayMicroseconds(50);
+	Serial.println("SamsungTv sent");
+#endif
 	return true;
 }
 
 bool IRSensor::sendDaikin() {
 
 	Serial.println("sendDaikin");
-
+#ifdef ESP8266
 	// Set up what we want to send. See ir_Daikin.cpp for all the options.
 	pdaikinir->on();
 	pdaikinir->setFan(1);
@@ -157,7 +222,7 @@ bool IRSensor::sendDaikin() {
 	pdaikinir->send();
 
 	delay(15000);
-
+#endif
 	return true;
 
 }
@@ -168,17 +233,27 @@ uint64_t home_data = 0x2AA8877;
 uint16_t home_rawData[62] = { 514, 622,  488, 626,  484, 626,  488, 622,  510, 600,  1634, 626,  494, 628,  1610, 626,  506, 616,  1624, 596,  514, 626,  1612, 638,  474, 634,  1640, 600,  514, 600,  1634, 628,  490, 620,  498, 628,  504, 590,  1638, 598,  516, 624,  496, 628,  484, 622,  502, 626,  1618, 610,  1624, 626,  1624, 620,  506, 610,  1628, 606,  1628, 626,  1612, 626 };  // UNKNOWN 3DA514
 
 
-uint16_t HK_DISC_rawData[40] = { 510, 610,  510, 610,  510, 606,  1630, 610,  514, 606,  1630, 610,  1630, 606,  1630, 610,  1632, 610,  1630, 606,  1644, 598,  514, 604,  1638, 598,  514, 608,  514, 594,  45110, 9062,  2210, 598,  65535, 0,  30655, 9070,  2218, 600 };  // UNKNOWN 25B83BF
-uint16_t HK_AVR_rawData[48] = { 1630, 604,  1634, 606,  514, 606,  514, 606,  514, 604,  514, 606,  510, 610,  510, 606,  514, 606,  1634, 606,  1634, 606,  1642, 600,  1628, 618,  1622, 620,  1616, 610,  1632, 604,  1644, 596,  514, 610,  512, 590,  45106, 9072,  2204, 584,  65535, 0,  30677, 9064,  2218, 576 };  // UNKNOWN FDC03324
-uint16_t HK_OFF_rawData[140] = { 514, 606,  510, 606,  514, 606,  514, 606,  514, 606,  514, 606,  514, 618,  1618, 606,  514, 606,  528, 592,  514, 606,  514, 606,  1630, 604,  1648, 602,  1622, 620,  512, 610,  1624, 598,  1642, 608,  1620, 624,  1620, 604,  1638, 602,  514, 606,  526, 600,  1624, 606,  514, 606,  516, 604,  520, 600,  516, 606,  508, 614,  1630, 604,  1640, 598,  528, 566,  45126, 9054,  2228, 562,  36842, 9056,  4458, 610,  510, 606,  516, 618,  502, 602,  518, 610,  502, 616,  504, 606,  518, 612,  1624, 608,  510, 620,  512, 596,  512, 606,  512, 612,  1624, 606,  1642, 612,  1624, 602,  514, 622,  1622, 598,  1634, 614,  1622, 610,  1632, 608,  1628, 614,  524, 592,  514, 606,  1630, 606,  528, 604,  510, 606,  516, 594,  518, 600,  518, 602,  1634, 600,  1646, 594,  518, 562,  45128, 9076,  2216, 560 };  // UNKNOWN 98D9F3F8
-uint16_t harmapoweronProntoCode[76] = {
-	0x0000, 0x006e, 0x0022, 0x0002, 0x0154, 0x00ac, 0x0015, 0x0015, 0x0015, 0x0015, 0x0015, 0x0015, 0x0015, 0x0015, 0x0015, 0x0015, 0x0015, 0x0015, 0x0015, 0x0015, 0x0015, 0x0040, 0x0015, 0x0015, 0x0015, 0x0015, 0x0015, 0x0015, 0x0015, 0x0015, 0x0015, 0x0041, 0x0015, 0x0041, 0x0015, 0x0040, 0x0015, 0x0015, 0x0015, 0x0040, 0x0015, 0x0040, 0x0015, 0x0041, 0x0015, 0x0041, 0x0015, 0x0041, 0x0015, 0x0015, 0x0015, 0x0015, 0x0015, 0x0040, 0x0015, 0x0015, 0x0015, 0x0015, 0x0015, 0x0015, 0x0015, 0x0015, 0x0015, 0x0015, 0x0015, 0x0040, 0x0015, 0x0040, 0x0015, 0x0015, 0x0015, 0x06af, 0x0154, 0x0056, 0x0015, 0x0e58
-};
+uint64_t ROBOT_HOME = 0x2AA8877;
+uint64_t ROBOT_CLEAN = 0x2AA22DD;
+
+
+
+uint64_t HK_DISC = 0x10E0BF4;
+uint64_t HK_TV = 0x10E8D72;
+uint64_t HK_SERVER = 0x10ECD32;
+uint64_t HK_AUDIO = 0x10E2DD2;
+uint64_t HK_AVR = 0x10E03FC;
+uint64_t HK_ON = 0x10E03FC;
+uint64_t HK_OFF = 0x10EF906;
+uint64_t HK_VOLUP = 0x10EE31C;
+uint64_t HK_VOLDOWN = 0x10E13EC;
+uint64_t HK_MUTE = 0x10E837C;
+
 
 bool IRSensor::sendRobotClean() {
 
 	Serial.println("sendVaacumCleaner");
-
+#ifdef ESP8266
 	// robot aspirapolvere. Manda due codici di seguito 
 
 	
@@ -188,34 +263,38 @@ bool IRSensor::sendRobotClean() {
 
 	pirsend->sendRaw(clean_rawData, 62, 38);  // Send a raw data capture at 38kHz.
 	delay(15000);
-
+#endif
 	return true;
 }
 
 bool IRSensor::sendRobotHome() {
 
 	Serial.println("sendVaacumCleaner");
-
+#ifdef ESP8266
 	// robot aspirapolvere. Manda due codici di seguito 
 
 
 	Serial.println("NEC");
-	pirsend->sendNEC(home_data/*0x2AA22DD*/, 32);
+	//pirsend->sendNEC(home_data/*0x2AA22DD*/, 32);
+	pirsend->sendNEC(ROBOT_HOME, 32);
 	delayMicroseconds(50);
 
 	pirsend->sendRaw(home_rawData, 62, 38);  // Send a raw data capture at 38kHz.
 	delay(15000);
-
+#endif
 	return true;
 }
 
 bool IRSensor::sendHarmanKardonDisc() {
 
 	Serial.println("sendHarmanKardonDisc");
-		
-	pirsend->sendPronto(harmapoweronProntoCode, 76);
-	//pirsend->sendRaw(HK_DISC_rawData, 40, 38);  // Send a raw data capture at 38kHz.
-	delay(15000);
+#ifdef ESP8266
 
+	pirsend->sendNEC(HK_DISC, 32);  // Send a raw data capture at 38kHz.
+	//pirsend->sendPronto(harmapoweronProntoCode, 76);
+	//pirsend->sendRaw(HK_DISC_rawData, 40, 19);  // Send a raw data capture at 38kHz.
+	//delay(15000);
+#endif
+	Serial.println("HarmanKardonDisc sent");
 	return true;
 }

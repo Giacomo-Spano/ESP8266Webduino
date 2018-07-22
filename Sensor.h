@@ -17,7 +17,7 @@ private:
 	static const int sensorAddressLen = 20;
 	static const int sensorTypeLen = 20;
 
-	const String STATUS_IDLE = "idle";
+	
 
 	const int json_full = 1;
 	const int json_settings = 2;
@@ -25,6 +25,8 @@ private:
 public:
 	Sensor(int id, uint8_t pin, bool enabled, String address, String name);
 	~Sensor();
+
+	const String STATUS_IDLE = "idle";
 
 	List childsensors;
 	int sensorid;

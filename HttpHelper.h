@@ -1,6 +1,14 @@
 #pragma once
 #include "Arduino.h"
-#include <ESP8266WiFi.h>
+#ifdef ESP8266
+#include <ESP8266WiFi.h>          //ESP8266 Core WiFi Library (you most likely already have this in your sketch)
+#else
+#include "WiFi.h"
+#endif
+
+
+
+
 #include "Logger.h"
 
 

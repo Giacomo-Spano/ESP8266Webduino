@@ -1,13 +1,25 @@
 #include "IRReceiveSensor.h"
 #include "Util.h"
-#include "ESP8266Webduino.h"
 #include "Shield.h"
-#include <IRremoteESP8266.h>
 
-//extern bool mqtt_publish(String topic, String message);
+
+#include "ESP8266Webduino.h"
+
+#ifdef ESP8266
+#include <IRremoteESP8266.h>
+#include <IRrecv.h>
+#include <IRutils.h>
+#endif
+
+extern bool mqtt_publish(String topic, String message);
 
 Logger IRReceiveSensor::logger;
 String IRReceiveSensor::tag = "IRReceiveSensor";
+#define TIMEOUT 50U  // Some A/C units have gaps in their protocols of ~40ms.
+#define RECV_PIN D4//14
+// As this program is a special purpose capture/decoder, let us use a larger
+// than normal buffer so we can handle Air Conditioner remote codes.
+#define CAPTURE_BUFFER_SIZE 1024
 
 // ==================== start of TUNEABLE PARAMETERS ====================
 // An IR detector/demodulator is connected to GPIO pin 14
@@ -78,7 +90,6 @@ String IRReceiveSensor::tag = "IRReceiveSensor";
 IRReceiveSensor::IRReceiveSensor(int id, uint8_t pin, bool enabled, String address, String name) : Sensor(id, pin, enabled, address, name)
 {
 	type = "irreceivesensor";
-
 	checkStatus_interval = 1000;
 	lastCheckStatus = 0;
 }
@@ -94,11 +105,15 @@ String IRReceiveSensor::getJSONFields() {
 	json += Sensor::getJSONFields();
 
 	// specific field
-	/*if (openStatus)
-	json += String(",\"open\":true");
-	else
-	json += String(",\"open\":false");*/
+	json += String(",\"codetype\":\"") + codetype + String("\"");
+	json += String(",\"code\":\"") + code + String("\"");
+	json += String(",\"bit\":") + bit;
 
+	codetype = "";
+	code = "";
+	bit = "0";
+	//status = STATUS_IDLE;
+	
 	//logger.println(tag, "<<IRSensor::getJSONFields");
 	return json;
 }
@@ -108,19 +123,44 @@ void IRReceiveSensor::init()
 {
 	logger.print(tag, "\n\t >>init IRReceiveSensor");
 
-	pirrecv = new IRrecv(pin, CAPTURE_BUFFER_SIZE, TIMEOUT, true);
+#ifdef ESP8266
 
 #if DECODE_HASH
 	// Ignore messages with less than minimum on or off pulses.
+	pirrecv = new IRrecv(pin, CAPTURE_BUFFER_SIZE, TIMEOUT, true);
 	pirrecv->setUnknownThreshold(MIN_UNKNOWN_SIZE);
 #endif  // DECODE_HASH
 	//pirrecv->enableIRIn();  // Start the receiver
-	
+
+#endif
 
 	logger.print(tag, "\n\t <<init IRReceiveSensor");
 }
 
 bool IRReceiveSensor::checkStatusChange() {
+	
+	if (status == STATUS_RESPONSERECEIVEONEIRCODE) {
+		logger.print(tag, "\n\t STATUS_RESPONSERECEIVEONEIRCODE");
+		sendCommandResponse(receivedcommanduuid, getJSON());
+		status = STATUS_IDLE;
+		return false;
+	} else if (status == STATUS_RECEIVEDIRCODE) {
+		logger.print(tag, "\n\t STATUS_RECEIVEDIRCODE");
+
+		logger.print(tag, "\n\t START RECEIVING AGAIN");
+
+		/*pirrecv->enableIRIn();  // Start the receiver
+		codetype = "";
+		code += "";
+		bit += "0";*/
+		startMillis = millis();
+		status = STATUS_RECEIVINGIRCODE;
+		return true;
+	}
+
+	if (status == STATUS_RECEIVINGIRCODE || status == STATUS_RECEIVONEIRCODE) {
+		receive();
+	}
 
 	unsigned long currMillis = millis();
 	unsigned long timeDiff = currMillis - lastCheckStatus;
@@ -150,81 +190,107 @@ bool IRReceiveSensor::checkStatusChange() {
 bool IRReceiveSensor::receiveCommand(String command, int id, String uuid, String json)
 {
 	bool res = Sensor::receiveCommand(command, id, uuid, json);
+
+#ifdef ESP8266
 	logger.println(tag, ">>receiveCommand=");
 	logger.print(tag, "\n\t command=" + command);
 	//int SAMSUNG_BITS = 32;
 
 	if (command.equals("send")) {
 		logger.print(tag, "\n\t send command");
-
+		receivedcommanduuid = uuid;
 
 		pirrecv->enableIRIn();  // Start the receiver
-
+		codetype = "";
+		code += "";
+		bit += "0";
+		startMillis = millis();
+		status = STATUS_RECEIVINGIRCODE;
 		
-		receive();
-
-
-		pirrecv->disableIRIn();  // Start the receiver
-
-		//sendSamsungTv();
-		//sendDaikin();
-
+#endif
+	
 	}
-
 	logger.println(tag, "<<receiveCommand res="/* + String(res)*/);
 	return res;
 }
 
 void IRReceiveSensor::receive() {
 
-	//pirrecv->resume();  // Receive the next value
-
-	logger.println(tag, "\n\n\n READY TO RECEIVE\n\n");
-
-	unsigned long startMillis = millis();
 	unsigned long currMillis = millis();
-	while (currMillis - startMillis < 60000) { /* 10 secondi */
-		currMillis = millis();
-		wdt_enable(WDTO_8S);
-
-		// Check if the IR code has been received.
-		//logger.println(tag, "receive\n"/* + String(res)*/);
-		if (pirrecv->decode(&results)) {
-			// Display a crude timestamp.
-			uint32_t now = millis();
-			Serial.printf("Timestamp : %06u.%03u\n", now / 1000, now % 1000);
-			if (results.overflow)
-				Serial.printf("WARNING: IR code is too big for buffer (>= %d). "
-					"This result shouldn't be trusted until this is resolved. "
-					"Edit & increase CAPTURE_BUFFER_SIZE.\n",
-					CAPTURE_BUFFER_SIZE);
-			// Display the basic output of what we found.
-			Serial.print(resultToHumanReadableBasic(&results));
-			dumpACInfo(&results);  // Display any extra A/C info if we have it.
-			yield();  // Feed the WDT as the text output can take a while to print.
-
-					  // Display the library version the message was captured with.
-			Serial.print("Library   : v");
-			Serial.println(_IRREMOTEESP8266_VERSION_);
-			Serial.println();
-
-			// Output RAW timing info of the result.
-			Serial.println(resultToTimingInfo(&results));
-			yield();  // Feed the WDT (again)
-
-					  // Output the results as source code
-			Serial.println(resultToSourceCode(&results));
-			Serial.println("");  // Blank line between entries
-			yield();  // Feed the WDT (again)
-		}
-
-
+	if (status == STATUS_RECEIVONEIRCODE && currMillis - startMillis > 10000) {
+		logger.print(tag, "\n\tTIMEOUT--*---");
+		codetype = "";
+		code += "";
+		bit += "0";
+		pirrecv->disableIRIn();
+		status = STATUS_IDLE;
 	}
 
-	logger.println(tag, "\n READY TO RECEIVE ------ TIMEOUT\n\n\n");
+#ifdef ESP8266
+	//wdt_enable(WDTO_8S);
 
-	
+	// Check if the IR code has been received.
+	if (pirrecv->decode(&results)) {
+		// Display a crude timestamp.
+		uint32_t now = millis();
+		Serial.printf("Timestamp : %06u.%03u\n", now / 1000, now % 1000);
+		if (results.overflow)
+			Serial.printf("WARNING: IR _code is too big for buffer (>= %d). "
+				"This result shouldn't be trusted until this is resolved. "
+				"Edit & increase CAPTURE_BUFFER_SIZE.\n",
+				CAPTURE_BUFFER_SIZE);
+		// Display the basic output of what we found.
+		Serial.print(resultToHumanReadableBasic(&results));
+		dumpACInfo(&results);  // Display any extra A/C info if we have it.
+		yield();  // Feed the WDT as the text output can take a while to print.
+
+				  // Display the library version the message was captured with.
+		Serial.print("Library   : v");
+		Serial.println(_IRREMOTEESP8266_VERSION_);
+		Serial.println();
+
+		// Output RAW timing info of the result.
+		Serial.println(resultToTimingInfo(&results));
+		yield();  // Feed the WDT (again)
+
+				  // Output the results as source code
+		Serial.println(resultToSourceCode(&results));
+		Serial.println("");  // Blank line between entries
+		yield();  // Feed the WDT (again)
+
+		code = "";
+		codetype = "";
+		bit = "";
+		codetype = typeToString(results.decode_type, results.repeat);
+		if (hasACState(results.decode_type)) {
+#if DECODE_AC
+			for (uint16_t i = 0; results.bits > i * 8; i++) {
+				if (results.state[i] < 0x10)  code += "0";  // Zero pad
+				code += uint64ToString(results.state[i], 16);
+			}
+#endif  // DECODE_AC
+		}
+		else {
+			code += uint64ToString(results.value, 16);
+		}
+		bit += uint64ToString(results.bits);
+
+		Serial.println("codetype: " + codetype);
+		Serial.println("code: " + code);
+		Serial.println("bit: " + bit);
+
+		
+		if (status == STATUS_RECEIVONEIRCODE) {
+			pirrecv->disableIRIn();
+			status = STATUS_RESPONSERECEIVEONEIRCODE;
+		}
+		else {
+			status = STATUS_RECEIVEDIRCODE;
+		}
+	}
+#endif
 }
+
 
 
 // Display the human readable state of an A/C message if we can.
