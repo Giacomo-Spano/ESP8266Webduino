@@ -15,8 +15,13 @@
 #include <SPI.h>
 #include <MFRC522.h>
 
+#ifdef ESP8266
 #define SS_PIN D8
 #define RST_PIN D3
+#else
+#define SS_PIN 0
+#define RST_PIN 0
+#endif
 //MFRC522 mfrc522(SS_PIN, RST_PIN);   // Create MFRC522 instance.
 
 

@@ -1,4 +1,6 @@
 ﻿
+#ifdef ESP8266
+
 #include "TFTDisplay.h"
 
 // https://learn.adafruit.com/adafruit-gfx-graphics-library?view=all
@@ -69,3 +71,4 @@ void TFTDisplay::clear() {
 	pDisplay->fillScreen(ST7735_BLUE);
 }
 
+#endif

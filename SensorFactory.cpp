@@ -69,6 +69,7 @@ Sensor * SensorFactory::createSensor(JSONObject* json)
 {
 	logger.print(tag, "\n");
 	logger.println(tag, "\n\t >>createSensor  json = " + logger.formattedJson(json->toString()));
+	logger.printFreeMem(tag, "start create sensor");
 
 	int sensorid;
 	String type;
@@ -156,6 +157,7 @@ Sensor * SensorFactory::createSensor(JSONObject* json)
 		sensor->loadChildren(jarray);
 	}
 	
+	logger.printFreeMem(tag, "end create sensor");
 	logger.println(tag, "<<SensorFactory::createSensor");
 	return sensor;
 }

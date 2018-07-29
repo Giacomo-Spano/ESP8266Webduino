@@ -184,11 +184,15 @@ bool Sensor::checkStatusChange()
 
 bool Sensor::receiveCommand(String command, int id, String uuid, String json)
 {
+	logger.print(tag, "\n\t >>Sensor::receiveCommand");
+	logger.print(tag, "\n\t command=" + command);
 	if (command.equals("requestsensorstatus")) {// richiesta stato di un singolo sensore
-		logger.print(tag, "\n\t ++requestsensorstatus");
+		logger.print(tag, "\n\t requestsensorstatus");
 		logger.print(tag, "\n\t sensorname=" + sensorname);
+		logger.print(tag, "\n\t <<Sensor::receiveCommand");
 		return sendCommandResponse(uuid, getJSON());
 	}
+	logger.print(tag, "\n\t <<Sensor::receiveCommand");
 	return false;
 }
 

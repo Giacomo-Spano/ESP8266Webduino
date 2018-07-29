@@ -107,9 +107,9 @@ uint64_t StrToHex(const char* str)
 
 bool IRSensor::receiveCommand(String command, int id, String uuid, String jsonStr)
 {
+	logger.print(tag, "\n\t >>IRSensor::receiveCommand=");
 	bool res = Sensor::receiveCommand(command, id, uuid, jsonStr);
-	logger.println(tag, ">>receiveCommand=");
-	logger.print(tag, "\n\t command=" + command);
+	//logger.print(tag, "\n\t command=" + command);
 	//int SAMSUNG_BITS = 32;
 	
 	if (command.equals("send")) {
@@ -124,6 +124,8 @@ bool IRSensor::receiveCommand(String command, int id, String uuid, String jsonSt
 			logger.print(tag, "\n\t codetype=" + codetype);
 		}
 		else {
+			logger.print(tag, "\n\t error");
+			logger.print(tag, "\n\t <<IRSensor::receiveCommand=");
 			return false;
 		}
 		if (json.has("code")) {
@@ -143,6 +145,8 @@ bool IRSensor::receiveCommand(String command, int id, String uuid, String jsonSt
 			value = StrToHex(code.c_str());
 		}
 		else {
+			logger.print(tag, "\n\t error");
+			logger.print(tag, "\n\t <<IRSensor::receiveCommand=");
 			return false;
 		}
 		if (json.has("bit")) {
@@ -150,6 +154,8 @@ bool IRSensor::receiveCommand(String command, int id, String uuid, String jsonSt
 			logger.print(tag, "\n\t bit=" + String(bit));
 		}
 		else {
+			logger.print(tag, "\n\t error");
+			logger.print(tag, "\n\t <<IRSensor::receiveCommand=");
 			return false;
 		}
 				
@@ -161,8 +167,7 @@ bool IRSensor::receiveCommand(String command, int id, String uuid, String jsonSt
 		//sendDaikin();
 		
 	}
-
-	logger.println(tag, "<<receiveCommand res="/* + String(res)*/);
+	logger.print(tag, "\n\t <<IRSensor::receiveCommand=");
 	return res;
 }
 
@@ -170,7 +175,7 @@ bool IRSensor::receiveCommand(String command, int id, String uuid, String jsonSt
 
 bool IRSensor::sendCode(String codetype, uint64_t code, int bit) {
 
-	Serial.println("sendCode");
+	logger.print(tag, "\n\t >>sendCode");
 #ifdef ESP8266
 
 	pirsend->sendNEC(code, bit);  // Send a raw data capture at 38kHz.
@@ -178,7 +183,7 @@ bool IRSensor::sendCode(String codetype, uint64_t code, int bit) {
 									//pirsend->sendRaw(HK_DISC_rawData, 40, 19);  // Send a raw data capture at 38kHz.
 									//delay(15000);
 #endif
-	Serial.println("HarmanKardonDisc sent");
+	logger.print(tag, "\n\t <<sendCode");
 	return true;
 }
 

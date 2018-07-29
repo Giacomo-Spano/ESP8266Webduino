@@ -31,31 +31,29 @@
 class IRReceiveSensor :
 	public Sensor
 {
+public:
+	IRReceiveSensor(int id, uint8_t pin, bool enabled, String address, String name);
+	~IRReceiveSensor();
 private:
 	static String tag;
 	static Logger logger;
 
+
+#ifdef ESP8266
+
+
+
 	virtual String getJSONFields();
 	
 	// Use turn on the save buffer feature for more complete capture coverage.
-#ifdef ESP8266
-	//static IRrecv irrecv;
-	//static IRrecv* _pirrecv;
-	//static decode_results _results;  // Somewhere to store the results
-	//static String _type;
-	//static String _code;
-	//static String _bit;
-	//static int _lastIrSensorIdreceiving;
 	unsigned long startMillis = 0;
-	//static bool received;
 	
 	String codetype;
 	String code;
 	String bit;
 	String receivedcommanduuid;
-#endif
+
 	void dumpACInfo(decode_results *results);
-	//static void receiveLoopCallback();
 	void receive();
 	IRrecv* pirrecv;
 	decode_results results;  // Somewhere to store the results
@@ -66,12 +64,12 @@ public:
 	const String STATUS_RESPONSERECEIVEONEIRCODE = "responsereceiveone";
 	const String STATUS_RECEIVEDIRCODE = "received";
 
-	IRReceiveSensor(int id, uint8_t pin, bool enabled, String address, String name);
-	~IRReceiveSensor();
+	
 
 	virtual void init();
 	//virtual bool getJSON(JSONObject *jObject);
 	virtual bool checkStatusChange();
 	bool receiveCommand(String command, int id, String uuid, String json);
-	};
+#endif
+};
 #endif

@@ -78,6 +78,7 @@ bool HornSensor::checkStatusChange() {
 
 bool HornSensor::receiveCommand(String command, int id, String uuid, String json)
 {
+	logger.print(tag, "\n\t >>HornSensor::receiveCommand=");
 	bool res = Sensor::receiveCommand(command, id, uuid, json);
 	logger.println(tag, ">>receiveCommand=");
 	logger.print(tag, "\n\t command=" + command);
@@ -94,7 +95,7 @@ bool HornSensor::receiveCommand(String command, int id, String uuid, String json
 	else if (command.equals("testclose")) {
 		logger.print(tag, "\n\t test close command");
 	}
-	logger.println(tag, "<<receiveCommand res="/* + String(res)*/);
+	logger.print(tag, "\n\t >>HornSensor::receiveCommand=");
 	return res;
 }
 

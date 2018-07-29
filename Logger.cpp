@@ -94,6 +94,14 @@ void Logger::print(String tag, String txt) {
 
 }
 
+
+void Logger::printFreeMem(String tag, String txt) {
+	
+	String str = "\nFree mem" + String(ESP.getFreeHeap()) + " " + tag +" " + txt + "\n";
+	Serial.print(str);
+}
+
+
 /*void Logger::print(String tag, String txt) {
 
 	if (line.equals("") && txt != NULL && !txt.equals("")) {
@@ -124,37 +132,6 @@ void Logger::println(String tag, int val) {
 }
 
 int packetcounter = 0;
-
-bool Logger::send() {
-
-	//String temp = "**FINE*";
-	if (toBeSent.length() > Command::maxLogSize) {
-		Command command;
-
-		Serial.println("SEND LOG");
-		//Serial.print("toBeSent = ");
-		//Serial.println(toBeSent);
-
-		String substr = toBeSent.substring(0, Command::maxLogSize - 1);
-
-		//Serial.print("SEND LOG PACKET ");
-		//Serial.print(packetcounter++,DEC);
-		//Serial.print(":");
-		//Serial.println(substr);
-		bool res = command.sendLog(substr/*, shieldid, serverName, port*/);
-		if (res) {
-			truncated = false;
-			Serial.println("PACKET SENT");
-			toBeSent = toBeSent.substring(substr.length()/*-1*/);
-			//Serial.print("toBeSent=");
-			//Serial.println(toBeSent);
-		}
-		else {
-			Serial.println("PACKET NOT SENT");
-
-		}
-	}
-}
 
 String Logger::getHeader(String tag) {
 
@@ -189,7 +166,7 @@ String Logger::getStrTimeDate() {
 }
 
 void Logger::sendLogToServer() {
-
+#ifdef ESP8266
 	Serial.println("\n >>Logger::sendLogToServer\n\n\n");
 	/*String str = "prova invio testo";
 	HttpHelper hplr;
@@ -229,6 +206,7 @@ void Logger::sendLogToServer() {
 
 		Serial.println("\n <<Logger::sendLogToServer\n\n\n");
 	}
+#endif
 }
 
 
@@ -237,6 +215,7 @@ void Logger::init() {
 
 	Serial.println("\n\n******INIT LOG*******");
 
+#ifdef ESP8266
 	// always use this to "mount" the filesystem
 	bool result = SPIFFS.begin();
 	Serial.println("SPIFFS opened: " + result);
@@ -280,6 +259,8 @@ void Logger::init() {
 		//logFile.readBytes
 	}
 	//logFile.close();
+#endif
+
 }
 
 String Logger::formattedJson(String str)

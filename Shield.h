@@ -9,10 +9,13 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include "ESPDisplay.h"
+#ifdef ESP8266
 #include "TFTDisplay.h"
+#endif
 #include "DoorSensor.h"
 #include "OnewireSensor.h"
 #include "HornSensor.h"
+#include <ESP8266WiFi.h>
 
 class Shield
 {	
@@ -29,9 +32,7 @@ protected:
 	static bool mqttMode;
 	static bool configMode;
 	static bool resetSettings;
-
-	
-	
+		
 
 public:
 	int checkHealth_timeout = 15*60*1000;
@@ -64,7 +65,7 @@ protected:
 	//bool sendRegister();
 	bool onResetCommand(JSON& json);
 	bool onRebootCommand(JSON& json);
-	bool sendUpdateSensorStatus();
+	//bool sendUpdateSensorStatus();
 	
 	
 
@@ -72,7 +73,9 @@ protected:
 	void checkSensorsStatus();	
 	
 	ESPDisplay display;
+#ifdef ESP8266
 	TFTDisplay tftDisplay;
+#endif
 
 public:
 
@@ -110,7 +113,19 @@ public:
 
 	static String getMACAddress()
 	{
-		return String(MAC_char);
+#ifdef ESP8266
+		return WiFi.macAddress();
+#else
+		uint8_t baseMac[6];
+		// Get MAC address for WiFi station
+		esp_read_mac(baseMac, ESP_MAC_WIFI_STA);
+		char baseMacChr[18] = { 0 };
+		sprintf(baseMacChr, "%02X:%02X:%02X:%02X:%02X:%02X", baseMac[0], baseMac[1], baseMac[2], baseMac[3], baseMac[4], baseMac[5]);
+
+		return String(baseMacChr);
+#endif
+
+		//return String(MAC_char);
 	}
 
 	static String getSWVersion()
@@ -132,6 +147,10 @@ public:
 
 	static String getStrPin(uint8_t pin)
 	{
+#ifdef ESP8266
+
+
+
 		if (pin == D0)
 			return "D0";
 		if (pin == D1)
@@ -155,11 +174,13 @@ public:
 		if (pin == D10)
 			return "D10";
 		else
+#endif // ESP8266
 			return "";
 	}
 
 	static uint8_t pinFromStr(String str)
 	{
+#ifdef ESP8266
 		if (str.equals("D0"))
 			return D0;
 		if (str.equals("D1"))
@@ -183,6 +204,31 @@ public:
 		if (str.equals("D10"))
 			return D10;
 		else
+#else
+		if (str.equals("D0"))
+				return 0;
+		if (str.equals("D1"))
+			return 1;
+		if (str.equals("D2"))
+			return 2;
+		if (str.equals("D3"))
+			return 3;
+		if (str.equals("D4"))
+			return 4;
+		if (str.equals("D5"))
+			return 5;
+		if (str.equals("D6"))
+			return 6;
+		if (str.equals("D7"))
+			return 7;
+		if (str.equals("D8"))
+			return 8;
+		if (str.equals("D9"))
+			return 9;
+		if (str.equals("D10"))
+			return 10;
+		else
+#endif // ESP8266
 			return 0;
 	}
 

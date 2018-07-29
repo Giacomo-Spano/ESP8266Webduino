@@ -23,6 +23,7 @@ HeaterSensor::~HeaterSensor()
 
 bool HeaterSensor::receiveCommand(String command, int id, String uuid, String jsonStr)
 {
+	logger.print(tag, "\n\t >>HeaterSensor::receiveCommand=");
 	bool res = Sensor::receiveCommand(command, id, uuid, jsonStr);
 	if (res) // se è true vuol dire che è stato inviato il comando base
 		return true;
@@ -84,8 +85,8 @@ bool HeaterSensor::receiveCommand(String command, int id, String uuid, String js
 		commanddate,
 		enddate,
 		zone);
-	
-	logger.println(tag, "<<receiveCommand res=" + String(res));
+
+	logger.print(tag, "\n\t <<HeaterSensor::receiveCommand=");
 	return res;
 }
 

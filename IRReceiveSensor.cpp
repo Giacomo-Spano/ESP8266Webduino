@@ -11,6 +11,9 @@
 #include <IRutils.h>
 #endif
 
+
+
+
 extern bool mqtt_publish(String topic, String message);
 
 Logger IRReceiveSensor::logger;
@@ -97,6 +100,8 @@ IRReceiveSensor::IRReceiveSensor(int id, uint8_t pin, bool enabled, String addre
 IRReceiveSensor::~IRReceiveSensor()
 {
 }
+
+#ifdef ESP8266
 
 String IRReceiveSensor::getJSONFields() {
 
@@ -189,12 +194,8 @@ bool IRReceiveSensor::checkStatusChange() {
 
 bool IRReceiveSensor::receiveCommand(String command, int id, String uuid, String json)
 {
+	logger.print(tag, "\n\t >>IRREceiveSensor::receiveCommand=");
 	bool res = Sensor::receiveCommand(command, id, uuid, json);
-
-#ifdef ESP8266
-	logger.println(tag, ">>receiveCommand=");
-	logger.print(tag, "\n\t command=" + command);
-	//int SAMSUNG_BITS = 32;
 
 	if (command.equals("send")) {
 		logger.print(tag, "\n\t send command");
@@ -205,12 +206,9 @@ bool IRReceiveSensor::receiveCommand(String command, int id, String uuid, String
 		code += "";
 		bit += "0";
 		startMillis = millis();
-		status = STATUS_RECEIVINGIRCODE;
-		
-#endif
-	
+		status = STATUS_RECEIVINGIRCODE;	
 	}
-	logger.println(tag, "<<receiveCommand res="/* + String(res)*/);
+	logger.print(tag, "\n\t <<IRREceiveSensor::receiveCommand=");
 	return res;
 }
 
@@ -226,7 +224,7 @@ void IRReceiveSensor::receive() {
 		status = STATUS_IDLE;
 	}
 
-#ifdef ESP8266
+
 	//wdt_enable(WDTO_8S);
 
 	// Check if the IR code has been received.
@@ -288,7 +286,6 @@ void IRReceiveSensor::receive() {
 			status = STATUS_RECEIVEDIRCODE;
 		}
 	}
-#endif
 }
 
 
@@ -348,3 +345,4 @@ void IRReceiveSensor::dumpACInfo(decode_results *results) {
 	// If we got a human-readable description of the message, display it.
 	if (description != "")  Serial.println("Mesg Desc.: " + description);
 }
+#endif

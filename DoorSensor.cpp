@@ -87,9 +87,10 @@ bool DoorSensor::checkStatusChange() {
 
 bool DoorSensor::receiveCommand(String command, int id, String uuid, String json)
 {
+	logger.print(tag, "\n\t >>DoorSensor::receiveCommand=");
 	bool res = Sensor::receiveCommand(command, id, uuid, json);
-	logger.println(tag, ">>receiveCommand=");
-	logger.print(tag, "\n\t command=" + command);
+	//logger.println(tag, ">>receiveCommand=");
+	//logger.print(tag, "\n\t command=" + command);
 
 	/*if (command.equals("teststart")) {
 		logger.print(tag, "\n\t test start command");
@@ -108,6 +109,6 @@ bool DoorSensor::receiveCommand(String command, int id, String uuid, String json
 		testMode = false;
 	}*/
 
-	logger.println(tag, "<<receiveCommand res="/* + String(res)*/);
+	logger.print(tag, "\n\t <<DoorSensor::receiveCommand=");
 	return res;
 }

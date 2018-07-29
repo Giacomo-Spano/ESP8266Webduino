@@ -16,8 +16,13 @@ String ESPDisplay::tag = "ESPDisplay";
 //SSD1306 ESPDisplay::display(0x3c, D7, D6);
 SSD1306* ESPDisplay::pdisplay;
 uint8_t ESPDisplay::address = 0x3c;
+#ifdef ESP8266
 uint8_t ESPDisplay::sda = D4;
 uint8_t ESPDisplay::scl = D3;
+#else
+uint8_t ESPDisplay::sda = 0;
+uint8_t ESPDisplay::scl = 0;
+#endif
 
 ESPDisplay::ESPDisplay()
 {

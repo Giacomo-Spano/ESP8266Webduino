@@ -32,9 +32,8 @@ public:
 	void println(String tag, char* buffer);
 	void print(String tag, int val);
 	void println(String tag, int val);
-	
-	bool send(/*int shieldid, String serverName, int port*/);
-	
+	void printFreeMem(String tag, String txt);
+		
 	static String getStrDate();
 	static String getStrDayDate();
 	static String getStrTimeDate();

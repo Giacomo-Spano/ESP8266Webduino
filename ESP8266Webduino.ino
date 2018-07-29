@@ -1,17 +1,20 @@
 //#define ESP8266
 
 
-#ifdef ESP8266
-#include <ESP8266WiFi.h>          //ESP8266 Core WiFi Library (you most likely already have this in your sketch)
-#include <ESP8266WebServer.h>     //Local WebServer used to serve the configuration portal
+#if defined ESP8266
+#include <ESP8266WiFi.h>          
 #else
-#include "WiFi.h"
-#include <WebServer.h>
+#include <WiFi.h>          
 #endif
 
-#include <DNSServer.h>            //Local DNS Server used for redirecting all requests to the configuration portal
+//needed for library
+#include <DNSServer.h>
+#if defined ESP8266
+#include <ESP8266WebServer.h>
+#else
+#include <WebServer.h>
+#endif
 #include <WiFiManager.h>      
-
 
 #include <PubSubClient.h>
 #include "stdafx.h"
@@ -23,11 +26,12 @@
 #include "TemperatureSensor.h"
 #include "DoorSensor.h"
 #include "HornSensor.h"
-
+#ifdef ESP8266
 #include "TFTDisplay.h"
-#include "HttpResponse.h"
-#include "ESPWebServer.h"
-#include "HttpRequest.h"
+#endif
+//#include "HttpResponse.h"
+//#include "ESPWebServer.h"
+//#include "HttpRequest.h"
 #include "ESP8266Webduino.h"
 //#include <ESP8266WiFi.h>
 
@@ -42,7 +46,7 @@
 #include "EEPROMAnything.h"
 //#include "wol.h"
 #include "Logger.h"
-#include "HttpHelper.h"
+//#include "HttpHelper.h"
 #include "JSON.h"
 #include "Shield.h"
 #include "Command.h"
@@ -146,15 +150,6 @@ extern void stopIRreceiveLoop();
 
 bool updateTime();
 
-// POST request
-bool receiveCommand(HttpRequest request, HttpResponse httpResponse);
-String setRemoteTemperature(HttpRequest request, HttpResponse httpResponse);
-String showPower(HttpRequest request, HttpResponse response);
-String softwareReset(HttpRequest request, HttpResponse response);
-
-// GET request
-String getJsonStatus(HttpRequest request, HttpResponse response);
-String getJsonSettings(HttpRequest request, HttpResponse response);
 
 // Create an instance of the server
 // specify the port to listen on as an argument
@@ -348,6 +343,11 @@ void writeSensors() {
 	index += eprom.writeInt(index, shield.sensorList.length());
 
 	for (int i = 0; i < shield.sensorList.length(); i++) {
+
+#ifdef ESP8266
+		ESP.wdtFeed();
+#endif // ESP8266
+
 		logger.print(tag, "\n\n\t sensor#: " + String(i));
 		Sensor* sensor = (Sensor*)shield.sensorList.get(i);
 		JSONObject json2;
@@ -391,8 +391,9 @@ void readEPROM() {
 // carica i settings dal server
 bool loadSensors(String settings) {
 
-	logger.print(tag, "\n\n");
-	logger.print(tag, ">>loadSensors settings=" + settings/*logger.formattedJson(settings)*/);
+	//logger.print(tag, "\n\n");
+	logger.print(tag, "\n\t>>loadSensors settings=" + settings/*logger.formattedJson(settings)*/);
+	logger.printFreeMem(tag, "");
 
 	JSONObject json(settings);
 
@@ -411,15 +412,17 @@ bool loadSensors(String settings) {
 		Shield::setShieldName(name);
 	}
 
-
+	logger.printFreeMem(tag, "");
 	if (json.has("sensors")) {
 		String str = json.getJSONArray("sensors");
 		JSONArray sensors(str);
-
+		logger.printFreeMem(tag, "");
 		String sensorstr = sensors.getFirst();
 		while (sensorstr != "") {
-
-
+			logger.printFreeMem(tag, "sensor start");
+#ifdef ESP8266
+			ESP.wdtFeed();
+#endif // ESP8266
 			logger.print(tag, "\n\n\t SENSOR: " + sensorstr);
 			JSONObject jObject(sensorstr);
 			logger.print(tag, "\n: " + logger.formattedJson(jObject.toString()));
@@ -432,9 +435,11 @@ bool loadSensors(String settings) {
 			}
 
 			sensorstr = sensors.getNext();
+			logger.printFreeMem(tag, "sensor end");
 		}
 
 	}
+	logger.printFreeMem(tag, "end loadsensor");
 	logger.println(tag, "<<loadSensors\n");
 	return true;
 
@@ -517,7 +522,9 @@ void setupAP(void) {
 			logger.print(tag, " (");
 			logger.print(tag, WiFi.RSSI(i));
 			logger.print(tag, ")");
+#ifdef ESP8266
 			logger.println(tag, (WiFi.encryptionType(i) == ENC_TYPE_NONE) ? " " : "*");
+#endif
 			delay(10);
 		}
 	}
@@ -533,7 +540,9 @@ void setupAP(void) {
 		st += " (";
 		st += WiFi.RSSI(i);
 		st += ")";
+#ifdef ESP8266
 		st += (WiFi.encryptionType(i) == ENC_TYPE_NONE) ? " " : "*";
+#endif
 		st += "</li>";
 	}
 	st += "</ul>";
@@ -668,7 +677,9 @@ bool testWifi() {
 		Serial.println("failed to connect and hit timeout");
 		delay(3000);
 		//reset and try again, or maybe put it to deep sleep
+#ifdef ESP8266
 		ESP.reset();
+#endif
 		delay(5000);
 		//return false;
 	}
@@ -705,12 +716,21 @@ bool testWifi() {
 
 
 
-void callback(char* topic, byte* payload, unsigned int length) {
+void messageReceived(char* topic, byte* payload, unsigned int length) {
 
-	logger.print(tag, "\n\n");
-	logger.println(tag, ">>callback");
-	logger.print(tag, "\n\t Message received");
+	logger.print(tag, "\n");
+	logger.println(tag, ">>messageReceived");
 	logger.print(tag, "\n\t topic=" + String(topic));
+
+
+	if (ESP.getFreeHeap() < 2000) {
+		logger.println(tag, "\n\n\n\LOW MEMORY");
+		logger.printFreeMem(tag, "");
+		logger.println(tag, "\n\n\n\LOW MEMORY");
+		delay(1000);
+		logger.printFreeMem(tag, "");
+		return;
+	}
 
 	String message = "";
 	for (int i = 0; i < length; i++) {
@@ -718,42 +738,16 @@ void callback(char* topic, byte* payload, unsigned int length) {
 	}
 	logger.print(tag, "\n\t message=" + message);
 	parseMessageReceived(String(topic), message);
-	logger.println(tag, "<<callback");
+	logger.println(tag, "<<messageReceived");
 }
 
 void parseMessageReceived(String topic, String message) {
 
+	logger.print(tag, "\n\t >>parseMessageReceived");
 	String str = String("fromServer/shield/") + Shield::getMACAddress();
 
-	if (topic.equals(str + "/updatesettingstatusrequest")) {
-		logger.print(tag, "\n\t received  setting status update request");
-		Command command;
-		command.sendSettingsStatus(shield);
-	}
-	else if (topic.equals(str + "/updatesensorstatusrequest")) {
-		logger.print(tag, "\n\t received sensor status update request");
-		/*String json = shield.getSensorsStatusJson();
-		Command command;
-		command.sendSensorsStatus(json);*/
-		char payload[1000];
-		bool res = shield._getSensorsStatusJson(payload);
-		Command command;
-		command._sendSensorsStatus(payload);
-	}
-	/*else if (topic.equals(str + "/checkhealth")) {
-		logger.print(tag, "\n\t received checkhealth request");
-
-		JSON json(message);
-		if (json.has("uuid")) {
-			String uuid = json.jsonGetString("uuid");
-			String topic = "toServer/response/" + uuid + "/success";
-			bool res = mqtt_publish(topic, shield.getJson());
-			shield.lastCheckHealth = millis();
-		}
-	}*/
-	else if (topic.equals(str + "/settings")) {
+	if (topic.equals(str + "/settings")) {
 		logger.print(tag, "\n\t received shield settings\n" + message + "\n");
-
 		loadSensors(message);
 		writeEPROM();
 
@@ -761,9 +755,6 @@ void parseMessageReceived(String topic, String message) {
 	else if (topic.equals(str + "/reboot")) {
 		logger.print(tag, "\n\t received reboot request");
 		ESP.restart();
-		/*String json = shield.getSensorsStatusJson();
-		Command command;
-		command.sendSensorsStatus(json);*/
 	}
 	else if (topic.equals(str + "/resetsettings")) {
 		logger.print(tag, "\n\t received resetsettings request");
@@ -771,9 +762,14 @@ void parseMessageReceived(String topic, String message) {
 		writeEPROM();
 		ESP.restart();
 	}
+	else if (topic.equals(str + "/time")) { // risposta a time
+		logger.print(tag, "\n\t received time");
+		time_t t = (time_t)atoll(message.c_str());
+		logger.print(tag, "\n\t time=" + String(t));
+		setTime(t);
+	}
 	else if (topic.equals(str + "/command")) {
 		logger.print(tag, "\n\t received command " + message);
-		//String response = shield.getSensorsStatusJson();
 		shield.receiveCommand(message);
 	}
 	else if (str.equals("configmode")) {
@@ -798,7 +794,7 @@ void parseMessageReceived(String topic, String message) {
 	else {
 		logger.print(tag, "\n\t PARSE NOT FOUND");
 	}
-
+	logger.print(tag, "\n\t <<parseMessageReceived");
 }
 
 void reconnect() {
@@ -828,36 +824,9 @@ void reconnect() {
 	logger.println(tag, ">>reconnect");
 }
 
-/*void loadCredentials(int index) {
-
-	logger.println(tag, ">>loadCredentials");
-
-	MyEPROMClass eprom;
-	eprom.readString(index, &siid);
-	eprom.readString(index+32, &pass);
-	logger.print(tag, "\n\t siid=" + siid);
-	logger.print(tag, "\n\t pass=" + pass);
-
-	logger.println(tag, "<<loadCredentials");
-}*/
-
-/** Store WLAN credentials to EEPROM */
-/*void saveCredentials(int index) {
-
-	logger.println(tag, ">>saveCredentials");
-	MyEPROMClass eprom;
-	eprom.writeString(index, &siid);
-	eprom.writeString(index+32, &pass);
-
-	logger.println(tag, "<<saveCredentials");
-}*/
-
-
-
-
 void setup()
 {
-	Serial.begin(115200);
+	Serial.begin(9600);
 	delay(10);
 
 	lastReboot = millis();
@@ -868,7 +837,9 @@ void setup()
 	logger.print(tag, "\n\n *******************RESTARTING************************");
 
 	shield.init();
+#ifdef ESP8266
 	shield.drawString(0, 0, "restarting..", 1, ST7735_WHITE);
+#endif
 
 	// Initialising the UI will init the display too.
 	String str = "\n\nstartingx.... Versione ";
@@ -884,13 +855,16 @@ void setup()
 
 	}
 	logger.print(tag, shield.MAC_char);
-
+#ifdef ESP8266
 	shield.drawString(0, 20, "read eprom..", 1, ST7735_WHITE);
+#endif
 
 	initEPROM();
 
 	// disabilita il watchdog sw e abilita quello hw
+#ifdef ESP8266
 	ESP.wdtDisable();
+#endif
 
 	// Connect to WiFi network
 	if (testWifi()) {
@@ -899,10 +873,11 @@ void setup()
 
 		mqttclient.init(&client);
 		mqttclient.setServer(Shield::getMQTTServer(), Shield::getMQTTPort());
-		mqttclient.setCallback(callback);
+		mqttclient.setCallback(messageReceived);
 		reconnect();
 
-		Logger::sendLogToServer();
+		updateTime();
+		//Logger::sendLogToServer();
 
 		JSONObject json;
 		String settings;
@@ -913,12 +888,16 @@ void setup()
 			mqttServerNotFoundError = true;
 		}
 		else {
-
+#ifdef ESP8266
 			shield.drawString(0, 50, "connected..Start server", 1, ST7735_WHITE);
+#endif
 			// Start the server
 			server.begin();
 			logger.print(tag, "Server started");
+
+#ifdef ESP8266
 			shield.drawString(0, 60, "server started", 1, ST7735_WHITE);
+#endif
 
 			shield.localIP = WiFi.localIP().toString();
 			// Print the IP address
@@ -930,7 +909,7 @@ void setup()
 	else {
 		mqttclient.init(&client);
 		mqttclient.setServer("192.168.4.2", 1883);
-		mqttclient.setCallback(callback);
+		mqttclient.setCallback(messageReceived);
 		reconnect();
 
 	}
@@ -941,224 +920,15 @@ void setup()
 	command.sendShieldStatus(shield.getJson());
 
 	//ESP.wdtDisable();
-	updateTime();
+	
 
 	logger.println(tag, "<<setup");
 }
 
-String softwareReset(HttpRequest request, HttpResponse response) {
 
-	logger.println(tag, F("\n\n\t >>software reset "));
 
-	String data;
-	data += "";
-	data += F("HTTP/1.1 200 OK\r\nContent-Type: text/html");
-	data += F("\n\n<html><head><meta HTTP-EQUIV='REFRESH' content='0; url=/main?msg=2'><title>rele</title></head><body>");
-	data += F("SOFTWARE RESET - Attendere prego");
-	data += F("</body></html>");
 
-	response.send(HttpResponse::HTTPRESULT_OK, ESPWebServer::htmlContentType, data);
 
-	delay(5000);
-
-	ESP.restart();
-
-	logger.println(tag, F("\n\t <<software reset "));
-	return "";
-}
-
-bool receiveCommand(HttpRequest request, HttpResponse response) {
-
-	logger.println(tag, F("\n\n\t >>receiveCommand "));
-
-	String str = request.body;
-	bool result = shield.receiveCommand(str);
-
-	logger.println(tag, "\n\t <<receiveCommand " + String(result));
-	return result;
-}
-
-// imposta temperatura del sensore remoto. Chiamata periodicamente dal server
-String setRemoteTemperature(HttpRequest request, HttpResponse response) {
-
-	logger.print(tag, F("\n\n\t >>setRemoteTemperature: "));
-
-	String str = request.body;
-	POSTData data(str);
-
-	if (data.has("temperature")) {
-		String str = data.getString("temperature");
-		logger.println(tag, "\n\t temperature=" + str);
-		float temperature = str.toFloat();
-		//shield.phearterActuator->setRemote(temperature);
-	}
-	String result = "";
-	result += getJsonStatus(request, response);
-
-	logger.print(tag, "\n\t <<setRemoteTemperature: " + result);
-	return result;
-}
-
-String showPower(HttpRequest request, HttpResponse response) {
-#ifdef dopo
-	logger.print(tag, F("\n\n\t >>showPower "));
-
-	logger.print(tag, F("\n\tprogramSettings.currentStatus="));
-	//logger.print(tag, shield.phearterActuator->getStatus());
-
-	String str = request.body;
-	POSTData posData(str);
-	if (posData.has("status")) {
-		String str = posData.getString("status");
-		logger.println(tag, "\n\t status=" + str);
-		if (str.equals("on") && shield.phearterActuator->getStatus() == Program::STATUS_DISABLED) {
-			shield.phearterActuator->setStatus(Program::STATUS_IDLE);
-			shield.phearterActuator->enableRele(true);
-
-		}
-		else if (str.equals("on")) {
-			shield.phearterActuator->setStatus(Program::STATUS_DISABLED);
-			shield.phearterActuator->enableRele(false);
-		}
-	}
-	String data = "<result><rele>" + String(shield.phearterActuator->getReleStatus()) + "</rele>" +
-		"<status>" + String(shield.phearterActuator->getStatus()) + "</status></result>";
-
-	logger.print(tag, F("\n\t <<showPower "));
-	return data;
-#endif
-	return "";
-}
-
-// NON FUNZIONA PIU' DA RIPRISTINARE
-String showwol(HttpRequest request, HttpResponse response) {
-
-	logger.println(tag, "\n\t >>showwol ");
-
-	/*wol* w = new wol();
-	w->init();
-	w->wakeup();
-	delete w;*/
-
-	String data;
-	data += "";
-	data += F("HTTP/1.1 200 OK\r\nContent-Type: text/html");
-	data += F("\n\n<html><head><meta HTTP-EQUIV='REFRESH' content='0; url=/main?msg=2'><title>WOL</title></head><body>");
-	data += F("</body></html>");
-	//client.println(data);
-	//client.stop();
-
-	logger.println(tag, "\n\t >>showwol ");
-	return data;
-}
-
-String getJsonStatus(HttpRequest request, HttpResponse response)
-{
-	logger.print(tag, F("\n\n\t >>getJsonStatus"));
-
-	String data;
-	data += "";
-	data += shield.getSettingsJson();
-
-	logger.print(tag, "\n\t <<getJsonStatus " + data + "\n");
-	return data;
-}
-
-String getJsonSensorsStatus(HttpRequest request, HttpResponse response)
-{
-	logger.print(tag, F("\n\t >> getJsonSensorsStatus"));
-
-	String data = "";
-	data += shield.getSensorsStatusJson();
-
-	logger.print(tag, "\n\t << getJsonSensorsStatus " + data + "\n");
-	return data;
-}
-
-// chiamata da jscript settings.html
-String getJsonSettings(HttpRequest request, HttpResponse response) {
-	logger.print(tag, F("\n\t >> getJsonSettings"));
-
-	String data;
-	data += "";
-	data += shield.getSettingsJson();
-
-	logger.print(tag, "\n\t << getJsonSettings" + data + "\n");
-	return data;
-}
-
-void processNextPage() {
-
-	String page, param;
-	client = server.available();
-	HttpHelper http;
-
-	ESPWebServer espWebServer(&client);
-	if (client) {
-		HttpRequest request = espWebServer.getHttpRequest();
-		HttpRequest::HttpRequestMethod method = request.method;
-		page = request.page;
-		param = request.param;
-		HttpResponse response = espWebServer.getHttpResponse();
-
-		if (request.method != HttpRequest::HTTP_NULL) {
-
-			logger.print(tag, "\n");
-			logger.println(tag, ">>next HTTP request " + page);
-
-			if (page.equalsIgnoreCase("command")) {
-				response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, receiveCommand(request, response));
-			}
-			else if (page.equalsIgnoreCase("temp")) {
-				response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, setRemoteTemperature(request, response));
-			}
-			else if (page.equalsIgnoreCase("power")) {
-				response.send(response.HTTPRESULT_OK, ESPWebServer::htmlContentType, showPower(request, response));
-			}
-			else if (page.equalsIgnoreCase("wol")) {
-				response.send(response.HTTPRESULT_OK, ESPWebServer::htmlContentType, showwol(request, response));
-			}
-			else if (page.equalsIgnoreCase("status")) {
-				response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, getJsonStatus(request, response));
-			}
-			else if (page.equalsIgnoreCase("settings")) {
-				response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, getJsonSettings(request, response));
-			}
-			else if (page.equalsIgnoreCase("sensorstatus")) {
-				response.send(response.HTTPRESULT_OK, ESPWebServer::jsonContentType, getJsonSensorsStatus(request, response));
-			}
-			else if (page.equalsIgnoreCase("reset")) {
-				// la chiamara a  send è dentro software reset perchè il metodo non torna mai
-				softwareReset(request, response);
-			}
-			else if (page.equalsIgnoreCase("startmqtt")) {
-				// la chiamara a  send è dentro software reset perchè il metodo non torna mai
-				Shield::setMQTTMode(true);
-				reconnect();
-			}
-			else if (page.endsWith(".html") ||
-				page.endsWith(".css") ||
-				page.endsWith(".js") ||
-				page.endsWith(".txt")) {
-				response.sendVirtualFile(response.HTTPRESULT_OK, ESPWebServer::htmlContentType, request.page);
-			}
-		}
-
-		logger.println(tag, "<<next request " + page + "\n");
-		logger.print(tag, "\n");
-
-		return;
-	}
-
-	/*if (shield.id >= 0 && !WiFi.localIP().toString().equals(shield.localIP)) {
-
-		logger.println(tag, "IP ADDRESS ERROR - re-register shield\n");
-		shield.registerShield();
-		shield.localIP = WiFi.localIP().toString();// a cosa serve??
-		return;
-	}*/
-
-}
 
 bool _mqtt_publish(char* topic, char* payload) {
 
@@ -1192,26 +962,28 @@ bool _mqtt_publish(char* topic, char* payload) {
 
 bool mqtt_publish(String topic, String message) {
 
-	logger.print(tag, "\n");
-	logger.println(tag, ">>mqtt_publish");
 
-	logger.print(tag, "\n\ttopic: ");
+	logger.print(tag, "\n\t >>mqtt_publish");
+	logger.printFreeMem(tag, "--mqtt_publish");
+
+
+	logger.print(tag, "\n\t topic: ");
 	logger.print(tag, topic);
-	logger.print(tag, "\n\tmessage" + String(message.length()) + " :");
+	logger.print(tag, "\n\t message: ");
 	logger.print(tag, message);
 
-	logger.print(tag, "\n Message: [" + topic + String("] ") + message);
+	//logger.print(tag, "\n Message: [" + topic + String("] ") + message);
 	bool res = mqttclient.publish(topic.c_str(), message.c_str());
 	// qui bisognerebbe aggiungere qualche logica per gestire errore
 	if (res) {
-		logger.print(tag, "\n\t payload sent\n");
+		logger.print(tag, "\n\t payload sent");
 	}
 	else {
 		lastCommandFailed = millis();
 		logger.print(tag, "\n\t payload NOT sent!!!\n");
 	}
-
-	logger.println(tag, "<<mqtt_publish\n");
+	logger.print(tag, "\n\t <<mqtt_publish");
+	logger.printFreeMem(tag, "--mqtt_publish");
 	return res;
 }
 
@@ -1255,7 +1027,20 @@ void(*callbackfunction)(void) ;
 
 void loop()
 {
+#ifdef ESP8266
 	ESP.wdtFeed();
+#endif // ESP8266
+	if (ESP.getFreeHeap() < 2000) {
+		logger.println(tag, "\n\n\n\LOW MEMORY");
+		logger.printFreeMem(tag, "");
+		delay(1000);
+		logger.println(tag, "\n\n\n\LOW MEMORY");
+		logger.printFreeMem(tag, "");
+		
+		return;
+	}
+
+	
 
 	if (IRReceiving) {
 		//IRreceiveLoop();
@@ -1286,12 +1071,16 @@ void loop()
 	}
 
 	if (checkHTTPUpdate) {
+#ifdef ESP8266
 		ESP.wdtFeed();
+#endif
 		checkHTTPUpdate = false;
 		checkForSWUpdate();
 	}
 
+#ifdef ESP8266
 	wdt_enable(WDTO_8S);
+#endif
 
 	if (Shield::getConfigMode()) {
 
@@ -1302,7 +1091,9 @@ void loop()
 			delay(3000);
 			//reset and try again, or maybe put it to deep sleep
 			logger.println(tag, "\n\n\n\-----------failed to connect and hit timeout REBOOT--------\n\n");
+#ifdef ESP8266
 			ESP.reset();
+#endif
 			delay(5000);
 		}
 		Shield::setConfigMode(false);
@@ -1321,17 +1112,19 @@ void loop()
 	}
 
 	if (!Shield::getMQTTmode()) {
-		processNextPage();
+		//processNextPage();
 	}
 
 	//logger.println(tag, "before checkStatus");
 	shield.checkStatus();
 	//logger.println(tag, "after checkStatus");
+	
+	
 	// questo si potrebbe eliminare, tanto dl'ora non è usata
-	/*currMillis = millis();
+	currMillis = millis();
 	if (currMillis - lastTimeSync > timeSync_interval) {
 		updateTime();
-	}*/
+	}
 
 	currMillis = millis();
 	if (lastCommandFailed > 0 && currMillis - lastCommandFailed > commandFailed_interval) {
@@ -1367,32 +1160,29 @@ void loop()
 
 
 // questa funzione non è usata
-bool updateTime() {
-	logger.println(tag, "\n");
+bool __updateTime() {
+	logger.println(tag, "\n\n\n\n\n\n\n\n\n\n\n\n");
 	logger.println(tag, ">>updateTime");
 
 	unsigned long currMillis = millis();
 	Command command;
 	lastTimeSync = currMillis;
 	//command.timeSync();
+	command.requestTime();
 
 	logger.println(tag, "<<updateTime");
 	return true;
 }
 
+bool updateTime() {
 
+	logger.println(tag, ">>requestTimeFromServer");
 
-decode_results results;  // Somewhere to store the results
-#define CAPTURE_BUFFER_SIZE 1024
-IRrecv *pirrecv;
-
-						 // Display the human readable state of an A/C message if we can.
-void dumpACInfo(decode_results *results) {
-	String description = "";
-
-	// If we got a human-readable description of the message, display it.
-	if (description != "")  Serial.println("Mesg Desc.: " + description);
+	Command command;
+	return command.requestTime();
 }
+
+
 
 void startIRreceiveLoop(void(*callback)(void)/*IRrecv *pirrecvptr*/) {
 

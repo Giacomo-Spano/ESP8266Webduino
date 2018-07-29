@@ -3,7 +3,7 @@
 #include <Arduino.h>
 #include "Logger.h"
 #include "Shield.h"
-#include "HttpHelper.h"
+//#include "HttpHelper.h"
 #include "JSON.h"
 #include "Program.h"
 
@@ -12,7 +12,6 @@ class Command
 private:
 	static String tag;
 	static Logger logger;
-	static time_t getNtpTime();
 
 public:	
 	static const int maxLogSize = 1000;
@@ -21,20 +20,10 @@ public:
 
 	Command();
 	~Command();
-	void registerShield(String json);
 	bool requestShieldSettings(String *result);
-	void sendRestartNotification();
+	bool requestTime();
 	boolean sendSensorStatus(String json);
 	boolean sendShieldStatus(String json);
-	//boolean sendSensorsStatus(String json);
-	boolean _sendSensorsStatus(char* json);
 	boolean requestZoneTemperature(String json);
-	boolean sendSettingsStatus(Shield shield);
-	bool sendLog(String log/*, int shieldid/*, String serverName, int port*/);
-	//boolean sendActuatorStatus(HeaterActuator actuator);
-	boolean download(String filename, Shield shield);
-
-	static int timeSync();
-
 };
 

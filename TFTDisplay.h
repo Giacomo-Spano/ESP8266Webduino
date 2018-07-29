@@ -1,4 +1,5 @@
 // TFTDisplay.h
+#ifdef ESP8266
 
 #ifndef _TFTDISPLAY_h
 #define _TFTDISPLAY_h
@@ -49,3 +50,4 @@ public:
 
 #endif
 
+#endif
