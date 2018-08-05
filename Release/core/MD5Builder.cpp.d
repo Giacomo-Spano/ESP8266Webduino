@@ -1,4 +1,4 @@
-C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\core\MD5Builder.cpp.o: \
+C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_d1_mini\Release\core\MD5Builder.cpp.o: \
  C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\cores\esp8266\MD5Builder.cpp \
  C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\cores\esp8266/Arduino.h \
  C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1/tools/sdk/libc/xtensa-lx106-elf/include/stdlib.h \
@@ -56,5 +56,5 @@ C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Rel
  C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\cores\esp8266/Stream.h \
  C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\cores\esp8266/md5.h \
  C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\cores\esp8266/debug.h \
- C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\variants\nodemcu/pins_arduino.h \
- C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\variants\nodemcu/../generic/common.h
+ C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\variants\d1_mini/pins_arduino.h \
+ C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\variants\d1_mini/../generic/common.h

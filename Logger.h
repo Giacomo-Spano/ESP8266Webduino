@@ -38,7 +38,7 @@ public:
 	static String getStrDayDate();
 	static String getStrTimeDate();
 	static void init();
-	static void sendLogToServer();
+	//static void sendLogToServer();
 
 	String formattedJson(String str);
 };

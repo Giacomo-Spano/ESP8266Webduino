@@ -46,15 +46,20 @@ public:
 	static int id;// = 0; // inizializzato a zero perch� viene impostato dalla chiamata a registershield
 	static String powerStatus; // power
 	static String lastRestartDate;
+	unsigned long lastTimeUpdate = 0;
 
 	static const int maxSensorNum = 10;
 
 	void drawString(int x, int y, String txt, int size, int color);
+	void drawDateTime();
+	void drawStatus();
 	void clearScreen();
 
 private:
 	static String tag;
 	static Logger logger;
+
+	ESPDisplay espDisplay;
 	
 	String oldDate;
 
@@ -169,10 +174,14 @@ public:
 			return "D7";
 		if (pin == D8)
 			return "D8";
+#ifdef D9
 		if (pin == D9)
 			return "D9";
+#endif
+#ifdef D10
 		if (pin == D10)
 			return "D10";
+#endif
 		else
 #endif // ESP8266
 			return "";
@@ -199,10 +208,14 @@ public:
 			return D7;
 		if (str.equals("D8"))
 			return D8;
+#ifdef D9
 		if (str.equals("D9"))
 			return D9;
+#endif
+#ifdef D10
 		if (str.equals("D10"))
 			return D10;
+#endif
 		else
 #else
 		if (str.equals("D0"))

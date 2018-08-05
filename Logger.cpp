@@ -97,7 +97,7 @@ void Logger::print(String tag, String txt) {
 
 void Logger::printFreeMem(String tag, String txt) {
 	
-	String str = "\nFree mem" + String(ESP.getFreeHeap()) + " " + tag +" " + txt + "\n";
+	String str = "\n\t --Free mem" + String(ESP.getFreeHeap()) + " " + tag +" " + txt + "";
 	Serial.print(str);
 }
 
@@ -131,13 +131,10 @@ void Logger::println(String tag, int val) {
 	println(tag, str);
 }
 
-int packetcounter = 0;
-
 String Logger::getHeader(String tag) {
 
 	String date = Logger::getStrDate();
-	String header = String(ESP.getFreeHeap()) + " " + date + " " + tag + ": ";
-
+	String header = String(date + " " + tag + "(" + ESP.getFreeHeap()) + "): ";
 	return header;
 }
 
@@ -164,51 +161,6 @@ String Logger::getStrTimeDate() {
 	String date = String(buffer);
 	return date;
 }
-
-void Logger::sendLogToServer() {
-#ifdef ESP8266
-	Serial.println("\n >>Logger::sendLogToServer\n\n\n");
-	/*String str = "prova invio testo";
-	HttpHelper hplr;
-	Shield shield;
-	String postResult;
-	boolean res = hplr.post(Shield::getServerName(), Shield::getServerPort(), "/webduino/log", str, &postResult);*/
-
-
-	String fileName = "/log/log.txt";
-	Serial.println("\nopening " + fileName);
-	// open the file in read mode
-	File file = SPIFFS.open(logFileName, "r");
-	if (!file) {
-		Serial.println("\nfile open failed - file does not exit");
-	}
-	else {
-		String topic = "toServer/shield/log" + String(Shield::getShieldId());
-		int count = 0;
-		char stopic[50];
-		for (int i = 0; i < topic.length(); i++) {
-			stopic[count++] = topic.charAt(i);
-		}
-		stopic[count++] = '\0';
-		
-		const int size = 256;
-		char payload[size];
-		Serial.println("logFile: " + fileName + " opened\n");
-		int len = 0;
-		
-		String str;
-		while (file.available()) {
-			str = file.readStringUntil('\n');
-			Serial.print(str);
-			//payload[size - 1] = '\0';
-			//bool res = _mqtt_publish(stopic, payload);
-		}	
-
-		Serial.println("\n <<Logger::sendLogToServer\n\n\n");
-	}
-#endif
-}
-
 
 
 void Logger::init() {

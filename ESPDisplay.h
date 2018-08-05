@@ -27,16 +27,19 @@ private:
 	static SSD1306* pdisplay;
 
 	static uint8_t address;
-	static uint8_t sda;
-	static uint8_t scl;
+	//static uint8_t sda;
+	//static uint8_t scl;
 
 public:
 	ESPDisplay();
 	~ESPDisplay();
-	void init();
+	void init(uint8_t sda, uint8_t scl);
 	void update();
 	void clear();
-	void drawString(int rox, int col, String txt, const char* font);
+	void drawString(int x, int y, String txt, const char* font);
+	void drawString(int x, int y, String txt);
+
+	
 
 };
 

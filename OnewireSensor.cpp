@@ -25,6 +25,11 @@ OnewireSensor::OnewireSensor(int id, uint8_t pin, bool enabled, String address, 
 	// beginTemperatureSensors deve essere chiamata nel costruttore per inizializzare
 	// la var tempSensorNum. 
 	beginTemperatureSensors();
+
+#ifdef ESP8266
+	ESP.wdtFeed();
+#endif // ESP8266
+
 	logger.println(tag, "<<OnewireSensor");
 }
 
@@ -103,6 +108,11 @@ void OnewireSensor::beginTemperatureSensors()
 	logger.print(tag, "\n\t search for 1-Wire devices.....");
 	while (oneWirePtr->search(_address) && tempSensorNum < OnewireSensor::maxTempSensors) {
 		
+#ifdef ESP8266
+		ESP.wdtFeed();
+#endif // ESP8266
+
+
 		// cerca il prossimo sensore di temperatura reali attaccato allo stesso pin
 		logger.print(tag, "\n\tFound \'1-Wire\' device with _address:");
 		for (int i = 0; i < 8; i++) {

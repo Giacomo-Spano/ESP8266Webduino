@@ -1,4 +1,4 @@
-C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\core\sntp-lwip2.c.o: \
+C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_d1_mini\Release\core\sntp-lwip2.c.o: \
  C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\cores\esp8266\sntp-lwip2.c \
  C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1/tools/sdk/lwip2/include/lwip/init.h \
  C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1/tools/sdk/lwip2/include/lwip/opt.h \

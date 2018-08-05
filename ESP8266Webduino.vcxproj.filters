@@ -228,9 +228,6 @@
     <ClCompile Include="Shield.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="HtmlFileClass.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="POSTData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

@@ -21,7 +21,7 @@ Logger Shield::logger;
 String Shield::tag = "Shield";
 
 String Shield::lastRestartDate = "";
-String Shield::swVersion = "1.52";
+String Shield::swVersion = "1.54";
 int Shield::id = 0; //// inizializzato a zero perch� viene impostato dalla chiamata a registershield
 
 int Shield::localPort = 80;
@@ -52,6 +52,8 @@ Shield::~Shield()
 void Shield::init() {
 	//tftDisplay.init();
 	//display.init();
+
+	espDisplay.init(D3, D4);
 }
 
 void Shield::clearAllSensors() {
@@ -99,6 +101,21 @@ Sensor* Shield::getSensorFromId(int id) { /// sidsogna aggiungere anche richerca
 	return nullptr;
 }
 
+void Shield::drawDateTime() {
+
+	String txt = logger.getStrDate();
+	espDisplay.drawString(0, 0, txt);
+}
+
+void Shield::drawStatus() {
+	for (int i = 0; i < sensorList.count; i++) {
+
+		Sensor* sensor = (Sensor*)sensorList.get(i);
+		if (!sensor->enabled)
+			continue;
+		espDisplay.drawString(0, 10 + i * 10,String(sensor->sensorname) + ": " + String(sensor->status));
+		}
+}
 
 void Shield::drawString(int x, int y, String txt, int size, int color) {
 
@@ -471,6 +488,19 @@ String Shield::getSettingsJson() { // usata per le impostazioni da jscript pages
 void Shield::checkStatus()
 {
 	checkSensorsStatus();
+
+	unsigned long currMillis = millis();
+	unsigned long timeDiff = currMillis - lastTimeUpdate;
+
+	if (timeDiff > 1000) {
+		lastTimeUpdate = currMillis;
+		
+		espDisplay.clear();
+		drawDateTime();
+		drawStatus();
+		espDisplay.update();
+	}
+
 
 	/*display.clear();
 	uint32_t getVcc = ESP.getVcc();// / 1024;

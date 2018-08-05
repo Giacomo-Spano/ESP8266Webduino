@@ -1,4 +1,4 @@
-C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\Time\DateStrings.cpp.o: \
+C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_d1_mini\Release\Time\DateStrings.cpp.o: \
  C:\Users\giaco\Documents\Arduino\libraries\Time\DateStrings.cpp \
  C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1/tools/sdk/libc/xtensa-lx106-elf/include/string.h \
  C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1/tools/sdk/libc/xtensa-lx106-elf/include/_ansi.h \
