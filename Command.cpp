@@ -4,7 +4,7 @@
 #include "JSONObject.h"
 
 extern bool mqtt_publish(String topic, String message);
-extern bool _mqtt_publish(char* topic, char* payload);
+//extern bool _mqtt_publish(char* topic, char* payload);
 
 Logger Command::logger;
 String Command::tag = "Command";
@@ -17,10 +17,9 @@ Command::~Command()
 {
 }
 
-bool Command::requestShieldSettings(String *result)
+bool Command::requestShieldSettings()
 {
-	logger.print(tag, F("\n"));
-	logger.println(tag, F(">> requestShieldSettings\n"));
+	logger.print(tag, F("\n\t>>Command::requestShieldSettings"));
 
 	bool res = false;
 	if (Shield::getMQTTmode() == true) {
@@ -28,23 +27,20 @@ bool Command::requestShieldSettings(String *result)
 		String json = Shield::getMACAddress();
 		res = mqtt_publish(topic, String(json));
 	}
-
-	logger.println(tag, F("<<sendSensorsStatus\n"));
+	if (!res)
+		logger.print(tag, F("\n\t<<Command::requestShieldSettings failed"));
+	logger.print(tag, F("\n\t<<Command::requestShieldSettings"));
 	return res;
 }
 
 bool Command::requestTime()
 {
-	logger.print(tag, F("\n"));
-	logger.println(tag, F(">> requestTime\n"));
+	logger.print(tag, F("\n\t>> requestTime\n"));
 
-	bool res = false;
-	if (Shield::getMQTTmode() == true) {
-		String topic = "toServer/shield/time";
-		String json = Shield::getMACAddress();
-		res = mqtt_publish(topic, String(json));
-	}
-	logger.println(tag, F("<< requestTime\n"));
+	String topic = "toServer/shield/time";
+	String json = Shield::getMACAddress();
+	bool res = mqtt_publish(topic, String(json));
+	logger.print(tag, F("\n\t<< requestTime\n"));
 	return res;
 }
 
@@ -53,26 +49,21 @@ boolean Command::sendSensorStatus(String json)
 	logger.print(tag, F("\n\t >>Command::sendSensorStatus"));
 		
 	bool res = false;
-	if (Shield::getMQTTmode() == true) {
-		String topic = "toServer/shield/sensor/update";
-		res = mqtt_publish(topic, String(json));
-	}
-	logger.println(tag, F("\n\t <<Command::sendSensorStatu"));
+	String topic = "toServer/shield/sensor/update";
+	res = mqtt_publish(topic, String(json));
+	logger.print(tag, "\n\t <<Command::sendSensorStatus res=" + Logger::boolToString(res));
 	return res;
 }
 
 boolean Command::sendShieldStatus(String json)
 {
-	logger.print(tag, "\n");
-	logger.println(tag, F(">>sendShieldStatus"));
-
+	logger.print(tag, F("\n\t>>sendShieldStatus"));
 	bool res = false;
 	if (Shield::getMQTTmode() == true) {
 		String topic = "toServer/shield/update";
 		res = mqtt_publish(topic, String(json));
 	}
-
-	logger.println(tag, F("<<sendShieldStatus\n"));
+	logger.print(tag, "\n\t<<sendShieldStatus\n res=" + Logger::boolToString(res));
 	return res;
 }
 

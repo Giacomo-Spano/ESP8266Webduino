@@ -1,4 +1,4 @@
-C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_d1_mini\Release\DNSServer\DNSServer.cpp.o: \
+C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\DNSServer\DNSServer.cpp.o: \
  C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\libraries\DNSServer\src\DNSServer.cpp \
  C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\libraries\DNSServer\src\DNSServer.h \
  C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\libraries\ESP8266WiFi\src/WiFiUdp.h \
@@ -78,5 +78,5 @@ C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_d1_mini\Relea
  C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\cores\esp8266/MD5Builder.h \
  C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\cores\esp8266/md5.h \
  C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\cores\esp8266/debug.h \
- C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\variants\d1_mini/pins_arduino.h \
- C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\variants\d1_mini/../generic/common.h
+ C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\variants\nodemcu/pins_arduino.h \
+ C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\variants\nodemcu/../generic/common.h

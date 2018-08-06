@@ -39,6 +39,7 @@ public:
 	static String getStrTimeDate();
 	static void init();
 	//static void sendLogToServer();
+	static String boolToString(bool res);
 
 	String formattedJson(String str);
 };

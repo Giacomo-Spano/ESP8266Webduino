@@ -30,6 +30,7 @@ public:
 	~TemperatureSensor();
 	virtual void init();
 	virtual bool checkStatusChange();
+	virtual String getStatusText();
 
 	String name = "Sensor name";
 	int id = 0;

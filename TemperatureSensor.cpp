@@ -24,10 +24,15 @@ void TemperatureSensor::init()
 	logger.print(tag, "\n\t <<init TemperatureSensor");
 }
 
-
 bool TemperatureSensor::checkStatusChange() {
 		
 	return false;
+}
+
+String TemperatureSensor::getStatusText()
+{
+	String text = "" + String(temperature) + "°C";
+	return text;
 }
 
 bool TemperatureSensor::getJSON(JSONObject *jObject) {

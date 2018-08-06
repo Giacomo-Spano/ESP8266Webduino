@@ -60,7 +60,10 @@ void MQTTClientClass::disconnect()
 
 boolean MQTTClientClass::publish(const char* topic, const char* payload)
 {
-	return client->publish(topic, payload);
+	bool res = client->publish(topic, payload);
+	if (!res)
+		logger.print(tag, "\n\t PUBLISH FAILED");
+	return res;
 }
 
 boolean MQTTClientClass::subscribe(const char* topic)

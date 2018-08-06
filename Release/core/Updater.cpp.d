@@ -1,4 +1,4 @@
-C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_d1_mini\Release\core\Updater.cpp.o: \
+C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\core\Updater.cpp.o: \
  C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\cores\esp8266\Updater.cpp \
  C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\cores\esp8266\Updater.h \
  C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\cores\esp8266/Arduino.h \
@@ -52,8 +52,8 @@ C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_d1_mini\Relea
  C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\cores\esp8266/Esp.h \
  C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\cores\esp8266/Updater.h \
  C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\cores\esp8266/debug.h \
- C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\variants\d1_mini/pins_arduino.h \
- C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\variants\d1_mini/../generic/common.h \
+ C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\variants\nodemcu/pins_arduino.h \
+ C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\variants\nodemcu/../generic/common.h \
  C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\cores\esp8266/flash_utils.h \
  C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\cores\esp8266/MD5Builder.h \
  C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\cores\esp8266/WString.h \

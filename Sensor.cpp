@@ -6,7 +6,7 @@ Logger Sensor::logger;
 String Sensor::tag = "Sensor";
 
 extern bool mqtt_publish(String topic, String message);
-extern bool _mqtt_publish(char* topic, char* payload);
+//extern bool _mqtt_publish(char* topic, char* payload);
 
 Sensor::Sensor(int id, uint8_t pin, bool enabled, String address, String name)
 {
@@ -180,6 +180,11 @@ void Sensor::init()
 
 bool Sensor::checkStatusChange()
 {
+}
+
+String Sensor::getStatusText()
+{
+	return status;
 }
 
 bool Sensor::receiveCommand(String command, int id, String uuid, String json)

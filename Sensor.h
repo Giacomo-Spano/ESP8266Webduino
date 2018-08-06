@@ -60,6 +60,7 @@ public:
 	virtual String toString();	
 	virtual void init();
 	virtual bool checkStatusChange();
+	virtual String getStatusText();
 	virtual bool receiveCommand(String command, int actuatorId, String uuid, String json);
 	bool sendCommandResponse(String uuid, String response);
 };

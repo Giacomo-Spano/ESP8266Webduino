@@ -53,12 +53,18 @@ public:
 	void drawString(int x, int y, String txt, int size, int color);
 	void drawDateTime();
 	void drawStatus();
+	void drawEvent();
+	void drawSensorsStatus();
+	void drawSWVersion();
 	void clearScreen();
+	void invalidateDisplay();
 
 private:
 	static String tag;
 	static Logger logger;
 
+	String status;
+	String shieldEvent;
 	ESPDisplay espDisplay;
 	
 	String oldDate;
@@ -95,6 +101,8 @@ public:
 	String getSettingsJson();
 	//void registerShield();
 	void checkStatus();	
+	void setStatus(String txt);
+	void setEvent(String txt);
 	bool receiveCommand(String jsonStr);		
 	
 	static unsigned char MAC_array[6];

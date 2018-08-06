@@ -80,6 +80,9 @@ int x = 0;
 
 
 bool checkHTTPUpdate = true; //true;
+bool mqttLoaded = false; //true;
+bool settingFromServerRequested = false;
+bool timeLoaded = false;
 //
 
 WiFiManager wifiManager;
@@ -178,7 +181,7 @@ unsigned long lastFlash = 0;//-flash_interval;
 unsigned long lastSendLog = 0;
 const int SendLog_interval = 10000;// 10 secondi
 unsigned long lastTimeSync = 0;
-const int timeSync_interval = 60000 * 15;// *12;// 60 secondi * 15 minuti
+const int timeSync_interval = 60000 * 5;// *12;// 60 secondi * 15 minuti
 unsigned long lastCommandFailed = 0;
 const int commandFailed_interval = 60000 * 30;// *12;// 60 secondi * 15 minuti
 unsigned long lastReboot = 0;
@@ -258,12 +261,12 @@ void writeSettings() {
 	logger.println(tag, "<<writeSettings\n");
 }
 
-bool requestSettingsFromServer(String *settings) {
-
+bool requestSettingsFromServer() {
 	logger.println(tag, ">>requestSettingsFromServer");
-
 	Command command;
-	return command.requestShieldSettings(settings);
+	bool res = command.requestShieldSettings();
+	logger.println(tag, "<<requestSettingsFromServer res=" + Logger::boolToString(res));
+	return res;
 }
 
 void readSettings(JSONObject *json) {
@@ -397,6 +400,8 @@ void readEPROM() {
 }
 
 // carica i settings dal server
+// può essere chiamat inn qualunque moneto: quanto riceve i setting dal server
+// oppure quando all'inizio la scheda legge i setting dalla eprom
 bool loadSensors(String settings) {
 
 	//logger.print(tag, "\n\n");
@@ -682,6 +687,9 @@ bool testWifi() {
 	//or if you want to use and auto generated name from 'ESP' and the esp's Chip ID use
 	//wifiManager.autoConnect();
 	if (!wifiManager.autoConnect()) {
+		shield.setEvent("failed to connect and hit timeout");
+		shield.invalidateDisplay();
+
 		Serial.println("failed to connect and hit timeout");
 		delay(3000);
 		//reset and try again, or maybe put it to deep sleep
@@ -694,6 +702,8 @@ bool testWifi() {
 
 	//if you get here you have connected to the WiFi
 	Serial.println("connected...yeey :)");
+	shield.setEvent("Wifi connected");
+	shield.invalidateDisplay();
 
 	if (shouldSaveConfig) {
 
@@ -756,15 +766,20 @@ void parseMessageReceived(String topic, String message) {
 
 	if (topic.equals(str + "/settings")) {
 		logger.print(tag, "\n\t received shield settings\n" + message + "\n");
+		shield.setEvent("<-received settings");
 		loadSensors(message);
 		writeEPROM();
-
+		settingFromServerRequested = true;
+		Command command;
+		command.sendShieldStatus(shield.getJson()); 
 	}
 	else if (topic.equals(str + "/reboot")) {
 		logger.print(tag, "\n\t received reboot request");
+		shield.setEvent("<-received reboot request");
 		ESP.restart();
 	}
 	else if (topic.equals(str + "/resetsettings")) {
+		shield.setEvent("<-received reset request");
 		logger.print(tag, "\n\t received resetsettings request");
 		Shield::setResetSettings(true);
 		writeEPROM();
@@ -772,12 +787,15 @@ void parseMessageReceived(String topic, String message) {
 	}
 	else if (topic.equals(str + "/time")) { // risposta a time
 		logger.print(tag, "\n\t received time");
+		shield.setEvent("<-received time");
+		lastTimeSync = millis();
 		time_t t = (time_t)atoll(message.c_str());
 		logger.print(tag, "\n\t time=" + String(t));
 		setTime(t);
 	}
 	else if (topic.equals(str + "/command")) {
 		logger.print(tag, "\n\t received command " + message);
+		shield.setEvent("<-received command");
 		shield.receiveCommand(message);
 	}
 	else if (str.equals("configmode")) {
@@ -805,31 +823,41 @@ void parseMessageReceived(String topic, String message) {
 	logger.print(tag, "\n\t <<parseMessageReceived");
 }
 
-void reconnect() {
-	logger.print(tag, "\n");
-	logger.println(tag, ">>reconnect");
+bool reconnect() {
+	logger.print(tag, "\n\n\t>>reconnect");
+	shield.setStatus("CONNECTING..");
 	// Loop until we're reconnected
-	while (!mqttclient.connected()) {
-		Serial.print("\nAttempting MQTT connection...");
-		// Attempt to connect
-		String clientId = "ESP8266Client" + Shield::getMACAddress();
-		if (mqttclient.connect(clientId)) {
-			Serial.println("connected");
-			// Once connected, publish an announcement...
-			//mqttclient.publish("send"/*topic.c_str()*/, "hello world");
-			String topic = "fromServer/shield/" + Shield::getMACAddress() + "/#";
-			logger.print(tag, "\n\t Subscribe to topic:" + topic);
-			mqttclient.subscribe(topic.c_str());
-		}
-		else {
-			Serial.print("failed, rc=");
-			Serial.print(mqttclient.state());
-			Serial.println(" try again in 5 seconds");
-			// Wait 5 seconds before retrying
-			delay(5000);
+	if (!mqttclient.connected()) {
+
+		for (int i = 0; i < 3; i++) {
+			logger.print(tag, "\n\tAttempting MQTT connection...");
+			logger.print(tag, "\n\ttemptative ");
+			logger.print(tag, String(i));
+			// Attempt to connect
+			String clientId = "ESP8266Client" + Shield::getMACAddress();
+			if (mqttclient.connect(clientId)) {
+				logger.print(tag, "\n\tconnected");
+				// Once connected, publish an announcement...
+				//mqttclient.publish("send"/*topic.c_str()*/, "hello world");
+				String topic = "fromServer/shield/" + Shield::getMACAddress() + "/#";
+				logger.print(tag, "\n\t Subscribe to topic:" + topic);
+				mqttclient.subscribe(topic.c_str());
+				shield.setStatus("ONLINE");
+				logger.print(tag, "\n\t<<reconnect\n\n");
+				return true;
+			}
+			else {
+				logger.print(tag, "\n\tfailed, rc=");
+				logger.print(tag, mqttclient.state());
+				logger.print(tag, "\n\ttry again in 1 seconds");
+				// Wait 1 seconds before retrying
+				delay(1000);
+			}
 		}
 	}
-	logger.println(tag, ">>reconnect");
+	shield.setStatus("OFFLINE");
+	logger.print(tag, "\n\t<<reconnect FAILED\n\n");
+	return false;
 }
 
 uint8_t portArray[] = { 16, 5, 4, 0, 2, 14, 12, 13 };
@@ -884,7 +912,7 @@ void check_if_exist_I2C() {
 
 void setup()
 {
-	Serial.begin(9600);
+	Serial.begin(115200);
 	delay(10);
 
 	//espDisplay.init(D4, D5);
@@ -904,6 +932,8 @@ void setup()
 #ifdef ESP8266
 	shield.drawString(0, 0, "restarting..", 1, ST7735_WHITE);
 #endif
+	shield.setEvent("restarting..");
+	shield.invalidateDisplay();
 
 	// Initialising the UI will init the display too.
 	String str = "\n\nstarting.... Versione ";
@@ -922,6 +952,8 @@ void setup()
 #ifdef ESP8266
 	shield.drawString(0, 20, "read eprom..", 1, ST7735_WHITE);
 #endif
+	shield.setEvent("read eprom..");
+	shield.invalidateDisplay();
 
 	initEPROM();
 
@@ -933,67 +965,35 @@ void setup()
 	// Connect to WiFi network
 	if (testWifi()) {
 
+		shield.setEvent("connecting wifi..");
+		shield.invalidateDisplay();
 
-
-		mqttclient.init(&client);
+		shield.localIP = WiFi.localIP().toString();
+		logger.print(tag, shield.localIP);
+		
+		mqttLoaded = false;
+		
+		/*mqttclient.init(&client);
 		mqttclient.setServer(Shield::getMQTTServer(), Shield::getMQTTPort());
 		mqttclient.setCallback(messageReceived);
 		reconnect();
 
 		updateTime();
-		//Logger::sendLogToServer();
+		bool res = requestSettingsFromServer();*/
 
-		JSONObject json;
-		String settings;
-		bool res = requestSettingsFromServer(&settings);
-
-		if (!res) {
-			logger.println(tag, "\n\n\tIMPOSSIBILE TROVARE IL SERVER MQTT\n");
-			mqttServerNotFoundError = true;
-		}
-		else {
-#ifdef ESP8266
-			shield.drawString(0, 50, "connected..Start server", 1, ST7735_WHITE);
-#endif
-			// Start the server
-			server.begin();
-			logger.print(tag, "Server started");
-
-#ifdef ESP8266
-			shield.drawString(0, 60, "server started", 1, ST7735_WHITE);
-#endif
-
-			shield.localIP = WiFi.localIP().toString();
-			// Print the IP address
-			logger.println(tag, shield.localIP);
-
-		}
-
+		
 	}
-	else {
-		mqttclient.init(&client);
-		mqttclient.setServer("192.168.4.2", 1883);
-		mqttclient.setCallback(messageReceived);
-		reconnect();
-
-	}
-
-	shield.sensorList.show();
-
-	Command command;
-	command.sendShieldStatus(shield.getJson());
-
-	//ESP.wdtDisable();
 	
-
-	logger.println(tag, "<<setup");
+	/*shield.sensorList.show();
+	Command command;
+	command.sendShieldStatus(shield.getJson());*/
+	//ESP.wdtDisable();
+	logger.println(tag, "\n\t<<setup\n\n");
 }
 
 
 
-
-
-
+/*
 bool _mqtt_publish(char* topic, char* payload) {
 
 	logger.print(tag, "\n");
@@ -1022,36 +1022,34 @@ bool _mqtt_publish(char* topic, char* payload) {
 	logger.println(tag, "<<_mqtt_publish payload\n");
 	return res;
 }
-
+*/
 
 bool mqtt_publish(String topic, String message) {
 
-
 	logger.print(tag, "\n\t >>mqtt_publish");
 	logger.printFreeMem(tag, "--mqtt_publish");
-
 
 	logger.print(tag, "\n\t topic: ");
 	logger.print(tag, topic);
 	logger.print(tag, "\n\t message: ");
 	logger.print(tag, message);
 
-	//logger.print(tag, "\n Message: [" + topic + String("] ") + message);
-	bool res = mqttclient.publish(topic.c_str(), message.c_str());
-	// qui bisognerebbe aggiungere qualche logica per gestire errore
-	if (res) {
-		logger.print(tag, "\n\t payload sent");
+	bool res = false;
+	if (!client.connected()) {
+		logger.print(tag, "\n\t OFFLINE - payload NOT sent!!!\n");
 	}
 	else {
-		lastCommandFailed = millis();
-		logger.print(tag, "\n\t payload NOT sent!!!\n");
+
+		res = mqttclient.publish(topic.c_str(), message.c_str());
+		// qui bisognerebbe aggiungere qualche logica per gestire errore
+		if (!res) {
+			lastCommandFailed = millis();
+		}
 	}
-	logger.print(tag, "\n\t <<mqtt_publish");
+	logger.print(tag, "\n\t <<mqtt_publish res=" + Logger::boolToString(res));
 	logger.printFreeMem(tag, "--mqtt_publish");
 	return res;
 }
-
-char msg[50];  //// DA ELIMINARE
 
 void checkForSWUpdate() {
 
@@ -1069,21 +1067,34 @@ void checkForSWUpdate() {
 	case HTTP_UPDATE_FAILED:
 
 		logger.print(tag, "\n\tHTTP_UPDATE_FAILD Error " + String(ESPhttpUpdate.getLastError()) + " " + ESPhttpUpdate.getLastErrorString().c_str());
-
+		shield.setEvent("sw Update failed");
 		break;
 
 	case HTTP_UPDATE_NO_UPDATES:
 		logger.print(tag, "\n\tHTTP_UPDATE_NO_UPDATES");
+		shield.setEvent("no sw update available");
 		break;
 
 	case HTTP_UPDATE_OK:
 		logger.print(tag, "\n\tHTTP_UPDATE_OK");
+		shield.setEvent("sw updated");
 		break;
 	}
 	logger.println(tag, "<<checkForSWUpdate");
 
 #endif
 }
+
+void initMQTTServer() {
+	logger.print(tag, "\n");
+	logger.println(tag, ">>initMQTTServer");
+	mqttclient.init(&client);
+	mqttclient.setServer(Shield::getMQTTServer(), Shield::getMQTTPort());
+	mqttclient.setCallback(messageReceived);
+	reconnect();
+	logger.println(tag, "<<initMQTTServer\n");
+}
+
 
 bool IRReceiving = false;
 //int(*foo_p)(int) = &foo;
@@ -1098,7 +1109,6 @@ void loop()
 	Wire.endTransmission();    // stop transmitting
 	x++;*/
 
-
 #ifdef ESP8266
 	ESP.wdtFeed();
 #endif // ESP8266
@@ -1111,7 +1121,6 @@ void loop()
 		
 		return;
 	}
-
 	
 
 	if (IRReceiving) {
@@ -1119,30 +1128,23 @@ void loop()
 		callbackfunction();
 		//return;
 	}
-
-	//for(;;) {}
-
-	String prova = "";
-	if (Serial.available()) {
-		logger.println(tag, "\n\n\n\-----------READINPUT--------\n\n");
-		prova = Serial.readString();
-		logger.println(tag, prova);
-	}
-
+		
 	unsigned long currMillis = millis();
 	if (currMillis - lastReboot > reboot_interval) {
+		shield.setEvent("timeout reboot");
 		logger.println(tag, "\n\n\n\-----------lastReboot TIMEOUT REBOOT--------\n\n");
 		ESP.restart();
 	}
 
-
 	currMillis = millis();
 	if (currMillis - shield.lastCheckHealth > shield.checkHealth_timeout) {
+		shield.setEvent("check health reboot");
 		logger.println(tag, "\n\n\n\-----------CHECK HEALTH TIMEOUT REBOOT--------\n\n");
 		ESP.restart();
 	}
 
 	if (checkHTTPUpdate) {
+		shield.setEvent("check sw update");
 #ifdef ESP8266
 		ESP.wdtFeed();
 #endif
@@ -1154,48 +1156,59 @@ void loop()
 	wdt_enable(WDTO_8S);
 #endif
 
-	if (Shield::getConfigMode()) {
+	if (!mqttLoaded) {
+		shield.setEvent("Init MQTT");
+		logger.print(tag, "\n\n\tINIT MQTT");
+		initMQTTServer();		
+		mqttLoaded = true;
+		return;
+	}	
+	
+	// controlla se l'ora è aggiornata (prima di richiedere i setting e dopo aver inizializzato mqtt)
+	currMillis = millis();
+	unsigned long timediff = currMillis - lastTimeSync;
+	if (client.connected() && (timediff > timeSync_interval || !timeLoaded)) {
+		shield.setEvent("Request time");
+		logger.print(tag, "\n\n\tUPDATE TIME TIMEOUT");
+		logger.print(tag, "\n\t currMillis=" + String(currMillis));
+		logger.print(tag, "\n\t lastTimeSync=" + String(lastTimeSync));
+		logger.print(tag, "\n\t timediff=" + String(timediff));
+		logger.print(tag, "\n\t timeSync_interval=" + String(timeSync_interval));
+		logger.print(tag, "\n\t timeLoaded=" + Logger::boolToString(timeLoaded));
+		updateTime();
+		timeLoaded = true;
+		lastTimeSync = currMillis - 60000; // questo serve per evitare che richieda l'ora prima di averla ricevuta
+		return;
+	}
 
-		logger.println(tag, "start config mode....");
-
-		if (!wifiManager.startConfigPortal("OnDemandAP")) {
-			Serial.println("failed to connect and hit timeout");
+	if (client.connected() && !settingFromServerRequested) {
+		logger.print(tag, "\n\n\tREQUEST SERVER SETTINGS");
+		shield.setEvent("request server setting..");
+		bool res = requestSettingsFromServer();
+		if (res) {
+			settingFromServerRequested = true;
+		}
+		else {	// se il comando è fallito attendi 3 secondi prima di anddare
+				// avenati e riprovare
 			delay(3000);
-			//reset and try again, or maybe put it to deep sleep
-			logger.println(tag, "\n\n\n\-----------failed to connect and hit timeout REBOOT--------\n\n");
-#ifdef ESP8266
-			ESP.reset();
-#endif
-			delay(5000);
 		}
-		Shield::setConfigMode(false);
-		logger.println(tag, "end config mode...");
-	}
-
-
-	// questo serve per controllare se ikl client mqtt è connesso
-	// ma in qualche caso secondo me non funziona
-	if (Shield::getMQTTmode()) {
-		if (!client.connected()) {
-			reconnect();
-		}
-		mqttclient.loop();
-
-	}
-
-	if (!Shield::getMQTTmode()) {
-		//processNextPage();
-	}
-
+		return;
+	}	
+	
 	//logger.println(tag, "before checkStatus");
 	shield.checkStatus();
-	//logger.println(tag, "after checkStatus");
-	
-	
-	// questo si potrebbe eliminare, tanto dl'ora non è usata
-	currMillis = millis();
-	if (currMillis - lastTimeSync > timeSync_interval) {
-		updateTime();
+	//logger.println(tag, "after checkStatus");	
+
+
+	// questo serve per controllare se il client mqtt è connesso
+	// deve essere fatto dopo check status altrimenti la scheda non si aggiorna
+	if (!client.connected()) {
+		logger.println(tag, "\n\n\tSERVER DISCONNECTED!!!\n");
+		shield.setEvent("server disconnected");
+		reconnect();
+		delay(5000);
+	} else {
+		mqttclient.loop();
 	}
 
 	currMillis = millis();
@@ -1203,58 +1216,15 @@ void loop()
 		logger.println(tag, "\n\n\n\-----------lastCommandFailed TIMEOUT REBOOT--------\n\n");
 		ESP.restart();
 	}
-
-
-	//#ifdef dopo
-	if (Shield::getMQTTmode()) {
-		/*unsigned long currMillis = millis();
-		unsigned long timeDiff = currMillis - lastFlash;
-		if (timeDiff > flash_interval) {
-
-			lastFlash = currMillis;
-			if (shield.id <= 0) {
-				logger.println(tag, F("ID NON VALIDO\n"));
-				shield.registerShield();
-			}
-			return;
-		}*/
-
-
-
-		/*if (currMillis - lastSendLog > SendLog_interval) {
-			lastSendLog = currMillis;
-			//logger.send();
-			return;
-		}*/
-	}
-
-}
-
-
-// questa funzione non è usata
-bool __updateTime() {
-	logger.println(tag, "\n\n\n\n\n\n\n\n\n\n\n\n");
-	logger.println(tag, ">>updateTime");
-
-	unsigned long currMillis = millis();
-	Command command;
-	lastTimeSync = currMillis;
-	//command.timeSync();
-	command.requestTime();
-
-	logger.println(tag, "<<updateTime");
-	return true;
 }
 
 bool updateTime() {
-
 	logger.println(tag, ">>requestTimeFromServer");
-
 	Command command;
-	return command.requestTime();
+	bool res = command.requestTime();
+	logger.print(tag, "\n\t <<requestTimeFromServer res=" + Logger::boolToString(res));
+	return res;
 }
-
-
 
 void startIRreceiveLoop(void(*callback)(void)/*IRrecv *pirrecvptr*/) {
 

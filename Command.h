@@ -20,7 +20,7 @@ public:
 
 	Command();
 	~Command();
-	bool requestShieldSettings(String *result);
+	bool requestShieldSettings();
 	bool requestTime();
 	boolean sendSensorStatus(String json);
 	boolean sendShieldStatus(String json);

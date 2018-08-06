@@ -3,7 +3,7 @@
 
 
 extern Logger logger;
-extern bool _mqtt_publish(char* topic, char* payload);
+//extern bool _mqtt_publish(char* topic, char* payload);
 
 
 String Logger::tag = "Logger";
@@ -162,6 +162,12 @@ String Logger::getStrTimeDate() {
 	return date;
 }
 
+String Logger::boolToString(bool val) {
+	String str = "true";
+	if (val)
+		str = "false";
+	return str;
+}
 
 void Logger::init() {
 
