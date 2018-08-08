@@ -3,7 +3,7 @@
 #include "ESP8266Webduino.h"
 #include "Shield.h"
 
-extern bool mqtt_publish(String topic, String message);
+//extern bool mqtt_publish(String topic, String message);
 
 
 Logger HornSensor::logger;
@@ -53,9 +53,9 @@ HornSensor::~HornSensor()
 
 void HornSensor::init()
 {
-	logger.print(tag, "\n\t >>init HornSensor");
+	logger.print(tag, F("\n\t >>init HornSensor"));
 	//pinMode(pin, INPUT);
-	logger.print(tag, "\n\t <<init HornSensor");
+	logger.print(tag, F("\n\t <<init HornSensor"));
 }
 
 bool HornSensor::getAlarmActiveStatus() {
@@ -78,24 +78,24 @@ bool HornSensor::checkStatusChange() {
 
 bool HornSensor::receiveCommand(String command, int id, String uuid, String json)
 {
-	logger.print(tag, "\n\t >>HornSensor::receiveCommand=");
+	logger.print(tag, F("\n\t >>HornSensor::receiveCommand="));
 	bool res = Sensor::receiveCommand(command, id, uuid, json);
-	logger.println(tag, ">>receiveCommand=");
-	logger.print(tag, "\n\t command=" + command);
+	//logger.println(tag, ">>receiveCommand=");
+	//logger.print(tag, "\n\t command=" + command);
 
 	if (command.equals("teststart")) {
-		logger.print(tag, "\n\t test start command");
+		//logger.print(tag, "\n\t test start command");
 	}
 	else if (command.equals("teststop")) {
-		logger.print(tag, "\n\t test stop command");
+		//logger.print(tag, "\n\t test stop command");
 	}
 	else if (command.equals("testopen")) {
-		logger.print(tag, "\n\t test open command");
+		//logger.print(tag, "\n\t test open command");
 	}
 	else if (command.equals("testclose")) {
-		logger.print(tag, "\n\t test close command");
+		//logger.print(tag, "\n\t test close command");
 	}
-	logger.print(tag, "\n\t >>HornSensor::receiveCommand=");
+	logger.print(tag, F("\n\t >>HornSensor::receiveCommand="));
 	return res;
 }
 

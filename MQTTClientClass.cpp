@@ -14,14 +14,14 @@ MQTTClientClass::~MQTTClientClass()
 
 void MQTTClientClass::init(WiFiClient* espClient)
 {
-	Serial.println("MQTTClientClass::init");
+	logger.println(tag, "MQTTClientClass::init");
 
 	client = new PubSubClient(*espClient);		
 }
 
 PubSubClient & MQTTClientClass::setServer(String domain, uint16_t port)
 {
-	Serial.println("MQTTClientClass::setServer");
+	logger.println(tag, "MQTTClientClass::setServer");
 
 	IPAddress ipaddr;
 	WiFi.hostByName(domain.c_str(), ipaddr);
@@ -34,7 +34,7 @@ PubSubClient & MQTTClientClass::setServer(String domain, uint16_t port)
 
 PubSubClient & MQTTClientClass::setCallback(MQTT_CALLBACK_SIGNATURE)
 {
-	Serial.println("MQTTClientClass::setCallback");
+	logger.println(tag, "MQTTClientClass::setCallback");
 	return client->setCallback(callback);
 }
 

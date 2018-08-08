@@ -1,7 +1,20 @@
-#pragma once
-#include "Actuator.h"
-#include "Program.h"
+// HEATERSENSOR.h
+
+#ifndef _HEATERSENSOR_h
+#define _HEATERSENSOR_h
+
+#if defined(ARDUINO) && ARDUINO >= 100
+#include "arduino.h"
+#else
+#include "WProgram.h"
+#endif
+
+#include "Sensor.h"
+#include <Arduino.h>
+#include "Logger.h"
 #include "CommandResponse.h"
+#include "JSONObject.h"
+
 
 class HeaterSensor :
 	public Sensor
@@ -68,8 +81,8 @@ public:
 	float getTargetTemperature();	
 	float getRemoteTemperature();
 	bool programEnded();
-	bool remoteTemperatureUpdate();
-	bool requestZoneTemperatureUpdate();
+	//bool remoteTemperatureUpdate();
+	//bool requestZoneTemperatureUpdate(int shieldid);
 	time_t getRemaininTime();
 	
 	time_t programStartTime = 0;
@@ -101,4 +114,4 @@ private:
 	unsigned long ConsumptionStartTime;
 };
 
-
+#endif

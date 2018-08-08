@@ -43,7 +43,7 @@ void ESPDisplay::init(uint8_t sda, uint8_t scl)
 	pdisplay->setFont(ArialMT_Plain_10);
 	pdisplay->setTextAlignment(TEXT_ALIGN_LEFT);
 
-	pdisplay->drawString(0, 0, "Restarting....");
+	pdisplay->drawString(0, 0, F("Restarting...."));
 	pdisplay->display();
 }
 

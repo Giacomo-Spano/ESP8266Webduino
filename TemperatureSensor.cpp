@@ -19,9 +19,9 @@ TemperatureSensor::~TemperatureSensor()
 
 void TemperatureSensor::init()
 {
-	logger.print(tag, "\n\t >>init TemperatureSensor");
+	//logger.print(tag, F("\n\t >>init TemperatureSensor");
 	//pinMode(pin, INPUT);
-	logger.print(tag, "\n\t <<init TemperatureSensor");
+	//logger.print(tag, "\n\t <<init TemperatureSensor");
 }
 
 bool TemperatureSensor::checkStatusChange() {
@@ -38,7 +38,7 @@ String TemperatureSensor::getStatusText()
 bool TemperatureSensor::getJSON(JSONObject *jObject) {
 
 	logger.print(tag, "\n");
-	logger.println(tag, ">>getJSON");
+	logger.println(tag, F(">>getJSON"));
 
 	bool res = Sensor::getJSON(jObject);
 	if (!res) return false;
@@ -48,7 +48,7 @@ bool TemperatureSensor::getJSON(JSONObject *jObject) {
 	jObject->pushFloat("temperature", temperature);
 	jObject->pushFloat("avtemperature", avTemperature);
 	
-	logger.println(tag, "<<getJSON");
+	logger.println(tag, F("<<getJSON"));
 
 	return res;
 }

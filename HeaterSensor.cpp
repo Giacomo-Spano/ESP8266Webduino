@@ -2,6 +2,8 @@
 #include "Logger.h"
 #include "Command.h"
 
+#include "ESP8266Webduino.h"
+
 Logger HeaterSensor::logger;
 String HeaterSensor::tag = "HeaterSensor";
 //gger HeaterSensor::status = "";
@@ -286,6 +288,7 @@ bool HeaterSensor::programEnded()
 	return false;
 }
 
+#ifdef dopo
 bool HeaterSensor::remoteTemperatureUpdate()
 {
 	
@@ -308,6 +311,7 @@ bool HeaterSensor::remoteTemperatureUpdate()
 	}
 	return false;
 }
+#endif
 
 void HeaterSensor::updateReleStatus() {
 
@@ -530,7 +534,8 @@ void  HeaterSensor::saveOldReleStatus() {
 	oldReleStatus = releStatus;
 }
 
-bool HeaterSensor::requestZoneTemperatureUpdate()
+#ifdef dopo
+bool HeaterSensor::requestZoneTemperatureUpdate(int shieldid)
 {
 	logger.print(tag, "\n");
 	logger.println(tag, ">> requestZoneTemperatureUpdate");
@@ -539,7 +544,7 @@ bool HeaterSensor::requestZoneTemperatureUpdate()
 	logger.print(tag, "\t REQUEST ZONE TEMPERATURE\n");
 
 	String json = "{";
-	json += "\"shieldid\":" + String(Shield::getShieldId());// shieldid
+	json += "\"shieldid\":" + String(shieldid);// shieldid
 	json += ",\"id\":" + String(sensorid);// shieldid
 	json += ",\"zoneid\":" + String(zoneId);
 	json += "}";
@@ -549,4 +554,5 @@ bool HeaterSensor::requestZoneTemperatureUpdate()
 
 	return res;
 }
+#endif
 

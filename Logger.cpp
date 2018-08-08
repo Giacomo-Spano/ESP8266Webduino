@@ -171,12 +171,12 @@ String Logger::boolToString(bool val) {
 
 void Logger::init() {
 
-	Serial.println("\n\n******INIT LOG*******");
+	//Serial.println("\n\n******INIT LOG*******");
 
 #ifdef ESP8266
 	// always use this to "mount" the filesystem
 	bool result = SPIFFS.begin();
-	Serial.println("SPIFFS opened: " + result);
+	//Serial.println("SPIFFS opened: " + result);
 	
 
 	/*Dir dir2 = SPIFFS.openDir("/log");
@@ -193,7 +193,7 @@ void Logger::init() {
 
 
 	logFileName = "/log/log.txt";
-	Serial.println("opening " + logFileName);
+	//Serial.println("opening " + logFileName);
 	// open the file in write mode
 	logFile = SPIFFS.open(logFileName, "a+");
 	if (!logFile) {
@@ -212,7 +212,7 @@ void Logger::init() {
 		// now write two lines in key/value style with  end-of-line characters
 		logFile.println(Logger::getStrDate());
 		int l = logFile.println("inizioxx00");
-		Serial.println("written: " + String(l));
+		//Serial.println("written: " + String(l));
 		logFile.close();
 		//logFile.readBytes
 	}

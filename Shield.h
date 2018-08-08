@@ -2,7 +2,7 @@
 
 #include <Arduino.h>
 #include <string.h>
-#include "Actuator.h"
+//#include "Actuator.h"
 #include "Sensor.h"
 #include "List.h"
 #include "JSON.h"
@@ -22,42 +22,54 @@ class Shield
 protected:
 	//static String networkSSID;
 	//static String networkPassword;
-	static int localPort;
-	static String serverName;//[serverNameLen];
-	static int serverPort;
-	static String mqttServer;
-	static int mqttPort;
-	static String shieldName;
+	int localPort;
+	String serverName;//[serverNameLen];
+	int serverPort;
+	String mqttServer;
+	int mqttPort;
+	String shieldName;
 
-	static bool mqttMode;
-	static bool configMode;
-	static bool resetSettings;
-		
+	bool mqttMode;
+	bool configMode;
+	bool resetSettings;
 
 public:
+	int freeMemory = 0;
 	int checkHealth_timeout = 15*60*1000;
 	unsigned long lastCheckHealth;
-	static String swVersion;
+	String swVersion;
 	static const int shieldNameLen = 30;
 	static const int serverNameLen = 30;
 	static const char networkSSIDLen = 32;// = "ssid";
 	static const char networkPasswordLen = 96;// = "password";
 
-	static int id;// = 0; // inizializzato a zero perch� viene impostato dalla chiamata a registershield
-	static String powerStatus; // power
-	static String lastRestartDate;
+	bool settingFromServerReceived = false;
+	bool settingFromServerRequested = false;
+	unsigned long settingRequestedTime;
+	unsigned long lastTimeSync = 0;
+	bool timeLoaded = false;
+
+	int id;// = 0; // inizializzato a zero perch� viene impostato dalla chiamata a registershield
+	String powerStatus; // power
+	String lastRestartDate;
 	unsigned long lastTimeUpdate = 0;
 
 	static const int maxSensorNum = 10;
 
+	bool loadSensors(String settings);
+	void parseMessageReceived(String topic, String message);
+
 	void drawString(int x, int y, String txt, int size, int color);
 	void drawDateTime();
 	void drawStatus();
+	void drawMemory();
 	void drawEvent();
 	void drawSensorsStatus();
 	void drawSWVersion();
 	void clearScreen();
 	void invalidateDisplay();
+
+	void setFreeMem(int mem);
 
 private:
 	static String tag;
@@ -70,7 +82,7 @@ private:
 	String oldDate;
 
 protected:
-	bool onUpdateSensorListCommand(JSON& json);
+	//bool onUpdateSensorListCommand(JSON& json);
 	bool onShieldSettingsCommand(JSON& json);
 	bool onPowerCommand(JSON& json);
 	//bool sendRegister();
@@ -97,34 +109,35 @@ public:
 	void init();
 	String getJson();
 	String getSensorsStatusJson();
-	bool _getSensorsStatusJson(char* payload);
+	//bool _getSensorsStatusJson(char* payload);
 	String getSettingsJson();
 	//void registerShield();
 	void checkStatus();	
 	void setStatus(String txt);
 	void setEvent(String txt);
 	bool receiveCommand(String jsonStr);		
+	bool updateTime();
 	
-	static unsigned char MAC_array[6];
-	static char MAC_char[18];
+	unsigned char MAC_array[6];
+	char MAC_char[18];
 	String localIP;
 	
-	void addSensor(Sensor* pSensor);
+	//void addSensor(Sensor* pSensor);
 	void clearAllSensors();
 	Sensor* getSensorFromAddress(String addr);
 	Sensor* getSensorFromId(int id);
 
-	static int getShieldId() {
+	int getShieldId() {
 		return id; 
 	} 
 
-	static void setShieldId(int shieldid) { 
+	void setShieldId(int shieldid) { 
 		id = shieldid;
 	}
-	static String getLastRestartDate() { return lastRestartDate; }
-	static void setLastRestartDate(String date) { lastRestartDate = date; }
+	String getLastRestartDate() { return lastRestartDate; }
+	void setLastRestartDate(String date) { lastRestartDate = date; }
 
-	static String getMACAddress()
+	String getMACAddress()
 	{
 #ifdef ESP8266
 		return WiFi.macAddress();
@@ -141,17 +154,17 @@ public:
 		//return String(MAC_char);
 	}
 
-	static String getSWVersion()
+	String getSWVersion()
 	{
 		return swVersion;
 	}
 		
-	static int getServerPort()
+	int getServerPort()
 	{
 		return serverPort;
 	}
 
-	static void setServerPort(int port)
+	void setServerPort(int port)
 	{		
 		logger.print(tag, "\n\t >>setServerPort");
 		serverPort = port;
@@ -254,12 +267,12 @@ public:
 	}
 
 	
-	static int getLocalPort()
+	int getLocalPort()
 	{
 		return localPort;
 	}
 
-	static void setLocalPort(int port)
+	void setLocalPort(int port)
 	{
 		logger.print(tag, "\n\t >>setLocalPort");
 		localPort = port;
@@ -289,12 +302,12 @@ public:
 		networkPassword = password;
 	}*/
 
-	static String getServerName()
+	String getServerName()
 	{
 		return String(serverName);
 	}
 
-	static void setServerName(String name)
+	void setServerName(String name)
 	{
 		logger.print(tag, "\n\t >>setServerName");
 		serverName = name;
@@ -302,12 +315,12 @@ public:
 		logger.print(tag, serverName);
 	}
 	
-	static String getShieldName()
+	String getShieldName()
 	{
 		return String(shieldName);
 	}
 
-	static void setShieldName(String name)
+	void setShieldName(String name)
 	{
 		logger.print(tag, "\n\t >>setShieldName");
 		shieldName = name;
@@ -315,60 +328,60 @@ public:
 		logger.print(tag, shieldName);
 	}
 
-	static String getPowerStatus()
+	String getPowerStatus()
 	{
 		return powerStatus;
 	}
 
-	static void setPowerStatus(String status)
+	void setPowerStatus(String status)
 	{
 		logger.print(tag, "\n\t>>setpowerStatus");
 		powerStatus = status;
 		logger.print(tag, "\n\t<< powerSatus=" + String(powerStatus));
 	}
 
-	static bool getMQTTmode()
+	bool getMQTTmode()
 	{
 		return mqttMode;
 	}
 
-	static void setMQTTMode(bool enabled)
+	void setMQTTMode(bool enabled)
 	{
 		logger.print(tag, "\n\t>> setMQTTMode");
 		mqttMode = enabled;
 		logger.print(tag, "\n\t<< setMQTTMode=" + String(mqttMode));
 	}
 
-	static bool getConfigMode()
+	bool getConfigMode()
 	{
 		return configMode;
 	}
 
-	static void setConfigMode(bool enabled)
+	void setConfigMode(bool enabled)
 	{
 		logger.print(tag, "\n\t>> setConfigMode");
 		configMode = enabled;
 		logger.print(tag, "\n\t<< setConfigMode=" + String(configMode));
 	}
 
-	static bool getResetSettings()
+	bool getResetSettings()
 	{
 		return resetSettings;
 	}
 
-	static void setResetSettings(bool enabled)
+	void setResetSettings(bool enabled)
 	{
 		logger.print(tag, "\n\t>> setResetSettings");
 		resetSettings = enabled;
 		logger.print(tag, "\n\t<< setResetSettings=" + String(resetSettings));
 	}
 
-	static String getMQTTServer()
+	String getMQTTServer()
 	{
 		return mqttServer;
 	}
 
-	static void setMQTTServer(String server)
+	void setMQTTServer(String server)
 	{
 		logger.print(tag, "\n\t>> setMQTTServer");
 		mqttServer = server;
@@ -376,17 +389,16 @@ public:
 	}
 
 
-	static int getMQTTPort()
+	int getMQTTPort()
 	{
 		return mqttPort;
 	}
 
-	static void setMQTTPort(int port)
+	void setMQTTPort(int port)
 	{
-		logger.print(tag, "\n\t>> setMQTTPort");
+		//logger.print(tag, "\n\t>> setMQTTPort");
 		mqttPort = port;
-		logger.print(tag, "\n\t<< setMQTTPort=" + String(mqttPort));
+		//logger.print(tag, "\n\t<< setMQTTPort=" + String(mqttPort));
 	}
-
 };
 

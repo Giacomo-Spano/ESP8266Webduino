@@ -82,16 +82,10 @@
     <ClInclude Include="Command.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Program.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Logger.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Actuator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Sensor.h">
@@ -106,13 +100,7 @@
     <ClInclude Include="ESP8266Webduino.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="HtmlFileClass.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="html.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="POSTData.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ESPDisplay.h">
@@ -207,16 +195,10 @@
     <ClCompile Include="Command.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Program.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Util.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Logger.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Actuator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Sensor.cpp">
@@ -226,9 +208,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Shield.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="POSTData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ESPDisplay.cpp">

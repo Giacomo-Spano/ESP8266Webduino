@@ -13,11 +13,10 @@ private:
 	static String tag;
 	static Logger logger;
 
-	static const int sensorNameLen = 20;
+	/*static const int sensorNameLen = 20;
 	static const int sensorAddressLen = 20;
 	static const int sensorTypeLen = 20;
-
-	
+	*/	
 
 	const int json_full = 1;
 	const int json_settings = 2;

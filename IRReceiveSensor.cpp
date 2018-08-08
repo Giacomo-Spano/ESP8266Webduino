@@ -14,7 +14,7 @@
 
 
 
-extern bool mqtt_publish(String topic, String message);
+//extern bool mqtt_publish(String topic, String message);
 
 Logger IRReceiveSensor::logger;
 String IRReceiveSensor::tag = "IRReceiveSensor";

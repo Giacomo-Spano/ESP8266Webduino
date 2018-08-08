@@ -16,7 +16,7 @@ String OnewireSensor::tag = "OnewireSensor";
 OnewireSensor::OnewireSensor(int id, uint8_t pin, bool enabled, String address, String name) : Sensor(id, pin, enabled, address, name)
 {
 	logger.print(tag, "\n");
-	logger.println(tag, ">>OnewireSensor");
+	logger.println(tag, F(">>OnewireSensor"));
 
 	checkStatus_interval = 60000;
 	lastCheckStatus = 0;
@@ -30,12 +30,12 @@ OnewireSensor::OnewireSensor(int id, uint8_t pin, bool enabled, String address, 
 	ESP.wdtFeed();
 #endif // ESP8266
 
-	logger.println(tag, "<<OnewireSensor");
+	logger.println(tag, F("<<OnewireSensor"));
 }
 
 void OnewireSensor::loadChildren(JSONArray& jarray) {
 
-	logger.println(tag, ">>loadChildren jarray=" + jarray.toString());
+	//logger.println(tag, ">>loadChildren jarray=" + jarray.toString());
 
 	childsensors.show();
 		
@@ -49,19 +49,19 @@ void OnewireSensor::loadChildren(JSONArray& jarray) {
 		JSONObject json(jsonChild);
 		if (json.has("name")) {
 			String name = json.getString("name");
-			logger.print(tag, "\n\t name=" + name);
+			//logger.print(tag, "\n\t name=" + name);
 			sensor->sensorname = name;
 		}
 		if (json.has("id")) {
 			int sensorid = json.getInteger("id");
-			logger.print(tag, "\n\t sensorid=" + sensorid);
+			//logger.print(tag, "\n\t sensorid=" + sensorid);
 			sensor->sensorid = sensorid;
 		}
 		jsonChild = jarray.getNext();
 	}
 
 	childsensors.show();
-	logger.println(tag, "<<loadChildren");
+	//logger.println(tag, "<<loadChildren");
 }
 
 
@@ -80,8 +80,8 @@ bool OnewireSensor::getJSON(JSONObject * jObject) {
 
 OnewireSensor::~OnewireSensor()
 {
-	logger.print(tag, "\n");
-	logger.println(tag, "~OnewireSensor");
+	//logger.print(tag, "\n");
+	//logger.println(tag, "~OnewireSensor");
 }
 
 void OnewireSensor::init()
@@ -93,8 +93,9 @@ void OnewireSensor::beginTemperatureSensors()
 {
 	// questa funz può essere chiamata solo dopo
 	// aver inizializzato pin
-	logger.print(tag, "\n");
-	logger.println(tag, ">>beginTemperatureSensors pin=" + String(pin));
+	logger.print(tag, F("\n"));
+	logger.print(tag, F("\n\t >>beginTemperatureSensors pin="));
+	logger.print(tag, String(pin));
 	oneWirePtr = new OneWire(pin);
 	pDallasSensors = new DallasTemperature(oneWirePtr);
 	pDallasSensors->begin();
@@ -105,7 +106,7 @@ void OnewireSensor::beginTemperatureSensors()
 	//SensorFactory factory;
 	childsensors.clearAll();
 
-	logger.print(tag, "\n\t search for 1-Wire devices.....");
+	logger.print(tag, F("\n\t search for 1-Wire devices....."));
 	while (oneWirePtr->search(_address) && tempSensorNum < OnewireSensor::maxTempSensors) {
 		
 #ifdef ESP8266
@@ -114,7 +115,7 @@ void OnewireSensor::beginTemperatureSensors()
 
 
 		// cerca il prossimo sensore di temperatura reali attaccato allo stesso pin
-		logger.print(tag, "\n\tFound \'1-Wire\' device with _address:");
+		logger.print(tag, F("\n\tFound \'1-Wire\' device with _address:"));
 		for (int i = 0; i < 8; i++) {
 			logger.print(tag, "0x");
 			if (_address[i] < 16) {
@@ -126,7 +127,7 @@ void OnewireSensor::beginTemperatureSensors()
 			}
 		}
 		if (OneWire::crc8(_address, 7) != _address[7]) {
-			logger.print(tag, "\n\t CRC is not valid!");
+			logger.print(tag, F("\n\t CRC is not valid!"));
 			return;
 		}
 
@@ -154,7 +155,7 @@ void OnewireSensor::beginTemperatureSensors()
 	oneWirePtr->reset_search();
 
 	childsensors.show();
-	logger.println(tag, "<<beginTemperatureSensors\n");
+	logger.println(tag, F("<<beginTemperatureSensors\n"));
 }
 
 /*float OnewireSensor::getTemperature(int index) {
@@ -173,36 +174,36 @@ float OnewireSensor::getAvTemperature(int index) {
 
 bool OnewireSensor::readTemperatures() {
 
-	logger.print(tag, "\n\n\t >>readTemperatures");
+	logger.print(tag, F("\n\n\t >>readTemperatures"));
 	// questa funzione ritorna true se è cambiata almeno uan tempertura
 	int res = false; // 
 
 	pDallasSensors->requestTemperatures(); // Send the command to get temperatures
 
-	logger.print(tag, "\n\t childsensors.length(): " + String(childsensors.length()));
+	//logger.print(tag, F("\n\t childsensors.length(): ") + String(childsensors.length()));
 	for (int i = 0; i < /*tempSensorNum*/childsensors.length(); i++) {
 		TemperatureSensor* tempSensor = (TemperatureSensor*)childsensors.get(i);
 		
 		// call dallasSensors.requestTemperatures() to issue a global temperature 
 		// request to all devices on the bus
-		logger.print(tag, "\n\t sensor: ");
+		logger.print(tag, F("n\t sensor: "));
 		logger.print(tag, tempSensor->name);
-		logger.print(tag, "\n\t index: ");
+		logger.print(tag, F("\n\t index: "));
 		logger.print(tag, i);
-		logger.print(tag, "\n\t addr ");
+		logger.print(tag, F("\n\t addr "));
 		logger.print(tag, tempSensor->getPhisicalAddress());
 
 		float oldTemperature = tempSensor->temperature;
-		logger.print(tag, "\n\t old Temperature   is: ");
+		logger.print(tag, F("\n\t old Temperature   is: "));
 		logger.print(tag, String(oldTemperature));
 
 		float dallasTemperature = pDallasSensors->getTempC(tempSensor->sensorAddr);
-		logger.print(tag, "\n\t dallas Temperature   is: ");
+		logger.print(tag, F("\n\t dallas Temperature   is: "));
 		logger.print(tag, String(dallasTemperature));
 		
 		tempSensor->temperature = (((int)(dallasTemperature * 10 + .5)) / 10.0);
 		//temperatureSensors[i].temperature = (((int)(dallasTemperature * 10 + .5)) / 10.0);
-		logger.print(tag, "\n\t rounded Temperature  is: ");
+		logger.print(tag, F("\n\t rounded Temperature  is: "));
 		logger.print(tag, String(tempSensor->temperature));
 
 		// se è cambiata almeno una temperatura ritorna true
@@ -228,15 +229,15 @@ bool OnewireSensor::readTemperatures() {
 		tempSensor->avTemperature = (((int)(dallasTemperature * 10 + .5)) / 10.0);
 		//temperatureSensors[i].avTemperature = ((int)(average * 100 + .5) / 100.0);
 
-		logger.print(tag, "\n\tAverage temperature  is: ");
+		logger.print(tag, F("\n\tAverage temperature  is: "));
 		logger.print(tag, String(tempSensor->avTemperature));
-		logger.print(tag, "\n");
+		logger.print(tag, F("\n"));
 	}
 	
 	if(res)
-		logger.print(tag, "\n\n\t --temperatura cambiata");
+		logger.print(tag, F("\n\n\t --temperatura cambiata"));
 	else
-		logger.print(tag, "\n\n\t >>readTemperatures - temperatura non cambiata");
+		logger.print(tag, F("\n\n\t >>readTemperatures - temperatura non cambiata"));
 	
 	return res;
 }
@@ -286,13 +287,13 @@ bool OnewireSensor::checkStatusChange() {
 	//logger.println(tag, "\n\t currMillis="+String(currMillis) + "timeDiff=" + String(timeDiff));
 	if (timeDiff > checkStatus_interval) {
 		logger.print(tag, F("\n\n"));
-		logger.println(tag, ">>checkStatusChange()::checkTemperatures timeDiff:" + String(timeDiff) + " checkStatus_interval:" + String(checkStatus_interval));
+		//logger.println(tag, ">>checkStatusChange()::checkTemperatures timeDiff:" + String(timeDiff) + " checkStatus_interval:" + String(checkStatus_interval));
 		lastCheckStatus = currMillis;
 		bool temperatureChanged = readTemperatures();
 		if (temperatureChanged)
-			logger.println(tag, "temperatura cambiata");
+			logger.println(tag, F("temperatura cambiata"));
 		else
-			logger.println(tag, "temperatura NON cambiata");
+			logger.println(tag, F("temperatura NON cambiata"));
 		logger.print(tag, F("\n\n"));
 		logger.println(tag, F("<<checkStatusChange()::checkTemperatures"));
 		return temperatureChanged;

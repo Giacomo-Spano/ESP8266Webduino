@@ -12,7 +12,7 @@
 #include "ESP8266Webduino.h"
 #include "Shield.h"
 
-extern bool mqtt_publish(String topic, String message);
+//extern bool mqtt_publish(String topic, String message);
 
 Logger IRSensor::logger;
 String IRSensor::tag = "IRSensor";

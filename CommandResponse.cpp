@@ -30,12 +30,13 @@ String CommandResponse::getJSON() {
 
 String CommandResponse::getJSONFields() {
 
-	logger.println(tag, ">>getJSONFields");
+	logger.println(tag, F(">>getJSONFields"));
 
 	String json = "";
 	json += "\"result\":\"" + result + "\",";
 	json += "\"uuid\":\"" + uuid + "\",";
 	
-	logger.println(tag, ">>getJSONFields" + json);
+	logger.println(tag, F(">>getJSONFields"));
+	logger.println(tag, json);
 	return json;
 }

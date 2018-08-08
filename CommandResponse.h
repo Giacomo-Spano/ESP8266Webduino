@@ -4,9 +4,6 @@
 #include <Arduino.h>
 #include "Logger.h"
 
-//const char*response_success = "success";
-//const char* response_failed = "failed";
-
 class CommandResponse
 {
 private:
@@ -15,7 +12,6 @@ private:
 
 public:
 	
-
 	CommandResponse();
 	~CommandResponse();
 

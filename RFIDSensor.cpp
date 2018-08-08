@@ -19,7 +19,7 @@ SCK			D5
 //MFRC522 mfrc522(SS_PIN, RST_PIN);   // Create MFRC522 instance.
 
 
-extern bool mqtt_publish(String topic, String message);
+//extern bool mqtt_publish(String topic, String message);
 
 
 Logger RFIDSensor::logger;

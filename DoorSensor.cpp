@@ -53,9 +53,9 @@ DoorSensor::~DoorSensor()
 
 void DoorSensor::init()
 {
-	logger.print(tag, "\n\t >>init DoorSensor");
+	logger.print(tag, F("\n\t >>init DoorSensor"));
 	pinMode(pin, INPUT);
-	logger.print(tag, "\n\t <<init DoorSensor");
+	logger.print(tag, F("\n\t <<init DoorSensor"));
 }
 
 bool DoorSensor::checkStatusChange() {
@@ -87,7 +87,7 @@ bool DoorSensor::checkStatusChange() {
 
 bool DoorSensor::receiveCommand(String command, int id, String uuid, String json)
 {
-	logger.print(tag, "\n\t >>DoorSensor::receiveCommand=");
+	logger.print(tag, F("\n\t >>DoorSensor::receiveCommand="));
 	bool res = Sensor::receiveCommand(command, id, uuid, json);
 	//logger.println(tag, ">>receiveCommand=");
 	//logger.print(tag, "\n\t command=" + command);
@@ -109,6 +109,6 @@ bool DoorSensor::receiveCommand(String command, int id, String uuid, String json
 		testMode = false;
 	}*/
 
-	logger.print(tag, "\n\t <<DoorSensor::receiveCommand=");
+	logger.print(tag, F("\n\t <<DoorSensor::receiveCommand="));
 	return res;
 }

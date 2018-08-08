@@ -63,17 +63,17 @@ int MyEPROMClass::writeJSON(int index, JSONObject *json)
 
 	String str = json->toString();
 
-	logger.print(tag, "\n\t str =" + str/*json->toString()*/);
+	//logger.print(tag, "\n\t str =" + str/*json->toString()*/);
 
 	if (index < 0 || (index + str.length()/*json->toString().length()*/) > epromSize) return 0;
 
 	index += writeInt(index, str.length()/*json->toString().length()*/);
 	
-	logger.print(tag, "\n\t len=" + String(str.length()/*json->toString().length())*/));
+	//logger.print(tag, "\n\t len=" + String(str.length()/*json->toString().length())*/));
 
 	/// qui c'è un bug. Se json è troppo grande va tutto in errore
 
-	logger.print(tag, "\n\t loop:");
+	//logger.print(tag, "\n\t loop:");
 	for (int i = 0; i < str.length()/*json->toString().length()*/; ++i)
 	{
 		//logger.print(tag, json->toString().charAt(i));
@@ -84,24 +84,25 @@ int MyEPROMClass::writeJSON(int index, JSONObject *json)
 
 	EEPROM.commit();
 
-	logger.print(tag, "\n\t <<writeJSON + written " + String(index - startIndex));
+	//logger.print(tag, "\n\t <<writeJSON + written " + String(index - startIndex));
 	return index - startIndex;
 
 }
 
 int MyEPROMClass::writeString(int index, String *txt)
 {
-	logger.println(tag, ">>writeString index=" + String(index));
+	logger.print(tag, F("1n1t >>writeString index="));
+	logger.print(tag, String(index));
 
 	int startIndex = index;
 
-	logger.print(tag, "\n\t str =" + *txt);
+	//logger.print(tag, "\n\t str =" + *txt);
 
 	if (index < 0 || (index + txt->length()) > epromSize) return 0;
 
 	index += writeInt(index, txt->length());
 
-	logger.print(tag, "\n\t len=" + String(txt->length()));
+	//logger.print(tag, "\n\t len=" + String(txt->length()));
 	for (int i = 0; i < txt->length(); ++i)
 	{
 		EEPROM.write(index++, txt->charAt(i));
@@ -112,7 +113,7 @@ int MyEPROMClass::writeString(int index, String *txt)
 
 	EEPROM.commit();
 
-	logger.print(tag, "\n\t <<txt + written " + String(index - startIndex));
+	//logger.print(tag, "\n\t <<txt + written " + String(index - startIndex));
 	return index - startIndex;
 
 }
