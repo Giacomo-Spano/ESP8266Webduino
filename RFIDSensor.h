@@ -47,7 +47,7 @@ public:
 	~RFIDSensor();
 
 	virtual void init();
-	virtual bool getJSON(JSONObject *jObject);
+	//virtual bool getJSON(JSONObject *jObject);
 	virtual bool checkStatusChange();
 	//virtual CommandResponse receiveCommand(String json);
 

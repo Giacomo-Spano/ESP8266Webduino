@@ -11,6 +11,7 @@
 #include <Arduino.h>
 #include "Logger.h"
 #include "JSONObject.h"
+#include <ArduinoJson.h>          //https://github.com/bblanchon/ArduinoJson
 
 class SensorFactory
 {
@@ -22,7 +23,8 @@ public:
 	~SensorFactory();
 
 	static Sensor* createSensor(int id, String type, uint8_t pin, bool enabled, String address, String name);
-	static Sensor * createSensor(JSONObject* json);
+	//static Sensor * createSensor(JSONObject* json);
+	static Sensor * createSensor(JsonObject& json);
 };
 
 #endif

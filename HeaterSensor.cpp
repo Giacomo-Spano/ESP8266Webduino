@@ -32,50 +32,56 @@ bool HeaterSensor::receiveCommand(String command, int id, String uuid, String js
 
 	logger.print(tag, "\n\n\t >>receiveCommand=");
 
-	JSON json(jsonStr);
+	size_t size = jsonStr.length();
+	DynamicJsonBuffer jsonBuffer;
+	JsonObject& json = jsonBuffer.parseObject(jsonStr);
+
+	//JSON json(jsonStr);
 	// duration
 	int duration = 0;
-	if (json.has("duration")) {
-		duration = json.jsonGetInt("duration");
+	if (json.containsKey("duration")) {
+		duration = json["duration"];
 		logger.print(tag, "\n\t duration=" + String(duration) + " secondi");
 		//duration = duration * 1000;
 		//logger.print(tag, "\n\t duration=" + String(duration) + " millisecondi");
 	}
 	// remote temperature
 	float rTemperature = 0;
-	if (json.has("temperature")) {
-		rTemperature = json.jsonGetFloat("temperature");
+	if (json.containsKey("temperature")) {
+		rTemperature = json["temperature"];
 		logger.print(tag, "\n\t temperature=" + String(rTemperature));
 	}
 	// target
 	float target = 0;
-	if (json.has("target")) {
-		target = json.jsonGetFloat("target");
+	if (json.containsKey("target")) {
+		target = json["target"];
 		logger.print(tag, "\n\t target=" + String(target));
 	}
 	// actionid
 	int actionid = 0;
-	if (json.has("actionid")) {
-		actionid = json.jsonGetInt("actionid");
+	if (json.containsKey("actionid")) {
+		actionid = json["actionid"];
 		logger.print(tag, "\n\t actionid=" + String(actionid));
 	}
 	// commanddate
 	String commanddate = "";
-	if (json.has("date")) {
-		commanddate = json.jsonGetString("date");
+	if (json.containsKey("date")) {
+		String str = json["date"];
+		commanddate = str;
 		logger.print(tag, "\n\t date=" + commanddate);
 	}
 	// enddate
 	String enddate = "";
-	if (json.has("enddate")) {
-		enddate = json.jsonGetString("enddate");
+	if (json.containsKey("enddate")) {
+		String str = json["enddate"];
+		enddate = str;
 		logger.print(tag, "\n\t enddate=" + enddate);
 	}
 
 	// zone
 	int zone = 0;
-	if (json.has("zone")) {
-		zone = json.jsonGetInt("zone");
+	if (json.containsKey("zone")) {
+		zone = json["zone"];
 		logger.print(tag, "\n\t sensorId=" + String(zone));
 	}
 
@@ -159,6 +165,7 @@ String HeaterSensor::getJSONFields()
 	return json;
 }
 
+#ifdef dopo
 bool HeaterSensor::getJSON(JSONObject * jObject)
 {
 	logger.print(tag, "\n");
@@ -167,14 +174,10 @@ bool HeaterSensor::getJSON(JSONObject * jObject)
 	bool res = Sensor::getJSON(jObject);
 	if (!res) return false;
 
-	/*jObject.pushInteger("id", id);
-	jObject.pushString("phisicaladdr", getPhisicalAddress());
-	jObject.pushFloat("temperature", temperature);
-	jObject.pushFloat("avtemperature", avTemperature);*/
-
 	logger.println(tag, "<<getJSON");
 	return res;
 }
+#endif
 
 
 void HeaterSensor::init()

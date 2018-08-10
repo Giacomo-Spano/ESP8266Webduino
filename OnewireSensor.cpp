@@ -33,6 +33,38 @@ OnewireSensor::OnewireSensor(int id, uint8_t pin, bool enabled, String address, 
 	logger.println(tag, F("<<OnewireSensor"));
 }
 
+void OnewireSensor::loadChildren(JsonArray& jsonarray) {
+	//logger.println(tag, ">>loadChildren jarray=" + jarray.toString());
+	childsensors.show();
+
+	//String jsonChild = jarray.getFirst();
+	int current = 0;
+	for (int i=0; i < jsonarray.size(); i++) {
+	//while (jsonChild != "") {
+
+		Sensor* sensor = (Sensor*)childsensors.get(current++);
+		if (sensor == nullptr) break;
+
+		//JSONObject json(jsonChild);
+		JsonObject& json = jsonarray[i];
+		if (json.containsKey("name")) {
+			String name = json["name"];
+			//logger.print(tag, "\n\t name=" + name);
+			sensor->sensorname = name;
+		}
+		if (json.containsKey("id")) {
+			int sensorid = json["id"];
+			//logger.print(tag, "\n\t sensorid=" + sensorid);
+			sensor->sensorid = sensorid;
+		}
+		//jsonChild = jarray.getNext();
+	}
+
+	childsensors.show();
+	//logger.println(tag, "<<loadChildren");
+}
+
+#ifdef dopo
 void OnewireSensor::loadChildren(JSONArray& jarray) {
 
 	//logger.println(tag, ">>loadChildren jarray=" + jarray.toString());
@@ -63,8 +95,9 @@ void OnewireSensor::loadChildren(JSONArray& jarray) {
 	childsensors.show();
 	//logger.println(tag, "<<loadChildren");
 }
+#endif
 
-
+#ifdef dopo
 bool OnewireSensor::getJSON(JSONObject * jObject) {
 
 	//logger.print(tag, "\n");
@@ -77,6 +110,7 @@ bool OnewireSensor::getJSON(JSONObject * jObject) {
 	//logger.println(tag, "<<getJSON");
 	return true;
 }
+#endif
 
 OnewireSensor::~OnewireSensor()
 {

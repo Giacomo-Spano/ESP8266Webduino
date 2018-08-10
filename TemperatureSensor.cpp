@@ -35,6 +35,7 @@ String TemperatureSensor::getStatusText()
 	return text;
 }
 
+#ifdef dopo
 bool TemperatureSensor::getJSON(JSONObject *jObject) {
 
 	logger.print(tag, "\n");
@@ -52,7 +53,7 @@ bool TemperatureSensor::getJSON(JSONObject *jObject) {
 
 	return res;
 }
-
+#endif
 
 String TemperatureSensor::getJSONFields() {
 

@@ -9,6 +9,7 @@ extern bool mqtt_publish(String topic, String message);
 Logger DoorSensor::logger;
 String DoorSensor::tag = "DoorSensor";
 
+#ifdef dopo
 bool DoorSensor::getJSON(JSONObject *jObject)
 {
 	//logger.print(tag, "\n");
@@ -22,6 +23,7 @@ bool DoorSensor::getJSON(JSONObject *jObject)
 	//logger.println(tag, "<<DoorSensor::getJSON");
 	return true;
 }
+#endif
 
 String DoorSensor::getJSONFields() {
 

@@ -46,6 +46,7 @@ String Sensor::toString()
 	return str;
 }
 
+#ifdef dopo
 bool Sensor::getJSON(JSONObject *jObject) { // 
 	//logger.print(tag, "\n");
 	//logger.println(tag, ">>getJSON");
@@ -79,6 +80,7 @@ bool Sensor::getJSON(JSONObject *jObject) { //
 	//logger.println(tag, "<<getJSON");
 	return true;
 }
+#endif
 
 String Sensor::getJSONFields() {
 	//logger.println(tag, ">>getJSONFields");
@@ -137,15 +139,12 @@ Sensor * Sensor::getSensorFromId(int id)
 
 
 String Sensor::getJSON() {
-
 	//logger.print(tag, "\n");
 	//logger.println(tag, ">>getJSON");
 
 	String json = "{";
-	
-	
-
 	json += getJSONFields();
+
 	// child sensors
 	json += getChildren();
 	json += "}";
@@ -154,7 +153,11 @@ String Sensor::getJSON() {
 	return json;
 }
 
-void Sensor::loadChildren(JSONArray& json)
+/*void Sensor::loadChildren(JSONArray& json)
+{
+}*/
+
+void Sensor::loadChildren(JsonArray& json)
 {
 }
 

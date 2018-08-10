@@ -4,32 +4,31 @@
 #include "Logger.h"
 #include "Command.h"
 #include "ESP8266Webduino.h"
-#include "JSONArray.h"
+//#include "JSONArray.h"
 #ifdef ESP8266
 #include <Adafruit_ST7735.h>
 #endif
 #include "SensorFactory.h"
 
-extern void writeEPROM();
-extern void resetEPROM();
-extern void resetWiFiManagerSettings();
+#include <ArduinoJson.h>          //https://github.com/bblanchon/ArduinoJson
 
+//extern void writeEPROM();
+//extern void resetEPROM();
+extern void resetWiFiManagerSettings();
 extern bool mqtt_publish(String topic, String message);
-//extern bool _mqtt_publish(char* topic, char* payload);
 
 Logger Shield::logger;
 String Shield::tag = "Shield";
 
-
 Shield::Shield()
 {
 	lastRestartDate = "";
-	swVersion = "1.62";
+	swVersion = "1.66";
 
 	id = 0; //// inizializzato a zero perch� viene impostato dalla chiamata a registershield
 	localPort = 80;
-	serverName = "192.168.1.33";
-	mqttServer = "192.168.1.33";
+	serverName = "giacomohome.ddns.net";
+	mqttServer = "giacomohome.ddns.net";
 	mqttPort = 1883;
 	serverPort = 8080;
 	shieldName = "shieldName";
@@ -234,12 +233,26 @@ void Shield::parseMessageReceived(String topic, String message) {
 		logger.print(tag, message);
 		logger.print(tag, F("\n"));
 		setEvent(F("<-received settings"));
-		loadSensors(message);
-		writeEPROM();
-		//settingFromServerRequested = true;
-		settingFromServerReceived = true;
-		Command command;
-		command.sendShieldStatus(getJson());
+
+		size_t size = message.length();
+		DynamicJsonBuffer jsonBuffer;
+		JsonObject& json = jsonBuffer.parseObject(message);
+		if (json.success()) {
+			logger.print(tag, F("\n\t settings= \n"));
+			json.printTo(Serial);
+		}
+		else {
+			logger.print(tag, F("failed to load json config"));
+			return;
+		}
+		
+		if (loadSensors(json)) {
+			writeSensorToFile(json);
+			//writeEPROM();
+			settingFromServerReceived = true;
+			Command command;
+			command.sendShieldStatus(getJson());
+		}
 	}
 	else if (topic.equals(str + F("/reboot"))) {
 		logger.print(tag, F("\n\t received reboot request"));
@@ -264,7 +277,7 @@ void Shield::parseMessageReceived(String topic, String message) {
 	else if (str.equals(F("reset"))) {
 		logger.print(tag, F("\n\t RESET SETTINGS!!!!!!!!!!!!!!!!"));
 		setResetSettings(true);
-		resetEPROM();
+		//resetEPROM();
 		ESP.restart();
 	}
 	else {
@@ -274,7 +287,7 @@ void Shield::parseMessageReceived(String topic, String message) {
 	logger.print(tag, F("\n\t <<parseMessageReceived"));
 }
 
-
+#ifdef dopo
 bool Shield::receiveCommand(String jsonStr) {
 
 	logger.print(tag, F("\n\t >>receiveCommand"));
@@ -289,9 +302,9 @@ bool Shield::receiveCommand(String jsonStr) {
 		logger.print(tag, command);
 		setEvent("<-received command " + command);
 		/*if (command.equals("updatesensorlist")) { // ???
-			result = onUpdateSensorListCommand(json);
-			logger.print(tag, "\n\t <<receiveCommand result=" + String(result));
-			return result;
+		result = onUpdateSensorListCommand(json);
+		logger.print(tag, "\n\t <<receiveCommand result=" + String(result));
+		return result;
 		}
 		else */if (command.equals(F("shieldsettings"))) { // risposta a loadsettting
 			result = onShieldSettingsCommand(json);
@@ -305,14 +318,14 @@ bool Shield::receiveCommand(String jsonStr) {
 			return result;
 		}
 		else if (command.equals(F("reset"))) { // che differenza c'è tra reboot e reset?
-			result = onResetCommand(json);
-			result = onRebootCommand(json);
+			result = onResetCommand();
+			//result = onRebootCommand(json);
 			logger.print(tag, F("\n\t <<receiveCommand result="));
 			logger.print(tag, String(result));
 			return result;
 		}
 		else if (command.equals(F("reboot"))) { // che differenza c'è tra reboot e reset?
-			result = onRebootCommand(json);
+			result = onRebootCommand();
 			logger.print(tag, F("\n\t <<receiveCommand result="));
 			logger.print(tag, String(result));
 			return result;
@@ -365,7 +378,105 @@ bool Shield::receiveCommand(String jsonStr) {
 	logger.print(tag, F("\n\t <<receiveCommand"));
 	return false;
 }
+#endif
 
+bool Shield::receiveCommand(String jsonStr) {
+
+	logger.print(tag, F("\n\t >>receiveCommand"));
+	//logger.printFreeMem(tag, "++receiveCommand");
+	logger.print(tag, jsonStr);
+
+	size_t size = jsonStr.length();
+	DynamicJsonBuffer jsonBuffer;
+	JsonObject& json = jsonBuffer.parseObject(jsonStr);
+	if (json.success()) {
+		logger.print(tag, F("\n\t settings= \n"));
+		json.printTo(Serial);
+	}
+	else {
+		Serial.println("failed to load json config");
+		return false;
+	}
+
+	if (json.containsKey("command")) {
+		bool result = false;
+		String command = json["command"];
+		logger.print(tag, F("\n\t command="));
+		logger.print(tag, command);
+		setEvent("<-received command " + command);
+		if (command.equals(F("shieldsettings"))) { // risposta a loadsettting
+			result = onShieldSettingsCommand(json);
+			logger.print(tag, "\n\t <<receiveCommand result=" + String(result));
+			return result;
+		}
+		else if (command.equals(F("power"))) { // ??
+			result = onPowerCommand(json);
+			logger.print(tag, F("\n\t <<receiveCommand result="));
+			logger.print(tag, String(result));
+			return result;
+		}
+		else if (command.equals(F("reset"))) { // che differenza c'è tra reboot e reset?
+			result = onResetCommand();
+			//result = onRebootCommand(json);
+			logger.print(tag, F("\n\t <<receiveCommand result="));
+			logger.print(tag, String(result));
+			return result;
+		}
+		else if (command.equals(F("reboot"))) { // che differenza c'è tra reboot e reset?
+			result = onRebootCommand();
+			logger.print(tag, F("\n\t <<receiveCommand result="));
+			logger.print(tag, String(result));
+			return result;
+		}
+		else if (command.equals(F("checkhealth"))) {
+			logger.printFreeMem(tag, F("++checkhealth"));
+
+			// uuid
+			String uuid = "";
+			if (json.containsKey("uuid")) {
+				String str = json["uuid"];
+				uuid = str;
+				logger.print(tag, F("\n\t uuid="));
+				logger.print(tag, uuid);
+			}
+			else {
+				logger.print(tag, F("\n\t uuid NOT FOUND!"));
+				return false;
+			}
+
+			lastCheckHealth = millis();
+			String topic = "toServer/response/" + uuid + "/success";
+			bool res = mqtt_publish(topic, getJson());
+
+			logger.print(tag, F("\n\t <<receiveCommand result="));
+			logger.print(tag, String(result));
+			return res;
+		}
+		else if (json.containsKey("actuatorid") && json.containsKey("uuid")) {	// se c'è il campo actuatorid
+
+			logger.print(tag, F("\n\treceived actuator command"));
+			int id = json["actuatorid"];
+			logger.print(tag, F("\n\t actuatorid="));
+			logger.print(tag, String(id));
+			String uuid = json["uuid"];
+			Sensor* sensor = getSensorFromId(id);
+			if (sensor != nullptr) {
+				setEvent(F("<-received sensor command "));
+				setEvent(command);
+				return sensor->receiveCommand(command, id, uuid, jsonStr);
+			}
+			else {
+				logger.print(tag, F("\n\t sensor not found"));
+				logger.print(tag, F("\n\t <<receiveCommand result"));
+			}
+		}
+	}
+	logger.printFreeMem(tag, F("--receiveCommand"));
+	logger.print(tag, F("\n\t <<receiveCommand"));
+	return false;
+}
+
+#ifdef dopo
 bool Shield::onShieldSettingsCommand(JSON& json)
 {
 	logger.print(tag, F("\n\t>>onShieldSettingsCommand"));
@@ -395,23 +506,56 @@ bool Shield::onShieldSettingsCommand(JSON& json)
 	logger.print(tag, F("\n\t <<onShieldSettingsCommand"));
 	return true;
 }
+#endif
 
-bool Shield::onRebootCommand(JSON& json)
+bool Shield::onShieldSettingsCommand(JsonObject& json)
+{
+	logger.print(tag, F("\n\t>>onShieldSettingsCommand"));
+
+	if (json.containsKey("localport")) {
+		int localPortr = json["localport"];
+		//logger.print(tag, "\n\t localport=" + localPort);
+		setLocalPort(localPort);
+	}
+	if (json.containsKey("shieldname")) {
+		String name = json["shieldname"];
+		//logger.print(tag, "\n\t shieldname=" + name);
+		setShieldName(name);
+	}
+	if (json.containsKey("servername")) {
+		String name = json["servername"];
+		//logger.print(tag, "\n\t servername=" + name);
+		setServerName(name);
+	}
+	if (json.containsKey("serverport")) {
+		int serverPort = json["serverport"];
+		//logger.print(tag, "\n\t serverport=" + serverPort);
+		setServerPort(serverPort);
+	}
+	//writeEPROM();
+
+	logger.print(tag, F("\n\t <<onShieldSettingsCommand"));
+	return true;
+}
+
+
+bool Shield::onRebootCommand()
 {
 	logger.print(tag, F("\n\t>> onRebootCommand"));
 	ESP.restart();
 	return true;
 }
 
-bool Shield::onResetCommand(JSON& json)
+bool Shield::onResetCommand()
 {
 	logger.print(tag, F("\n\t>> onResetCommand"));
 	resetWiFiManagerSettings();
-	resetEPROM(); // scrive 0 nel primo settore della EPROM per azzerare tutto
+	//resetEPROM(); // scrive 0 nel primo settore della EPROM per azzerare tutto
 
 	return true;
 }
 
+#ifdef dopo
 bool Shield::onPowerCommand(JSON& json)
 {
 	logger.print(tag, F("\n\t>> onPowerCommand"));
@@ -419,6 +563,29 @@ bool Shield::onPowerCommand(JSON& json)
 
 	if (json.has(F("status"))) {
 		String status = json.jsonGetString(F("status"));
+		//logger.print(tag, "\n\t status=" + status);
+
+		if (status.equals(F("on"))) {
+			setPowerStatus(status);
+			res = true;
+		}
+		else if (status.equals(F("off"))) {
+			setPowerStatus(status);
+			res = true;
+		}
+	}
+	logger.print(tag, F("\n\t<< onPowerCommand"));
+	return true;
+}
+#endif 
+
+bool Shield::onPowerCommand(JsonObject& json)
+{
+	logger.print(tag, F("\n\t>> onPowerCommand"));
+	bool res = false;
+
+	if (json.containsKey("status")) {
+		String status = json["status"];
 		//logger.print(tag, "\n\t status=" + status);
 
 		if (status.equals(F("on"))) {
@@ -639,6 +806,7 @@ void Shield::checkSensorsStatus()
 	}
 }
 
+#ifdef dopo
 // carica i settings
 // può essere chiamat inn qualunque moneto: quanto riceve i setting dal server
 // oppure quando all'inizio la scheda legge i setting dalla eprom
@@ -700,6 +868,7 @@ bool  Shield::loadSensors(String settings) {
 	return true;
 
 }
+#endif
 
 bool Shield::updateTime() {
 	logger.println(tag, F(">>requestTimeFromServer"));
@@ -710,6 +879,120 @@ bool Shield::updateTime() {
 	return res;
 }
 
+void Shield::readSensorFromFile() {
+	if (SPIFFS.begin()) {
+		Serial.println("mounted file system");
+		if (SPIFFS.exists("/sensors.json")) {
+			//file exists, reading and loading
+			Serial.println("reading config file");
+			File configFile = SPIFFS.open("/config.json", "r");
+			if (configFile) {
+				Serial.println("opened config file");
+				size_t size = configFile.size();
+				// Allocate a buffer to store contents of the file.
+				std::unique_ptr<char[]> buf(new char[size]);
+				configFile.readBytes(buf.get(), size);
+				DynamicJsonBuffer jsonBuffer;
+				JsonObject& json = jsonBuffer.parseObject(buf.get());
+				json.printTo(Serial);
+				if (json.success()) {
+					Serial.println("\nparsed json");
+					loadSensors(json);
+					//return json;
+				}
+				else {
+					Serial.println("failed to load json config");
+					//return json;
+
+				}
+			}
+		}
+	}
+	else {
+		Serial.println("failed to mount FS");
+	}
+	//end read
+}
+
+bool Shield::writeSensorToFile(JsonObject& json) {
+	File configFile = SPIFFS.open("/sensors.json", "w");
+	if (!configFile) {
+		Serial.println("failed to open config file for writing");
+	}
+
+	json.printTo(Serial);
+	json.printTo(configFile);
+	configFile.close();
+}
+
+// carica i settings
+// può essere chiamat inn qualunque moneto: quanto riceve i setting dal server
+// oppure quando all'inizio la scheda legge i setting dalla eprom
+bool  Shield::loadSensors(/*String settings*/JsonObject& json) {
+
+	//logger.print(tag, "\n\n");
+	logger.print(tag, F("\n\t>>loadSensors"));
+	//logger.printFreeMem(tag, "loadSensors");
+	//logger.print(tag, F("\n\t settings="));
+	//logger.print(tag, settings);
+
+	/*size_t size = settings.length();
+	DynamicJsonBuffer jsonBuffer;
+	JsonObject& json = jsonBuffer.parseObject(settings);
+	if (json.success()) {
+		logger.print(tag, F("\n\t settings= \n"));
+		json.printTo(Serial);
+	}
+	else {
+		Serial.println("failed to load json config");
+		return false;
+	}*/
+	
+	if (json.containsKey("shieldid")) {
+		int shieldid = json["shieldid"];
+		setShieldId(shieldid);
+	}
+	else {
+		logger.println(tag, "error -ID MISSING");
+		return false;
+	}
+
+	if (json.containsKey("name")) {
+		String name = json["name"];
+		setShieldName(name);
+	}
+
+	if (json.containsKey("sensors")) {
+		String str = json["sensors"];
+		size_t size = str.length();
+		DynamicJsonBuffer jsonBuffer;
+		JsonArray& sensorjsonarray = jsonBuffer.parseArray(str);
+		
+		clearAllSensors(); // serve per inizializzare
+		//String sensorstr = sensorjsonarray.getFirst();
+		for (int i = 0; i < sensorjsonarray.size(); i++) {
+#ifdef ESP8266
+			ESP.wdtFeed();
+#endif // ESP8266
+			logger.print(tag, F("\n\n\t SENSOR: "));
+			//logger.print(tag, sensorstr);
+			sensorjsonarray[i].printTo(Serial);
+			
+			Sensor* sensor = SensorFactory::createSensor(sensorjsonarray[i]);
+			if (sensor != nullptr) {
+				logger.print(tag, F("\n\n\t sensor="));
+				logger.print(tag, sensor->toString());
+				sensorList.add(sensor);
+			}
+
+		}
+
+	}
+	//logger.printFreeMem(tag, " end loadsensor");
+	logger.println(tag, F("<<loadSensors\n"));
+	return true;
+
+}
 
 #ifdef dopo
 void Shield::addSensor(Sensor* pSensor) { // non è usata?????????

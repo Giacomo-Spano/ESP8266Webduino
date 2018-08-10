@@ -9,6 +9,7 @@
 Logger HornSensor::logger;
 String HornSensor::tag = "HornSensor";
 
+#ifdef dopo
 bool HornSensor::getJSON(JSONObject *jObject)
 {
 	//logger.print(tag, "\n");
@@ -22,6 +23,7 @@ bool HornSensor::getJSON(JSONObject *jObject)
 	//logger.println(tag, "<<HornSensor::getJSON");
 	return true;
 }
+#endif
 
 String HornSensor::getJSONFields() {
 

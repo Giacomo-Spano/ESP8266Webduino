@@ -6,6 +6,7 @@
 #include "JSONObject.h"
 #include "JSONArray.h"
 #include "CommandResponse.h"
+#include <ArduinoJson.h>          //https://github.com/bblanchon/ArduinoJson
 
 class Sensor : public ObjectClass
 {
@@ -51,10 +52,12 @@ public:
 	String getChildren();
 	Sensor* getSensorFromId(int id);
 
-	virtual bool getJSON(JSONObject *jObject);
+	//virtual bool getJSON(JSONObject *jObject);
 	virtual String getJSONFields();	
 	virtual String getJSON();
-	virtual void loadChildren(JSONArray& json);
+	//virtual JsonObject& getJson();
+	//virtual void loadChildren(JSONArray& json);
+	virtual void loadChildren(JsonArray& jsonarray);
 	virtual void show();
 	virtual String toString();	
 	virtual void init();

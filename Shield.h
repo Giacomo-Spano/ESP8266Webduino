@@ -5,7 +5,6 @@
 //#include "Actuator.h"
 #include "Sensor.h"
 #include "List.h"
-#include "JSON.h"
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include "ESPDisplay.h"
@@ -56,7 +55,10 @@ public:
 
 	static const int maxSensorNum = 10;
 
-	bool loadSensors(String settings);
+	//bool loadSensors(String settings);
+	bool loadSensors(/*String settings*/JsonObject& json);
+	void readSensorFromFile();
+	bool writeSensorToFile(JsonObject& json);
 	void parseMessageReceived(String topic, String message);
 
 	void drawString(int x, int y, String txt, int size, int color);
@@ -83,11 +85,13 @@ private:
 
 protected:
 	//bool onUpdateSensorListCommand(JSON& json);
-	bool onShieldSettingsCommand(JSON& json);
-	bool onPowerCommand(JSON& json);
+	//bool onShieldSettingsCommand(JSON& json);
+	bool onShieldSettingsCommand(JsonObject& json);
+	//bool onPowerCommand(JSON& json);
+	bool onPowerCommand(JsonObject& json);
 	//bool sendRegister();
-	bool onResetCommand(JSON& json);
-	bool onRebootCommand(JSON& json);
+	bool onResetCommand();
+	bool onRebootCommand();
 	//bool sendUpdateSensorStatus();
 	
 	
@@ -115,7 +119,8 @@ public:
 	void checkStatus();	
 	void setStatus(String txt);
 	void setEvent(String txt);
-	bool receiveCommand(String jsonStr);		
+	//bool receiveCommand(String jsonStr);
+	bool receiveCommand(String jsonStr);
 	bool updateTime();
 	
 	unsigned char MAC_array[6];

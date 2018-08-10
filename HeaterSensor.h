@@ -24,7 +24,7 @@ private:
 
 
 public:
-	virtual bool getJSON(JSONObject * jObject);
+	//virtual bool getJSON(JSONObject * jObject);
 	static String tag;
 	static Logger logger;
 

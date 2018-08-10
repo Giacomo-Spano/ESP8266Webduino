@@ -32,7 +32,7 @@ public:
 	~HornSensor();
 
 	virtual void init();
-	virtual bool getJSON(JSONObject *jObject);
+	//virtual bool getJSON(JSONObject *jObject);
 	virtual bool checkStatusChange();
 	bool receiveCommand(String command, int id, String uuid, String json);
 

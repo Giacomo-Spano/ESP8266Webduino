@@ -118,9 +118,16 @@ bool IRSensor::receiveCommand(String command, int id, String uuid, String jsonSt
 		String codetype, code;
 		uint64_t value;
 		int bit;
-		JSON json(jsonStr);
-		if (json.has("codetype")) {
-			codetype = json.jsonGetString("codetype");
+
+
+		size_t size = jsonStr.length();
+		DynamicJsonBuffer jsonBuffer;
+		JsonObject& json = jsonBuffer.parseObject(jsonStr);
+
+		//JSON json(jsonStr);
+		if (json.containsKey("codetype")) {
+			String str = json["codetype"];
+			codetype = str;
 			logger.print(tag, "\n\t codetype=" + codetype);
 		}
 		else {
@@ -128,8 +135,9 @@ bool IRSensor::receiveCommand(String command, int id, String uuid, String jsonSt
 			logger.print(tag, "\n\t <<IRSensor::receiveCommand=");
 			return false;
 		}
-		if (json.has("code")) {
-			code = json.jsonGetString("code");
+		if (json.containsKey("code")) {
+			String str = json["code"];
+			code = str;
 			logger.print(tag, "\n\t code=" + code);
 
 			//code = "0x" + code;
@@ -149,8 +157,8 @@ bool IRSensor::receiveCommand(String command, int id, String uuid, String jsonSt
 			logger.print(tag, "\n\t <<IRSensor::receiveCommand=");
 			return false;
 		}
-		if (json.has("bit")) {
-			bit = json.jsonGetInt("bit");
+		if (json.containsKey("bit")) {
+			bit = json["bit"];
 			logger.print(tag, "\n\t bit=" + String(bit));
 		}
 		else {

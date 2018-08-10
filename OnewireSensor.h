@@ -57,7 +57,7 @@ private:
 	virtual String getJSONFields();
 
 public:
-	virtual bool getJSON(JSONObject *jObject);
+	//virtual bool getJSON(JSONObject *jObject);
 	//virtual void loadChildren(JSONObject json);
 	static const int avTempsize = 10;
 
@@ -66,7 +66,8 @@ public:
 
 	//OnewireSensor();
 	OnewireSensor(int id, uint8_t pin, bool enabled, String address, String name);
-	virtual void loadChildren(JSONArray& jarray);
+	//virtual void loadChildren(JSONArray& jarray);
+	virtual void loadChildren(JsonArray& jsonarray);
 	~OnewireSensor();
 	virtual bool checkStatusChange();
 

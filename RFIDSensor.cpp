@@ -25,6 +25,7 @@ SCK			D5
 Logger RFIDSensor::logger;
 String RFIDSensor::tag = "RFIDSensor";
 
+#ifdef dopo
 bool RFIDSensor::getJSON(JSONObject *jObject)
 {
 	//logger.print(tag, "\n");
@@ -38,6 +39,7 @@ bool RFIDSensor::getJSON(JSONObject *jObject)
 	//logger.println(tag, "<<DoorSensor::getJSON");
 	return true;
 }
+#endif
 
 String RFIDSensor::getJSONFields() {
 
