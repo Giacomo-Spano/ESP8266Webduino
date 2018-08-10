@@ -4,7 +4,9 @@
 
 extern Logger logger;
 //extern bool _mqtt_publish(char* topic, char* payload);
-
+//#define maxjournalcount 100
+//String journal[maxjournalcount];
+//int journalcount = 0;
 
 String Logger::tag = "Logger";
 String Logger::logFileName = "/log/log.txt";
@@ -53,6 +55,12 @@ void Logger::print(String tag, String txt) {
 	}*/
 	//line += txt;
 	Serial.print(txt);
+
+	/*journal[journalcount] = txt;
+	if (journalcount < maxjournalcount)
+		journalcount++;
+	else
+		journalcount = 0;*/
 
 	/*if (logFile.size() > 100000) {
 
@@ -171,179 +179,6 @@ String Logger::boolToString(bool val) {
 
 void Logger::init() {
 
-	//Serial.println("\n\n******INIT LOG*******");
-
-#ifdef ESP8266
-	// always use this to "mount" the filesystem
-	bool result = SPIFFS.begin();
-	//Serial.println("SPIFFS opened: " + result);
 	
-
-	/*Dir dir2 = SPIFFS.openDir("/log");
-	Serial.println("dir /log");
-	while (dir2.next()) {
-
-		Serial.print(dir2.fileName());
-		Serial.print(" size ");
-		File f = dir2.openFile("r");
-		Serial.print(f.size());
-		Serial.println(" bytes");
-		f.close();
-	}*/
-
-
-	logFileName = "/log/log.txt";
-	//Serial.println("opening " + logFileName);
-	// open the file in write mode
-	logFile = SPIFFS.open(logFileName, "a+");
-	if (!logFile) {
-		Serial.println("file open failed - file does not exit");
-
-		/*logFile = SPIFFS.open(logFileName, "w+");
-		if (!logFile) {
-		Serial.println("file creation failed");
-		}*/
-	}
-	else {
-		Serial.println("logFile: " + logFileName + " opened\n");
-
-		//logFile.seek(logFile.size(), SeekSet);
-		logFile.seek(0, SeekEnd);
-		// now write two lines in key/value style with  end-of-line characters
-		logFile.println(Logger::getStrDate());
-		int l = logFile.println("inizioxx00");
-		//Serial.println("written: " + String(l));
-		logFile.close();
-		//logFile.readBytes
-	}
-	//logFile.close();
-#endif
-
 }
 
-String Logger::formattedJson(String str)
-{
-
-	//char *json = str.c_str();
-
-	String pretty;
-
-	if (str == NULL || str.length() == 0)
-	{
-		return pretty;
-	}
-
-	//String str = String(json);
-	bool        quoted = false;
-	bool        escaped = false;
-	String INDENT = ".";
-	int indentval = 1;
-	int         indent = 0;
-	int         length = (int)str.length();
-	int         i;
-
-	for (i = 0; i < length; i++)
-	{
-		char ch = str[i];
-
-		switch (ch)
-		{
-		case '{':
-		case '[':
-			pretty += ch;
-
-			if (!quoted)
-			{
-				pretty += "\n";
-
-				if (!(str[i + 1] == '}' || str[i + 1] == ']'))
-				{
-					++indent;
-
-					for (int j = 0; j < indent*indentval; j++)
-					{
-						pretty += INDENT;
-					}
-				}
-			}
-
-			break;
-
-		case '}':
-		case ']':
-			if (!quoted)
-			{
-				if ((i > 0) && (!(str[i - 1] == '{' || str[i - 1] == '[')))
-				{
-					pretty += "\n";
-
-					--indent;
-
-					for (int j = 0; j < indent*indentval; j++)
-					{
-						pretty += INDENT;
-					}
-				}
-				else if ((i > 0) && ((str[i - 1] == '[' && ch == ']') || (str[i - 1] == '{' && ch == '}')))
-				{
-					for (int j = 0; j < indent*indentval; j++)
-					{
-						pretty += INDENT;
-					}
-				}
-			}
-
-			pretty += ch;
-
-			break;
-
-		case '"':
-			pretty += ch;
-			escaped = false;
-
-			if (i > 0 && str[i - 1] == '\\')
-			{
-				escaped = !escaped;
-			}
-
-			if (!escaped)
-			{
-				quoted = !quoted;
-			}
-
-			break;
-
-		case ',':
-			pretty += ch;
-
-			if (!quoted)
-			{
-				pretty += "\n";
-
-				for (int j = 0; j < indent*indentval; j++)
-				{
-					pretty += INDENT;
-				}
-			}
-
-			break;
-
-		case ':':
-			pretty += ch;
-
-			if (!quoted)
-			{
-				pretty += " ";
-			}
-
-			break;
-
-		default:
-			pretty += ch;
-
-			break;
-		}
-	}
-
-	return pretty;
-}

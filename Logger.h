@@ -41,6 +41,6 @@ public:
 	//static void sendLogToServer();
 	static String boolToString(bool res);
 
-	String formattedJson(String str);
+	//String formattedJson(String str);
 };
 

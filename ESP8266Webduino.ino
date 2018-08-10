@@ -28,60 +28,19 @@
 #ifdef ESP8266
 #include "TFTDisplay.h"
 #endif
-//#include "HttpResponse.h"
-//#include "ESPWebServer.h"
-//#include "HttpRequest.h"
 #include "ESP8266Webduino.h"
-//#include <ESP8266WiFi.h>
-
-
-
 #include "MQTTClientClass.h"
-
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
-//#include <EEPROM.h>
-//#include "EEPROMAnything.h"
-//#include "wol.h"
 #include "Logger.h"
-//#include "HttpHelper.h"
-//#include "JSON.h"
 #include "Shield.h"
 #include "Command.h"
-//#include "Program.h"
-//#include "Actuator.h"
 #include <Time.h>
 #include "TimeLib.h"
 #include "POSTData.h"
-
-//#include "JSONObject.h"
-
 #include <Wire.h>
-
-
 #include <ArduinoJson.h>          //https://github.com/bblanchon/ArduinoJson
-
 #include "Ticker.h"
-
-//void triggerUpdateTime();
-
-
-/*Ticker updatetimeTimer(triggerUpdateTime, 30000); // once, immediately
-bool timeNotUpdated = true;
-
-void triggerUpdateTime() {
-	logger.println(tag, F("\n\t >triggerUpdateTime"));
-	timeNotUpdated = true;
-}
-
-
-
-/*int sda = 0;
-int scl = 1;
-int x = 0;*/
-
-// HTTP Update
-//#include <ESP8266HTTPClient.h>
 #ifdef ESP8266
 #include <ESP8266httpUpdate.h>
 #else
@@ -94,47 +53,30 @@ int x = 0;*/
 #include <IRutils.h>
 #endif
 
+//void triggerUpdateTime();
+
+/*Ticker updatetimeTimer(triggerUpdateTime, 30000); // once, immediately
+bool timeNotUpdated = true;
+
+void triggerUpdateTime() {
+	logger.println(tag, F("\n\t >triggerUpdateTime"));
+	timeNotUpdated = true;
+}*/
+extern void resetWiFiManagerSettings();
+extern bool mqtt_publish(String topic, String message);
 
 bool checkHTTPUpdate = true; //true;
 bool mqttLoaded = false; //true;
-
-
-//
-
+bool shouldSaveConfig = true;
 WiFiManager wifiManager;
-
 ESPDisplay espDisplay;
-
-#define production "1"
-
-
-int EPROM_Table_Schema_Version = 8;
-
 Logger logger;
-
 String tag = "Webduino";
-static Shield shield;
+Shield shield;
+MQTTClientClass mqttclient;
 
-// EPROM
-const byte EEPROM_ID = 0x96; // used to identify if valid data in EEPROM
-const int ID_ADDR = 0; // the EEPROM address used to store the ID
-const int SWVERSION_ADDR = 1;
-const int CREDENTIAL_ADDR = SWVERSION_ADDR + 10; // the EEPROM address used to store the pin
-const int SETTINGS_ADDR = CREDENTIAL_ADDR + Shield::networkSSIDLen + Shield::networkPasswordLen + 2; // the EEPROM address used to store the pin
-const int SENSOR_ADDR = SETTINGS_ADDR + 1000; // the EEPROM address used to store the pin
-//int epromversion = 0;
-
-extern void resetWiFiManagerSettings();
-//extern void writeSettings();
-//extern void readSettings(JSONObject *json);
-
-// Create an instance of the server
-// specify the port to listen on as an argument
 WiFiServer server(80);
 WiFiClient client;
-
-extern bool mqtt_publish(String topic, String message);
-MQTTClientClass mqttclient;
 
 const int timeSync_interval = 60000 * 5;// *12;// 60 secondi * 15 minuti
 unsigned long lastCommandFailed = 0;
@@ -145,77 +87,11 @@ const int reboot_interval = 3600000 * 24;// 24 ore
 extern int __bss_end;
 extern void *__brkval;
 
-#ifdef dopo
-void resetEPROM() {
-	// scrive zero nel primo settore della EPROM
-	// così al riavvio successivo saranno ripristinati i valori di default
-	logger.print(tag, F("\n\n\t >>resetEPROM"));
-
-	byte hiByte;
-	byte loByte;
-	EEPROM.write(ID_ADDR, 0/*EEPROM_ID*/); // delete EEPROM_ID to indicate invalid data
-
-	EEPROM.commit();
-	logger.println(tag, F("\n\t <<resetEPROM"));
-}
-#endif
-
 void resetWiFiManagerSettings() {
 	logger.print(tag, F("\n\n\t >>resetWiFiManagerSettings"));
 	wifiManager.resetSettings();
 	logger.println(tag, F("\n\t <<resetWiFiManagerSettings"));
 }
-
-#ifdef dopo
-void writeSettings() {
-
-	logger.print(tag, F("\n"));
-	logger.println(tag, "\n\t >>writeSettings");
-
-	JSONObject json;
-
-	// server name
-	String serverName = shield.getServerName();
-	//logger.print(tag, "\n\t serverName = " + serverName);
-	json.pushString("server", serverName);
-
-	// server port
-	int serverport = shield.getServerPort();
-	//logger.print(tag, "\n\t serverport = " + String(serverport));
-	json.pushInteger("serverport", serverport);
-
-	// mqtt server name
-	String mqttServer = shield.getMQTTServer();
-	logger.print(tag, "\n\t mqttServer = " + mqttServer);
-	json.pushString("mqttserver", mqttServer);
-
-	// mqtt server port
-	int mqttport = shield.getMQTTPort();
-	//logger.print(tag, "\n\t mqttport = " + String(mqttport));
-	json.pushInteger("mqttport", mqttport);
-
-	// config mode
-	bool configmode = shield.getConfigMode();
-	//logger.print(tag, "\n\t configmode = " + String(configmode));
-	json.pushBool("configmode", configmode);
-
-	// resetsettings
-	bool resetsettings = shield.getResetSettings();
-	//logger.print(tag, "\n\t resetsettings = " + String(resetsettings));
-	json.pushBool("resetsettings", resetsettings);
-
-	// shieldName name
-	/*String shieldname = Shield::getShieldName();
-	logger.print(tag, "\n\t shieldname = " + shieldname);
-	json.pushString("shieldname", shieldname);*/
-
-	MyEPROMClass eprom;
-	//logger.print(tag, "\n" + logger.formattedJson(json.toString()));
-	eprom.writeJSON(SETTINGS_ADDR, &json);
-
-	logger.println(tag, "<<writeSettings\n");
-}
-#endif
 
 bool requestSettingsFromServer() {
 	logger.println(tag, F(">>requestSettingsFromServer"));
@@ -232,337 +108,9 @@ bool requestSettingsFromServer() {
 	return res;
 }
 
-#ifdef dopo
-void readSettings(JSONObject *json) {
-
-	logger.println(tag, F("\n\t >>readSettings"));
-
-	// server
-	String server = "";
-	if (json->has("server"))
-		server = json->getString("server");
-	//logger.print(tag, "\n\t server=" + server);
-	shield.setServerName(server);
-
-	// server port
-	int serverport = 0;
-	if (json->has("serverport"))
-		serverport = json->getInteger("serverport");
-	//logger.print(tag, "\n\t serverport=" + String(serverport));
-	shield.setServerPort(serverport);
-
-	// mqtt server
-	String mqttserver = "";
-	if (json->has("mqttserver"))
-		mqttserver = json->getString("mqttserver");
-	//logger.print(tag, "\n\t mqttserver=" + mqttserver);
-	shield.setMQTTServer(mqttserver);
-
-	// mqtt port
-	int mqttport = 0;
-	if (json->has("mqttport"))
-		mqttport = json->getInteger("mqttport");
-	//logger.print(tag, "\n\t mqttport=" + String(mqttport));
-	shield.setMQTTPort(mqttport);
-
-	// config mode
-	bool configmode = false;
-	if (json->has("configmode"))
-		configmode = json->getBool("configmode");
-	//logger.print(tag, "\n\t configmode=" + String(configmode));
-	shield.setConfigMode(configmode);
-
-	// resetsettings
-	bool resetsettings = false;
-	if (json->has("resetsettings"))
-		resetsettings = json->getBool("resetsettings");
-	//logger.print(tag, "\n\t resetsettings=" + String(resetsettings));
-	shield.setResetSettings(resetsettings);
-
-	//Shield::setServerName("giacomohome.ddns.net");
-	// Shield::setMQTTServer("giacomohome.ddns.net");
-	/*Shield::setServerName("192.168.1.3");
-	Shield::setMQTTServer("192.168.1.3");
-
-	Shield::setServerPort(8080);
-	Shield::setMQTTPort(1883);*/
-	//writeSettings();
-
-	logger.print(tag, F("\n\t <<readSettings"));
-}
-#endif
-
-#ifdef dopo
-void writeEPROM() {
-
-	logger.print(tag, F("\n\n\t >>write EPROM"));
-
-	EEPROM.write(ID_ADDR, EEPROM_ID); // write the ID to indicate valid data
-
-	MyEPROMClass eprom;
-	eprom.writeInt(SWVERSION_ADDR, EPROM_Table_Schema_Version);
-
-	writeSettings();
-
-	writeSensors();
-
-	logger.print(tag, F("\n\t <<write EPROM\n"));
-}
-#endif
-
-#ifdef dopo
-void writeSensors() {
-
-	logger.print(tag, F("\n"));
-	logger.println(tag, F(">>writeSensors"));
-
-	MyEPROMClass eprom;
-	// sensor number
-	int index = SENSOR_ADDR;
-	index += eprom.writeInt(index, shield.sensorList.length());
-
-	for (int i = 0; i < shield.sensorList.length(); i++) {
-
-#ifdef ESP8266
-		ESP.wdtFeed();
-#endif // ESP8266
-
-		logger.print(tag, F("\n\n\t sensor#: "));
-		logger.print(tag, String(i));
-		Sensor* sensor = (Sensor*)shield.sensorList.get(i);
-		JSONObject json2;
-		//sensor->getJSON(&json2);
-		//logger.print(tag, "\n" + logger.formattedJson(json2.toString()));
-
-		//index += eprom.writeJSON(index, &json2);
-	}
-
-	logger.println(tag, F("<<writeSensors\n"));
-}
-#endif
-
-#ifdef dopo
-void readEPROM() {
-
-	logger.println(tag, F("\t >>read EPROM"));
-
-	// check EPROM_ID
-	byte epromID = EEPROM.read(ID_ADDR);
-	logger.print(tag, F("\n\t epromID="));
-	logger.print(tag, String(epromID));
-
-	if (epromID != EEPROM_ID) { // reset EPROM_ID
-		logger.print(tag, F("\n\t INVALID DATA"));
-		logger.print(tag, String(epromID));
-		writeEPROM();
-		return;
-	}
-	MyEPROMClass eprom;
-	// epromversion
-	eprom.readInt(SWVERSION_ADDR, &epromversion);
-	//logger.print(tag, "\n\t epromversion=" + String(epromversion));
-
-	// load settings
-	JSONObject json;
-	eprom.readJSON(SETTINGS_ADDR, &json);
-	//logger.print(tag, "\n\n\t json:" + logger.formattedJson(json.toString()));
-	readSettings(&json);
-
-	logger.print(tag, F("\n\n\t <<read EPROM\n"));
-}
-#endif
-
-#ifdef dopo
-void readSensors() {
-
-	logger.println(tag, F(">>read Sensors"));
-
-	int index = SENSOR_ADDR;
-	MyEPROMClass eprom;
-	int sensorCount;
-	index += eprom.readInt(index, &sensorCount);
-	logger.print(tag, F("\n\t sensorCount="));
-	logger.print(tag, String(sensorCount));
-	if (sensorCount < 0 || sensorCount > Shield::maxSensorNum) {
-		logger.print(tag, F("\n\t INVALID VALUE!"));
-		sensorCount = 0;
-		return;
-	}
-
-	//SensorFactory factory;
-	shield.clearAllSensors(); // serve per inizializzare
-	for (int i = 0; i < sensorCount; i++) {
-
-		//logger.print(tag, "\n\n\t SENSOR: #" + String(i));
-
-		JSONObject jObject;
-		index += eprom.readJSON(index, &jObject);
-
-		logger.print(tag, F("\n: "));
-		logger.print(tag, logger.formattedJson(jObject.toString()));
-
-		// questo bisogna riscrivero con arduinojson
-		/*Sensor* sensor = SensorFactory::createSensor(&jObject);
-
-		if (sensor != nullptr) {
-			logger.print(tag, "\n\n\t sensor=" + sensor->toString());
-			shield.sensorList.add(sensor);
-		}*/
-	}
-
-	logger.println(tag, F("<<read Sensors\n"));
-}
-#endif
-
-#ifdef doipo
-void initEPROM()
-{
-	logger.println(tag, F(">>initEPROM"));
-
-	EEPROM.begin(4096);
-
-	byte id = EEPROM.read(ID_ADDR); // read the first byte from the EEPROM
-	if (id == EEPROM_ID)
-	{
-		readEPROM();
-	}
-	else
-	{
-		writeEPROM();
-	}
-	logger.println(tag, F("<<initEPROM"));
-}
-#endif
-
-#ifdef dopo
-void setupAP(void) {
-
-	WiFi.mode(WIFI_STA);
-	WiFi.disconnect();
-	delay(100);
-	int n = WiFi.scanNetworks();
-	logger.println(tag, "scan done");
-	if (n == 0)
-		logger.println(tag, "no networks found");
-	else
-	{
-		logger.println(tag, n);
-		logger.println(tag, " networks found");
-		for (int i = 0; i < n; ++i)
-		{
-			// Print SSID and RSSI for each network found
-			logger.print(tag, i + 1);
-			logger.print(tag, ": ");
-			logger.print(tag, WiFi.SSID(i));
-			logger.print(tag, " (");
-			logger.print(tag, WiFi.RSSI(i));
-			logger.print(tag, ")");
-#ifdef ESP8266
-			logger.println(tag, (WiFi.encryptionType(i) == ENC_TYPE_NONE) ? " " : "*");
-#endif
-			delay(10);
-		}
-	}
-	logger.print(tag, "\n");
-	String st = "<ul>";
-	for (int i = 0; i < n; ++i)
-	{
-		// Print SSID and RSSI for each network found
-		st += "<li>";
-		st += i + 1;
-		st += ": ";
-		st += WiFi.SSID(i);
-		st += " (";
-		st += WiFi.RSSI(i);
-		st += ")";
-#ifdef ESP8266
-		st += (WiFi.encryptionType(i) == ENC_TYPE_NONE) ? " " : "*";
-#endif
-		st += "</li>";
-	}
-	st += "</ul>";
-	delay(100);
-
-	logger.println(tag, "input SSID");
-	bool readInput = true;
-	while (readInput) {
-		while (Serial.available()) {
-			siid = Serial.readString();
-			readInput = false;
-		}
-	}
-	logger.println(tag, siid);
-
-	logger.println(tag, "input pass");
-	readInput = true;
-	while (readInput) {
-		while (Serial.available()) {
-			pass = Serial.readString();
-			readInput = false;
-		}
-	}
-	logger.println(tag, pass);
-
-	//saveCredentials(CREDENTIAL_ADDR);
-
-	String ssidName = String(ssidAP);
-	for (int i = 0; i < sizeof(shield.MAC_array); ++i) {
-		if (i > 0)
-			ssidName += ":";
-		ssidName += shield.MAC_array[i];
-	}
-	char buffer[100];
-	ssidName.toCharArray(buffer, 100);
-	logger.print(tag, "\nssidAP buffer= ");
-	logger.println(tag, buffer);
-	WiFi.softAP(buffer, passwordAP);
-}
-#endif
-
-#ifdef dopo
-void checkOTA()
-{
-	// Port defaults to 8266
-	// ArduinoOTA.setPort(8266);
-
-	// Hostname defaults to esp8266-[ChipID]
-	// ArduinoOTA.setHostname("myesp8266");
-
-	// No authentication by default
-	// ArduinoOTA.setPassword((const char *)"123");
-
-	ArduinoOTA.onStart([]() {
-		Serial.println("Start");
-	});
-	ArduinoOTA.onEnd([]() {
-		Serial.println("\nEnd");
-	});
-	ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-		Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
-	});
-	ArduinoOTA.onError([](ota_error_t error) {
-		Serial.printf("Error[%u]: ", error);
-		if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
-		else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
-		else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
-		else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
-		else if (error == OTA_END_ERROR) Serial.println("End Failed");
-	});
-	ArduinoOTA.begin();
-	Serial.println("Ready");
-	Serial.print("IP address: ");
-	Serial.println(WiFi.localIP());
-
-	//ArduinoOTA.handle();  uesta chiamata deve essere messa in loop()
-}
-#endif
-
-bool shouldSaveConfig = true;
-
 void saveConfigCallback() {
 	logger.println(tag, F("Should save config"));
 	shouldSaveConfig = true;
-
 }
 
 bool testWifi() {
@@ -649,28 +197,17 @@ bool testWifi() {
 
 void messageReceived(char* topic, byte* payload, unsigned int length) {
 
-	//logger.print(tag, "\n");
 	logger.println(tag, F(">>messageReceived"));
 	logger.print(tag, F("\n\t topic="));
 	logger.print(tag, String(topic));
 
-	/*if (ESP.getFreeHeap() < 2000) {
-		logger.println(tag, F("\n\n\n\LOW MEMORY"));
-		logger.printFreeMem(tag, "");
-		logger.println(tag, F("\n\n\n\LOW MEMORY"));
-		delay(1000);
-		logger.printFreeMem(tag, "");
-		return;
-	}*/
 	String message = "";
 	for (int i = 0; i < length; i++) {
 		message += char(payload[i]);
 	}
-	//logger.print(tag, "\n\t message=" + message);
 	shield.parseMessageReceived(String(topic), message);
 	logger.println(tag, F("<<messageReceived"));
 }
-
 
 bool reconnect() {
 	logger.print(tag, F("\n\n\t>>reconnect"));
@@ -712,9 +249,6 @@ bool reconnect() {
 
 void readConfig() {
 	
-	//clean FS, for testing
-	//SPIFFS.format();
-
 	//read configuration from FS json
 	Serial.println("mounting FS...");
 
@@ -791,7 +325,6 @@ void readConfig() {
 					//clean FS, for testing
 					SPIFFS.format();
 					writeConfig();
-					//ESP.restart();
 				}
 			}
 		}
@@ -799,14 +332,9 @@ void readConfig() {
 	else {
 		Serial.println("failed to mount FS");
 	}
-	//end read
 }
 
-
 void writeConfig() {
-
-	//clean FS, for testing
-	//SPIFFS.format();
 
 	Serial.println("\nsaving config");
 	DynamicJsonBuffer jsonBuffer;
@@ -833,9 +361,6 @@ void writeConfig() {
 	//end save
 }
 
-
-
-
 void setup()
 {
 	Serial.begin(115200);
@@ -849,12 +374,7 @@ void setup()
 	logger.print(tag, F("\n\n *******************RESTARTING************************"));
 
 	shield.init();
-
-	//writeConfig();
-
 	readConfig();
-
-
 
 #ifdef ESP8266
 	shield.drawString(0, 0, F("restarting.."), 1, ST7735_WHITE);
@@ -882,39 +402,26 @@ void setup()
 	shield.setEvent(F("read eprom.."));
 	shield.invalidateDisplay();
 
-	//initEPROM();
-
-	// disabilita il watchdog sw e abilita quello hw
-#ifdef ESP8266
-	ESP.wdtDisable();
-#endif
-
 	// Connect to WiFi network
 	if (testWifi()) {
 
 		shield.setEvent(F("connecting wifi.."));
 		shield.invalidateDisplay();
 
-		ESP.wdtFeed();
-		//checkHTTPUpdate = false;
 		checkForSWUpdate();
+
+#ifdef ESP8266
+		ESP.wdtDisable();
+#endif
+		ESP.wdtFeed();		
 
 		shield.localIP = WiFi.localIP().toString();
 		logger.print(tag, shield.localIP);
 
-		mqttLoaded = false;
-
+		//mqttLoaded = false;
 		shield.setEvent(F("Init MQTT"));
 		initMQTTServer();
-		mqttLoaded = true;
-
-		//readConfig();
-
-		//shield.setEvent(F("Init MQTT"));
-		//logger.print(tag, "\n\n\tINIT MQTT");
-		//initMQTTServer();
 		//mqttLoaded = true;
-		//requestSettingsFromServer();
 	}
 
 	logger.println(tag, F("\n\t<<setup\n\n"));
@@ -1006,15 +513,7 @@ void loop()
 		checkHTTPUpdate = false;
 		checkForSWUpdate();
 	}*/
-
-	/*if (!mqttLoaded) {
-		shield.setEvent(F("Init MQTT"));
-		initMQTTServer();
-		mqttLoaded = true;
-		return;
-	}*/
-
-
+	
 #endif // ESP8266
 	shield.setFreeMem(ESP.getFreeHeap());
 	if (ESP.getFreeHeap() < 2000) {
@@ -1036,9 +535,7 @@ void loop()
 		logger.println(tag, F("\n\n\n\-----------CHECK HEALTH TIMEOUT REBOOT--------\n\n"));
 		ESP.restart();
 	}
-
-
-
+	
 #ifdef ESP8266
 	wdt_enable(WDTO_8S);
 #endif
