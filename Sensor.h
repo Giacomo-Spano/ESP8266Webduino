@@ -3,8 +3,6 @@
 #include "Logger.h"
 #include "ObjectClass.h"
 #include "List.h"
-#include "JSONObject.h"
-#include "JSONArray.h"
 #include "CommandResponse.h"
 #include <ArduinoJson.h>          //https://github.com/bblanchon/ArduinoJson
 
@@ -27,6 +25,7 @@ public:
 	~Sensor();
 
 	const String STATUS_IDLE = "idle";
+	const String STATUS_OFFLINE = "offline";
 
 	List childsensors;
 	int sensorid;
@@ -35,7 +34,7 @@ public:
 	bool enabled;
 	uint8_t pin;
 	String address;
-	String status = STATUS_IDLE;
+	String status = STATUS_OFFLINE;
 
 	bool testMode = false;
 	bool lastUpdateStatusFailed = false;

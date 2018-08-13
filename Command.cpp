@@ -33,12 +33,13 @@ bool Command::requestShieldSettings(String MACAddress)
 
 bool Command::requestTime(String macAddress)
 {
-	logger.print(tag, F("\n\t>> requestTime\n"));
+	logger.print(tag, F("\n\t >>requestTime\n"));
 
 	String topic = "toServer/shield/time";
 	String json = macAddress;
 	bool res = mqtt_publish(topic, String(json));
-	logger.print(tag, F("\n\t<< requestTime\n"));
+	logger.print(tag, F("\n\t <<requestTime res="));
+	logger.print(tag, Logger::boolToString(res));
 	return res;
 }
 

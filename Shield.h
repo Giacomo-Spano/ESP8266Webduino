@@ -43,15 +43,28 @@ public:
 	static const char networkPasswordLen = 96;// = "password";
 
 	bool settingFromServerReceived = false;
-	bool settingFromServerRequested = false;
-	unsigned long settingRequestedTime;
-	unsigned long lastTimeSync = 0;
-	bool timeLoaded = false;
+	//bool settingFromServerRequested = false;
+	//unsigned long settingRequestedTime;
+	
+	unsigned long settingsRequest_interval = 30 * 60 * 1000;
+	const int settingsRequest_timeout = 1 * 60 * 1000;
+	unsigned long lastSettingRequest = 0;
+	bool settingsNeedToBeUpdated = true;
+	bool settingsRequestInprogress = false;
+
+	const int timeSync_interval = 5*60*1000;// *12;// 60 secondi * 15 minuti
+	const int timeRequest_timeout = 1 * 60 * 1000;
+	unsigned long lastTimeRequest = 0;
+	bool timeNeedToBeUpdated = true;
+	bool timeRequestInprogress = false;
+
+	//bool timeUpdated = false;
+	unsigned long lastTimeUpdate = 0; // usato dall'orologio per aggiornare il display ogni secondo
 
 	int id;// = 0; // inizializzato a zero perch� viene impostato dalla chiamata a registershield
 	String powerStatus; // power
 	String lastRestartDate;
-	unsigned long lastTimeUpdate = 0;
+	
 
 	static const int maxSensorNum = 10;
 
@@ -70,6 +83,9 @@ public:
 	void drawSWVersion();
 	void clearScreen();
 	void invalidateDisplay();
+
+	void checkTimeUpdateStatus();
+	void checkSettingResquestStatus();
 
 	void setFreeMem(int mem);
 
@@ -98,6 +114,7 @@ protected:
 
 	//bool temperatureChanged = false; // indica se la temperatura � cambiata dall'ultima chiamata a flash()
 	void checkSensorsStatus();	
+
 	
 	ESPDisplay display;
 #ifdef ESP8266
@@ -112,19 +129,20 @@ public:
 	~Shield();
 	void init();
 	String getJson();
-	String getSensorsStatusJson();
+	//String getSensorsStatusJson();
 	//bool _getSensorsStatusJson(char* payload);
-	String getSettingsJson();
+	//String getSettingsJson();
 	//void registerShield();
 	void checkStatus();	
 	void setStatus(String txt);
 	void setEvent(String txt);
 	//bool receiveCommand(String jsonStr);
 	bool receiveCommand(String jsonStr);
-	bool updateTime();
+	bool requestTime();
+	bool requestSettingsFromServer();
 	
-	unsigned char MAC_array[6];
-	char MAC_char[18];
+	//unsigned char MAC_array[6];
+	//char MAC_char[18];
 	String localIP;
 	
 	//void addSensor(Sensor* pSensor);
@@ -179,9 +197,6 @@ public:
 	static String getStrPin(uint8_t pin)
 	{
 #ifdef ESP8266
-
-
-
 		if (pin == D0)
 			return "D0";
 		if (pin == D1)

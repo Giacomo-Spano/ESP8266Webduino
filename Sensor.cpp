@@ -125,6 +125,10 @@ void Sensor::init()
 
 bool Sensor::checkStatusChange()
 {
+	String oldStatus = status;
+	if (!status.equals(oldStatus))
+		return true;
+	return false;
 }
 
 String Sensor::getStatusText()

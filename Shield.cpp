@@ -20,7 +20,7 @@ String Shield::tag = "Shield";
 Shield::Shield()
 {
 	lastRestartDate = "";
-	swVersion = "1.68";
+	swVersion = "1.70";
 
 	id = 0; //// inizializzato a zero perch� viene impostato dalla chiamata a registershield
 	localPort = 80;
@@ -199,7 +199,11 @@ void Shield::parseMessageReceived(String topic, String message) {
 	else if (topic.equals(str + F("/time"))) { // risposta a time
 		logger.print(tag, F("\n\t received time"));
 		setEvent(F("<-received time"));
-		lastTimeSync = millis();
+
+		lastTimeRequest = millis();
+		timeNeedToBeUpdated = false;
+		bool timeRequestInprogress = false;
+
 		time_t t = (time_t)atoll(message.c_str());
 		logger.print(tag, F("\n\t time="));
 		logger.print(tag, String(t));
@@ -393,7 +397,7 @@ String Shield::getJson() {
 	// andrebbe trasformato in JSONObject
 	String str = "{";
 
-	str += "\"MAC\":\"" + String(MAC_char) + "\"";
+	str += "\"MAC\":\"" + getMACAddress() + "\"";
 	str += ",\"swversion\":\"" + swVersion + "\"";
 	str += ",\"lastreboot\":\"" + lastRestartDate + "\"";
 	str += ",\"lastcheckhealth\":\"" + String(lastCheckHealth) + "\"";
@@ -465,25 +469,6 @@ void Shield::checkStatus()
 	}
 	display.update();*/
 
-
-	String date = Logger::getStrDate();
-	//logger.println(tag, "dater:" + date);
-	//if (!date.equals(oldDate)) {
-		//tftDisplay.drawString(0, 0, Logger::getStrTimeDate(), 1, ST7735_WHITE);
-		//tftDisplay.drawString(20, 16, Logger::getStrDayDate() + " ", 1, ST7735_WHITE);
-	//}
-	//oldDate = date;
-
-	//tftDisplay.clear();
-	//int textWidth = 5;
-	//int textHeight = 8;
-
-	//tftDisplay.drawString(0, 0, Logger::getStrDayDate() + " ", 1, ST7735_WHITE);
-	//tftDisplay.drawString(0, textHeight, Logger::getStrTimeDate() + " ", 2, ST7735_WHITE);
-
-	//tftDisplay.drawString(0, textHeight*(2 + 1), phearterActuator->getStatusName(), 2, ST7735_WHITE);
-
-	//display.update();
 }
 
 void Shield::checkSensorsStatus()
@@ -497,48 +482,110 @@ void Shield::checkSensorsStatus()
 		Sensor* sensor = (Sensor*)sensorList.get(i);
 		if (!sensor->enabled)
 			continue;
-		//logger.print(tag, "\n\t sensor->name: " + String(sensor->sensorname));
+
+		bool sendUpdate = false;
+
 		bool res = sensor->checkStatusChange();
-
-		unsigned long currMillis = millis();
-		unsigned long timeDiff = currMillis - sensor->lastUpdateStatus;
-
-		// Invia il comando se è cambiato lo stato del sensore
-		// oppure se l’ultimo invio è fallito 
-		// oppure se è passato il timeout dall’ultimo invio
-		if (res || /*sensor->lastUpdateStatusFailed ||*/ timeDiff > sensor->updateStatus_interval) {
-			// eliminato reinvio su LasUpdateStatusFailed perchè va in loop infinito
+		if (res) {
+			sendUpdate = true;
 			setEvent(F("SENSOR STATUS CHANGED"));
+			logger.print(tag, F("\n\t status changed"));
+			logger.print(tag, String(sensor->status));
+		}
 
-			logger.println(tag, F(">>SEND SENSOR STATUS"));
-			logger.print(tag, F("\n\t sensor->name: "));
-			logger.print(tag, String(sensor->sensorname));
-			if (res) {
-				logger.print(tag, F("\n\t status changed"));
-				logger.print(tag, String(sensor->status));
-			}
-			if (timeDiff > sensor->updateStatus_interval)
-				logger.print(tag, F("\n\t updateStatus_interval timeout"));
+		unsigned long timeDiff = millis() - sensor->lastUpdateStatus;
+		if (timeDiff > sensor->updateStatus_interval) {
+			setEvent(F("SENSOR STATUS UPDATE TIMEOUT"));
+			logger.print(tag, F("\n\t updateStatus_interval timeout"));
+			sendUpdate = true;
+		}
 
-			//sensorStatusChanged = true;
+		if (sendUpdate) {
 			sensor->lastUpdateStatus = millis();
-
 			Command command;
 			bool res = command.sendSensorStatus(sensor->getJSON());
-			sensor->lastUpdateStatusFailed = !res;
 			logger.println(tag, F("<<SEND SENSOR STATUS"));
 		}
 	}
 }
 
-bool Shield::updateTime() {
-	logger.println(tag, F(">>requestTimeFromServer"));
+bool Shield::requestTime() {
+	logger.print(tag, F("\n\t >>requestTimeFromServer"));
+	setEvent(F("request server setting.."));
+	lastTimeRequest = millis();
 	Command command;
 	bool res = command.requestTime(getMACAddress());
+	if (res)
+		timeRequestInprogress = true;
+	else
+		timeRequestInprogress = false;
 	logger.print(tag, F("\n\t <<requestTimeFromServer res="));
 	logger.print(tag, Logger::boolToString(res));
 	return res;
 }
+
+void Shield::checkTimeUpdateStatus() {
+	unsigned long timediff;
+
+	timediff = millis() - lastTimeRequest;
+	if (timediff > timeSync_interval) {
+		timeNeedToBeUpdated = true;
+	}
+
+	if (timeRequestInprogress && timediff > timeRequest_timeout) {
+		timeNeedToBeUpdated = true;
+	}
+
+	if (timeNeedToBeUpdated && !timeRequestInprogress) {
+		logger.println(tag, F("\n\n\n\-----------TIME UPDATE TIMEOUT --------\n\n"));
+		setEvent(F("Request time"));
+		bool res = requestTime();
+		if (!res) { // se fallisce rirpova tra un minuto
+			logger.println(tag, F("\n request setting failed"));
+			lastTimeRequest = millis() - timeSync_interval + 1 * 60 * 1000;
+		}
+	}
+}
+
+void Shield::checkSettingResquestStatus() {
+
+	unsigned long timediff = millis() - lastSettingRequest;
+	if (timediff > settingsRequest_interval) {
+		settingsNeedToBeUpdated = true;
+	}
+
+	if (settingsRequestInprogress && timediff > settingsRequest_timeout) {
+		timeNeedToBeUpdated = true;
+	}
+
+	if (settingsNeedToBeUpdated && !settingsRequestInprogress) {
+		logger.println(tag, F("\n\n\n\-----------SERVER SETTINGS TIMEOUT--------\n\n"));
+		setEvent(F("Request setting"));
+		bool res = requestSettingsFromServer();
+		if (!res) { // se fallisce carica i dati da file
+					// e riprova al prossimo timeout
+			logger.println(tag, F("\n request setting failed"));
+			lastSettingRequest = millis() - settingsRequest_interval + 1 * 60 * 1000;
+			readSensorFromFile();
+		}
+	}
+}
+
+bool Shield::requestSettingsFromServer() {
+	logger.print(tag, F("\n\t >>requestSettingsFromServer"));
+	setEvent(F("request server setting.."));
+	lastSettingRequest = millis();
+	Command command;
+	bool res = command.requestShieldSettings(getMACAddress());
+	if (res)
+		settingsRequestInprogress = true;
+	else
+		settingsRequestInprogress = false;
+	logger.print(tag, F("\n\t <<requestSettingsFromServer res="));
+	logger.print(tag, Logger::boolToString(res));
+	return res;
+}
+
 
 void Shield::readSensorFromFile() {
 	if (SPIFFS.begin()) {

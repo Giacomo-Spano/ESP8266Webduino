@@ -171,9 +171,9 @@ String Logger::getStrTimeDate() {
 }
 
 String Logger::boolToString(bool val) {
-	String str = "true";
-	if (val)
-		str = "false";
+	String str = F("true");
+	if (!val)
+		str = F("false");
 	return str;
 }
 
