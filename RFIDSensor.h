@@ -11,7 +11,7 @@
 #include <Arduino.h>
 #include "Logger.h"
 #include "CommandResponse.h"
-
+#include <ArduinoJson.h> 
 #include <SPI.h>
 #include <MFRC522.h>
 
@@ -32,7 +32,8 @@ private:
 	static String tag;
 	static Logger logger;
 
-	virtual String getJSONFields();
+	virtual void getJson(JsonObject& json);
+	virtual bool receiveCommand(String command, int actuatorId, String uuid, String json);
 	bool openStatus = false;
 	bool testOpenStatus;
 	MFRC522* mfrc522;   // Create MFRC522 instance.

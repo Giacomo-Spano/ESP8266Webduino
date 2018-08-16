@@ -42,8 +42,8 @@ private:
 #ifdef ESP8266
 
 
-
-	virtual String getJSONFields();
+	virtual void getJson(JsonObject& json);
+	//virtual String getJSONFields();
 	
 	// Use turn on the save buffer feature for more complete capture coverage.
 	unsigned long startMillis = 0;

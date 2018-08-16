@@ -3,7 +3,6 @@
 #include <Arduino.h>
 #include "Logger.h"
 #include "Shield.h"
-#include "JSON.h"
 
 class Command
 {
@@ -18,9 +17,9 @@ public:
 
 	Command();
 	~Command();
-	bool requestShieldSettings(String MACAddress);
+	bool requestShieldSettings(String MACAddress, String rebootreason);
 	bool requestTime(String macAddress);
-	boolean sendSensorStatus(String json);
+	boolean sendSensorStatus(JsonObject& json);
 	boolean sendShieldStatus(String json);
 	boolean requestZoneTemperature(int id, String json);
 };

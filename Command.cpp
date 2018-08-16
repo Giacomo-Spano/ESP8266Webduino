@@ -1,7 +1,6 @@
 #include "Command.h"
 //#include "Program.h"
 #include "Util.h"
-#include "JSONObject.h"
 
 extern bool mqtt_publish(String topic, String message);
 //extern bool _mqtt_publish(char* topic, char* payload);
@@ -17,14 +16,24 @@ Command::~Command()
 {
 }
 
-bool Command::requestShieldSettings(String MACAddress)
+bool Command::requestShieldSettings(String MACAddress, String rebootreason)
 {
-	logger.print(tag, F("\n\t>>Command::requestShieldSettings"));
+	logger.print(tag, F("\n\t>>Command::requestShieldSettings "));
+	logger.print(tag, MACAddress);
+
 
 	bool res = false;
-	String topic = "toServer/shield/loadsettings";// +Shield::getMACAddress();
-	String json = MACAddress;
-	res = mqtt_publish(topic, String(json));
+	String topic = "toServer/shield/loadsettings";
+
+	DynamicJsonBuffer jsonBuffer;
+	JsonObject& json = jsonBuffer.createObject();
+	json["rebootreason"] = rebootreason;
+	json["MACAddress"] = MACAddress;
+	logger.printJson(json);
+
+	String jsonStr;
+	json.printTo(jsonStr);
+	res = mqtt_publish(topic, jsonStr);
 	if (!res)
 		logger.print(tag, F("\n\t<<Command::requestShieldSettings failed"));
 	logger.print(tag, F("\n\t<<Command::requestShieldSettings"));
@@ -43,13 +52,16 @@ bool Command::requestTime(String macAddress)
 	return res;
 }
 
-boolean Command::sendSensorStatus(String json)
+boolean Command::sendSensorStatus(JsonObject& json)
 {
 	logger.print(tag, F("\n\t >>Command::sendSensorStatus"));
 
 	bool res = false;
 	String topic = "toServer/shield/sensor/update";
-	res = mqtt_publish(topic, String(json));
+	String jsonStr;
+	logger.print(tag, F("\n\t jsonStr="));
+	json.printTo(jsonStr);
+	res = mqtt_publish(topic, jsonStr);
 	logger.print(tag, F("\n\t <<Command::sendSensorStatus res="));
 	logger.print(tag, Logger::boolToString(res));
 	return res;

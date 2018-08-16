@@ -7,7 +7,6 @@
 #include "RFIDSensor.h"
 #include "IRSensor.h"
 #include "IRReceiveSensor.h"
-#include "JSONObject.h"
 #include "Shield.h"
 //#include "Util.h"
 //#include "ESP8266Webduino.h"

@@ -14,35 +14,7 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include "Logger.h"
-#include "JSON.h"
-#include "JSONArray.h"
 
-/*class TemperatureSensorOld {
-
-public:
-	String name = "Sensor name";
-	int id = 0;
-	float temperature;
-	float avTemperature;
-
-	uint8_t sensorAddr[8]; // indirizzi fisico sensore
-
-	String getPhisicalAddress() {
-
-		String str = "";
-		for (int i = 0; i < 8; i++) {
-
-			char temp[30];
-			sprintf(temp, "%02X", sensorAddr[i]);
-			str += String(temp);
-
-			if (i < 7) {
-				str += ":";
-			}
-		}
-		return str;
-	}
-};*/
 
 class OnewireSensor :
 	public Sensor
@@ -53,8 +25,6 @@ private:
 
 	OneWire* oneWirePtr;
 	DallasTemperature* pDallasSensors;
-
-	virtual String getJSONFields();
 
 public:
 	//virtual bool getJSON(JSONObject *jObject);
@@ -72,6 +42,7 @@ public:
 	virtual bool checkStatusChange();
 
 	void beginTemperatureSensors();
+	virtual void getJson(JsonObject& json);
 
 	static const int maxTempSensors = 10; // max num sensori onewire sullo stesso pin
 	//TemperatureSensorOld temperatureSensors[maxTempSensors];

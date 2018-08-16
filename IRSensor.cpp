@@ -29,7 +29,18 @@ IRSensor::~IRSensor()
 {
 }
 
-String IRSensor::getJSONFields() {
+
+/*JsonObject& IRSensor::getJson() {
+	
+	logger.print(tag, F("\n\t >>IRSensor::getJson"));
+
+	JsonObject& json = Sensor::getJson();
+	logger.print(tag, F("\n\t >>IRSensor::getJson"));
+
+	return json;
+}*/
+
+/*String IRSensor::getJSONFields() {
 
 	//logger.println(tag, ">>IRSensor::getJSONFields");
 	String json = "";
@@ -37,7 +48,7 @@ String IRSensor::getJSONFields() {
 	// specific field
 	//logger.println(tag, "<<IRSensor::getJSONFields");
 	return json;
-}
+}*/
 
 void IRSensor::init()
 {
@@ -178,8 +189,6 @@ bool IRSensor::receiveCommand(String command, int id, String uuid, String jsonSt
 	logger.print(tag, "\n\t <<IRSensor::receiveCommand=");
 	return res;
 }
-
-
 
 bool IRSensor::sendCode(String codetype, uint64_t code, int bit) {
 

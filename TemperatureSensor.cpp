@@ -35,43 +35,7 @@ String TemperatureSensor::getStatusText()
 	return text;
 }
 
-#ifdef dopo
-bool TemperatureSensor::getJSON(JSONObject *jObject) {
-
-	logger.print(tag, "\n");
-	logger.println(tag, F(">>getJSON"));
-
-	bool res = Sensor::getJSON(jObject);
-	if (!res) return false;
-
-	jObject->pushInteger("id", id);
-	jObject->pushString("phisicaladdr", getPhisicalAddress());
-	jObject->pushFloat("temperature", temperature);
-	jObject->pushFloat("avtemperature", avTemperature);
-	
-	logger.println(tag, F("<<getJSON"));
-
-	return res;
+void TemperatureSensor::getJson(JsonObject& json) {
+	Sensor::getJson(json);
+	json["temp"] = temperature;
 }
-#endif
-
-String TemperatureSensor::getJSONFields() {
-
-	//logger.println(tag, ">>getJSONFields");
-	String json = "";
-	json += Sensor::getJSONFields();
-
-	// specific field
-	/*json += String(",\"id\":");
-	json += String(id) + "";
-	json += ",\"phisicaladdr\":";
-	json += "\"" + getPhisicalAddress() + "\"";*/
-	json += ",\"temp\": ";
-	json += String(temperature);
-	/*json += ",\"avtemperature\": ";
-	json += String(avTemperature);*/
-
-	//logger.println(tag, "<<getJSONField" + json);
-	return json;
-}
-

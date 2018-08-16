@@ -13,6 +13,7 @@
 #include <Arduino.h>
 #include "Logger.h"
 #include "CommandResponse.h"
+#include <ArduinoJson.h> 
 
 class DoorSensor :
 	public Sensor
@@ -21,7 +22,7 @@ private:
 	static String tag;
 	static Logger logger;
 
-	virtual String getJSONFields();
+	virtual void getJson(JsonObject& json);
 	
 public:
 	const String STATUS_DOOROPEN = "dooropen";
@@ -31,7 +32,6 @@ public:
 	~DoorSensor();
 
 	virtual void init();	
-	//virtual bool getJSON(JSONObject *jObject);
 	virtual bool checkStatusChange();
 	bool receiveCommand(String command, int id, String uuid, String json);
 };

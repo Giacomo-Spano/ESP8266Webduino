@@ -3,6 +3,7 @@
 #include <Time.h>
 #include "TimeLib.h"
 #include "FS.h"
+#include <ArduinoJson.h>          //https://github.com/bblanchon/ArduinoJson
 
 
 class Logger
@@ -33,6 +34,7 @@ public:
 	void print(String tag, int val);
 	void println(String tag, int val);
 	void printFreeMem(String tag, String txt);
+	void printJson(JsonObject& json);
 		
 	static String getStrDate();
 	static String getStrDayDate();

@@ -46,17 +46,7 @@ String Sensor::toString()
 	return str;
 }
 
-String Sensor::getJSONFields() {
-	//logger.println(tag, ">>getJSONFields");
-	String json = "";
-	json += "\"sensorid\":" + String(sensorid) + ",";
-	json += "\"status\":\"" + status + "\",";
-	json += "\"addr\":\"" + address + "\"";
-	//logger.println(tag, ">>getJSONFields" + json);
-	return json;
-}
-
-String Sensor::getChildren() {
+/*String Sensor::getChildren() {
 
 	//logger.print(tag, "\n");
 	//logger.println(tag, ">>getChildren child num=" + String(childsensors.length()));
@@ -76,7 +66,7 @@ String Sensor::getChildren() {
 	}
 	//logger.println(tag, "<<getChildren" + json);
 	return json;
-}
+}*/
 
 Sensor * Sensor::getSensorFromId(int id)
 {
@@ -101,18 +91,24 @@ Sensor * Sensor::getSensorFromId(int id)
 	return nullptr;
 }
 
-String Sensor::getJSON() {
-	//logger.println(tag, ">>getJSON");
+void Sensor::getJson(JsonObject& json) {
 
-	String json = "{";
-	json += getJSONFields();
+	json["sensorid"] = sensorid;
+	json["status"] = status;
+	json["addr"] = address;
+	logger.printJson(json);
 
-	// child sensors
-	json += getChildren();
-	json += "}";
-
-	//logger.println(tag, "<<getJSON " + json);
-	return json;
+	
+	if (childsensors.length() > 0) {
+		JsonArray& children = json.createNestedArray("children");
+		for (int i = 0; i < childsensors.length(); i++) {
+			Sensor* child = (Sensor*)childsensors.get(i);
+			DynamicJsonBuffer jsonBuffer;
+			JsonObject& childjson = jsonBuffer.createObject();
+			child->getJson(childjson);
+			children.add(child);
+		}
+	}
 }
 
 void Sensor::loadChildren(JsonArray& json)
@@ -136,15 +132,21 @@ String Sensor::getStatusText()
 	return status;
 }
 
-bool Sensor::receiveCommand(String command, int id, String uuid, String json)
+bool Sensor::receiveCommand(String command, int id, String uuid, String jsoncmd)
 {
 	logger.print(tag, F("\n\t >>Sensor::receiveCommand"));
 	//logger.print(tag, "\n\t command=" + command);
 	if (command.equals("requestsensorstatus")) {// richiesta stato di un singolo sensore
 		logger.print(tag, F("\n\t requestsensorstatus"));
-		//logger.print(tag, "\n\t sensorname=" + sensorname);
-		logger.print(tag, F("\n\t <<Sensor::receiveCommand"));
-		return sendCommandResponse(uuid, getJSON());
+		DynamicJsonBuffer jsonBuffer;
+		JsonObject& jsonresult = jsonBuffer.createObject();
+		getJson(jsonresult);
+		String jsonStr;
+		logger.printJson(jsonresult);
+		jsonresult.printTo(jsonStr);
+		logger.print(tag, F("\n\t jsonstr="));
+		logger.print(tag, jsonStr);
+		return sendCommandResponse(uuid, jsonStr);
 	}
 	logger.print(tag, F("\n\t <<Sensor::receiveCommand"));
 	return false;

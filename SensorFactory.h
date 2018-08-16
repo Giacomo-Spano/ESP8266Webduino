@@ -10,7 +10,6 @@
 #include "Sensor.h"
 #include <Arduino.h>
 #include "Logger.h"
-#include "JSONObject.h"
 #include <ArduinoJson.h>          //https://github.com/bblanchon/ArduinoJson
 
 class SensorFactory

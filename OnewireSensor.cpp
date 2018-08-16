@@ -6,7 +6,6 @@
 #include "Util.h"
 #include "ESP8266Webduino.h"
 #include "Shield.h"
-#include "JSONArray.h"
 #include "TemperatureSensor.h"
 #include "SensorFactory.h"
 
@@ -63,54 +62,6 @@ void OnewireSensor::loadChildren(JsonArray& jsonarray) {
 	childsensors.show();
 	//logger.println(tag, "<<loadChildren");
 }
-
-#ifdef dopo
-void OnewireSensor::loadChildren(JSONArray& jarray) {
-
-	//logger.println(tag, ">>loadChildren jarray=" + jarray.toString());
-
-	childsensors.show();
-		
-	String jsonChild = jarray.getFirst();
-	int current = 0;
-	while (jsonChild != "") {
-
-		Sensor* sensor = (Sensor*)childsensors.get(current++);
-		if (sensor == nullptr) break;
-		
-		JSONObject json(jsonChild);
-		if (json.has("name")) {
-			String name = json.getString("name");
-			//logger.print(tag, "\n\t name=" + name);
-			sensor->sensorname = name;
-		}
-		if (json.has("id")) {
-			int sensorid = json.getInteger("id");
-			//logger.print(tag, "\n\t sensorid=" + sensorid);
-			sensor->sensorid = sensorid;
-		}
-		jsonChild = jarray.getNext();
-	}
-
-	childsensors.show();
-	//logger.println(tag, "<<loadChildren");
-}
-#endif
-
-#ifdef dopo
-bool OnewireSensor::getJSON(JSONObject * jObject) {
-
-	//logger.print(tag, "\n");
-	//logger.println(tag, ">>getJSON");
-
-	bool res = Sensor::getJSON(jObject);
-	if (!res) return false;
-
-
-	//logger.println(tag, "<<getJSON");
-	return true;
-}
-#endif
 
 OnewireSensor::~OnewireSensor()
 {
@@ -276,7 +227,12 @@ bool OnewireSensor::readTemperatures() {
 	return res;
 }
 
-String OnewireSensor::getJSONFields() {
+void OnewireSensor::getJson(JsonObject& json) {
+	Sensor::getJson(json);
+	//json["codetype"] = codetype;
+}
+
+/*String OnewireSensor::getJSONFields() {
 
 	//logger.println(tag, ">>getJSONFields");
 	String json = "";
@@ -286,7 +242,7 @@ String OnewireSensor::getJSONFields() {
 
 	//logger.println(tag, "<<getJSONField");
 	return json;
-}
+}*/
 
 /*void OnewireSensor::addTemperatureSensorsFromJson(JSON sensorJson) {
 	// QUETSA CHI LA CHIAMA?? DA ELIMINARE

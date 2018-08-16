@@ -9,36 +9,9 @@ extern bool mqtt_publish(String topic, String message);
 Logger DoorSensor::logger;
 String DoorSensor::tag = "DoorSensor";
 
-#ifdef dopo
-bool DoorSensor::getJSON(JSONObject *jObject)
-{
-	//logger.print(tag, "\n");
-	//logger.println(tag, ">>DoorSensor::getJSON");
-
-	bool res = Sensor::getJSON(jObject);
-	if (!res) return false;
-
-	//res = jObject->pushBool("open", openStatus);
-
-	//logger.println(tag, "<<DoorSensor::getJSON");
-	return true;
-}
-#endif
-
-String DoorSensor::getJSONFields() {
-
-	//logger.println(tag, ">>DoorSensor::getJSONFields");
-	String json = "";
-	json += Sensor::getJSONFields();
-
-	// specific field
-	/*if (openStatus)
-		json += String(",\"open\":true");
-	else
-		json += String(",\"open\":false");*/
-
-		//logger.println(tag, "<<DoorSensor::getJSONFields");
-	return json;
+void DoorSensor::getJson(JsonObject& json) {
+	Sensor::getJson(json);
+	//json["card"] = lastcard;
 }
 
 DoorSensor::DoorSensor(int id, uint8_t pin, bool enabled, String address, String name) : Sensor(id, pin, enabled, address, name)

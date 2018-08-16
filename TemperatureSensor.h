@@ -13,19 +13,15 @@
 #include <Arduino.h>
 #include "Logger.h"
 
-
-
 class TemperatureSensor : public Sensor
 {
 private:
 	static String tag;
 	static Logger logger;
 
-	virtual String getJSONFields();
-
+	virtual void getJson(JsonObject& json);
 
 public:
-	//virtual bool getJSON(JSONObject *jObject);
 	TemperatureSensor(int id, uint8_t pin, bool enabled, String address, String name);
 	~TemperatureSensor();
 	virtual void init();

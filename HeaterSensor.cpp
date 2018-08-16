@@ -98,6 +98,35 @@ bool HeaterSensor::receiveCommand(String command, int id, String uuid, String js
 	return res;
 }
 
+
+void HeaterSensor::getJson(JsonObject& json) {
+
+	Sensor::getJson(json);
+	json["relestatus"] = getReleStatus();
+	if (status.equals(STATUS_KEEPTEMPERATURE)) {
+
+		json["remotetemp"] = getRemoteTemperature();
+		json["duration"] = programDuration;
+		json["remaining"] = getRemaininTime();
+		json["target"] = getTargetTemperature();
+		json["actionid"] = activeActionId;
+		json["zoneid"] = zoneId;
+		json["enddate"] = endDate;
+	}
+	else if (status.equals(STATUS_MANUAL)) {
+
+		json["remotetemp"] = getRemoteTemperature();
+		json["duration"] = programDuration;
+		json["remaining"] = getRemaininTime();
+		json["target"] = getTargetTemperature();
+		json["zoneid"] = getRemoteTemperature();
+		json["enddate"] = endDate;
+	}
+	json["lastcmnd"] = lastCommandDate;
+	json["lasttemp"] = lastTemperatureUpdate;
+}
+
+#ifdef dopo
 String HeaterSensor::getJSONFields()
 {
 	//logger.print(tag, "\n\t >>HeaterActuator::getJSONFields");
@@ -164,21 +193,7 @@ String HeaterSensor::getJSONFields()
 	//logger.print(tag, "\n\t <<HeaterActuator::getJSONFields json=" + json);
 	return json;
 }
-
-#ifdef dopo
-bool HeaterSensor::getJSON(JSONObject * jObject)
-{
-	logger.print(tag, "\n");
-	logger.println(tag, ">>getJSON");
-
-	bool res = Sensor::getJSON(jObject);
-	if (!res) return false;
-
-	logger.println(tag, "<<getJSON");
-	return res;
-}
 #endif
-
 
 void HeaterSensor::init()
 {

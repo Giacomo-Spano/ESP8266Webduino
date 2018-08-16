@@ -13,14 +13,13 @@
 #include <Arduino.h>
 #include "Logger.h"
 #include "CommandResponse.h"
-#include "JSONObject.h"
-
+#include <ArduinoJson.h>
 
 class HeaterSensor :
 	public Sensor
 {
 private:
-	virtual String getJSONFields();
+	//virtual String getJSONFields();
 
 
 public:
@@ -65,6 +64,7 @@ public:
 	//CommandResponse receiveCommand(int actuatorId, String uuid, String json);
 	bool receiveCommand(String command, int id, String uuid, String json);
 
+	virtual void getJson(JsonObject& json);
 
 	void setStatus(String status);
 	String getStatus();

@@ -12,20 +12,12 @@ private:
 	static String tag;
 	static Logger logger;
 
-	/*static const int sensorNameLen = 20;
-	static const int sensorAddressLen = 20;
-	static const int sensorTypeLen = 20;
-	*/	
-
-	const int json_full = 1;
-	const int json_settings = 2;
-
 public:
 	Sensor(int id, uint8_t pin, bool enabled, String address, String name);
 	~Sensor();
 
 	const String STATUS_IDLE = "idle";
-	const String STATUS_OFFLINE = "offline";
+	//const String STATUS_OFFLINE = "offline";
 
 	List childsensors;
 	int sensorid;
@@ -34,28 +26,20 @@ public:
 	bool enabled;
 	uint8_t pin;
 	String address;
-	String status = STATUS_OFFLINE;
+	String status = STATUS_IDLE;
 
-	bool testMode = false;
-	bool lastUpdateStatusFailed = false;
+	//bool testMode = false;
+	//bool lastUpdateStatusFailed = false;
 	unsigned lastUpdateStatus = 0;
 	
-
 	int checkStatus_interval = 1000;	// il valore corretto per ogni tipo di sensore
 									// è impostato nel costruttore
 									// default 1 secondo
 	int updateStatus_interval = 60000; // intervallo minimo di aggiornamentto 
 									// default 1 minuto
 	unsigned long lastCheckStatus;// = 0;//-flash_interval;
-	
-	String getChildren();
 	Sensor* getSensorFromId(int id);
-
-	//virtual bool getJSON(JSONObject *jObject);
-	virtual String getJSONFields();	
-	virtual String getJSON();
-	//virtual JsonObject& getJson();
-	//virtual void loadChildren(JSONArray& json);
+	virtual void getJson(JsonObject& json);
 	virtual void loadChildren(JsonArray& jsonarray);
 	virtual void show();
 	virtual String toString();	

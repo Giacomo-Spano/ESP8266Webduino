@@ -31,6 +31,9 @@ protected:
 	bool mqttMode;
 	bool configMode;
 	bool resetSettings;
+	String mqttUser;
+	String mqttPassword;
+	String rebootreason;
 
 public:
 	int freeMemory = 0;
@@ -46,34 +49,26 @@ public:
 	//bool settingFromServerRequested = false;
 	//unsigned long settingRequestedTime;
 	
-	unsigned long settingsRequest_interval = 30 * 60 * 1000;
+	unsigned long settingsRequest_interval = 1 * 60 * 1000;
 	const int settingsRequest_timeout = 1 * 60 * 1000;
 	unsigned long lastSettingRequest = 0;
 	bool settingsNeedToBeUpdated = true;
 	bool settingsRequestInprogress = false;
-
+	
 	const int timeSync_interval = 5*60*1000;// *12;// 60 secondi * 15 minuti
 	const int timeRequest_timeout = 1 * 60 * 1000;
 	unsigned long lastTimeRequest = 0;
 	bool timeNeedToBeUpdated = true;
 	bool timeRequestInprogress = false;
-
-	//bool timeUpdated = false;
 	unsigned long lastTimeUpdate = 0; // usato dall'orologio per aggiornare il display ogni secondo
-
 	int id;// = 0; // inizializzato a zero perch� viene impostato dalla chiamata a registershield
 	String powerStatus; // power
 	String lastRestartDate;
-	
-
-	static const int maxSensorNum = 10;
-
-	//bool loadSensors(String settings);
-	bool loadSensors(/*String settings*/JsonObject& json);
+	//static const int maxSensorNum = 10;
+	bool loadSensors(JsonObject& json);
 	void readSensorFromFile();
 	bool writeSensorToFile(JsonObject& json);
 	void parseMessageReceived(String topic, String message);
-
 	void drawString(int x, int y, String txt, int size, int color);
 	void drawDateTime();
 	void drawStatus();
@@ -128,24 +123,15 @@ public:
 	Shield();
 	~Shield();
 	void init();
-	String getJson();
-	//String getSensorsStatusJson();
-	//bool _getSensorsStatusJson(char* payload);
-	//String getSettingsJson();
-	//void registerShield();
+	virtual void getJson(JsonObject& json);
+	//String getJson();
 	void checkStatus();	
 	void setStatus(String txt);
 	void setEvent(String txt);
-	//bool receiveCommand(String jsonStr);
 	bool receiveCommand(String jsonStr);
 	bool requestTime();
 	bool requestSettingsFromServer();
-	
-	//unsigned char MAC_array[6];
-	//char MAC_char[18];
 	String localIP;
-	
-	//void addSensor(Sensor* pSensor);
 	void clearAllSensors();
 	Sensor* getSensorFromAddress(String addr);
 	Sensor* getSensorFromId(int id);
@@ -418,6 +404,42 @@ public:
 	{
 		//logger.print(tag, "\n\t>> setMQTTPort");
 		mqttPort = port;
+		//logger.print(tag, "\n\t<< setMQTTPort=" + String(mqttPort));
+	}
+
+	String getMQTTUser()
+	{
+		return mqttUser;
+	}
+
+	void setMQTTUser(String user)
+	{
+		//logger.print(tag, "\n\t>> setMQTTPort");
+		mqttUser = user;
+		//logger.print(tag, "\n\t<< setMQTTPort=" + String(mqttPort));
+	}
+
+	String getMQTTPassword()
+	{
+		return mqttPassword;
+	}
+
+	void setMQTTPassword(String password)
+	{
+		//logger.print(tag, "\n\t>> setMQTTPort");
+		mqttPassword = password;
+		//logger.print(tag, "\n\t<< setMQTTPort=" + String(mqttPort));
+	}
+
+	String getRebootReason()
+	{
+		return rebootreason;
+	}
+
+	void setRebootReason(String reason)
+	{
+		//logger.print(tag, "\n\t>> setMQTTPort");
+		rebootreason = reason;
 		//logger.print(tag, "\n\t<< setMQTTPort=" + String(mqttPort));
 	}
 };

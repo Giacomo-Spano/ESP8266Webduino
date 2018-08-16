@@ -103,26 +103,12 @@ IRReceiveSensor::~IRReceiveSensor()
 
 #ifdef ESP8266
 
-String IRReceiveSensor::getJSONFields() {
-
-	//logger.println(tag, ">>IRSensor::getJSONFields");
-	String json = "";
-	json += Sensor::getJSONFields();
-
-	// specific field
-	json += String(",\"codetype\":\"") + codetype + String("\"");
-	json += String(",\"code\":\"") + code + String("\"");
-	json += String(",\"bit\":") + bit;
-
-	codetype = "";
-	code = "";
-	bit = "0";
-	//status = STATUS_IDLE;
-	
-	//logger.println(tag, "<<IRSensor::getJSONFields");
-	return json;
+void IRReceiveSensor::getJson(JsonObject& json) {
+	Sensor::getJson(json);
+	json["codetype"] = codetype;
+	json["code"] = code;
+	json["bit"] = bit;
 }
-
 
 void IRReceiveSensor::init()
 {
@@ -146,7 +132,12 @@ bool IRReceiveSensor::checkStatusChange() {
 	
 	if (status == STATUS_RESPONSERECEIVEONEIRCODE) {
 		logger.print(tag, "\n\t STATUS_RESPONSERECEIVEONEIRCODE");
-		sendCommandResponse(receivedcommanduuid, getJSON());
+		DynamicJsonBuffer jsonBuffer;
+		JsonObject& json = jsonBuffer.createObject();
+		getJson(json);
+		String jsonStr;
+		json.printTo(jsonStr);
+		sendCommandResponse(receivedcommanduuid, jsonStr);
 		status = STATUS_IDLE;
 		return false;
 	} else if (status == STATUS_RECEIVEDIRCODE) {

@@ -64,6 +64,8 @@ void triggerUpdateTime() {
 }*/
 extern void resetWiFiManagerSettings();
 extern bool mqtt_publish(String topic, String message);
+extern void reboot(String reason);
+
 
 bool checkHTTPUpdate = true; //true;
 bool mqttLoaded = false; //true;
@@ -92,6 +94,11 @@ void resetWiFiManagerSettings() {
 	logger.println(tag, F("\n\t <<resetWiFiManagerSettings"));
 }
 
+void reboot(String reason) {
+	shield.setRebootReason(reason);
+	writeRebootReason();
+	ESP.restart();
+}
 
 void saveConfigCallback() {
 	logger.println(tag, F("Should save config"));
@@ -149,7 +156,8 @@ bool testWifi() {
 		shield.invalidateDisplay();
 		logger.println(tag, F("failed to connect and hit timeout"));
 		delay(3000);
-		ESP.restart();
+		//ESP.restart();
+		reboot("Autoconnect Timeout");
 
 	}
 
@@ -185,6 +193,10 @@ void messageReceived(char* topic, byte* payload, unsigned int length) {
 	logger.println(tag, F(">>messageReceived"));
 	logger.print(tag, F("\n\t topic="));
 	logger.print(tag, String(topic));
+
+#ifdef ESP8266
+	ESP.wdtFeed();
+#endif // ESP8266
 
 	String message = "";
 	for (int i = 0; i < length; i++) {
@@ -235,17 +247,16 @@ bool reconnect() {
 
 void readConfig() {
 
-	//read configuration from FS json
-	Serial.println("mounting FS...");
-
+	logger.println(tag, F(">>readConfig"));
+	
 	if (SPIFFS.begin()) {
-		Serial.println("mounted file system");
+		logger.print(tag, F("\n\t mounted file system"));
 		if (SPIFFS.exists("/config.json")) {
 			//file exists, reading and loading
-			Serial.println("reading config file");
+			logger.print(tag, F("\n\t reading config file"));
 			File configFile = SPIFFS.open("/config.json", "r");
 			if (configFile) {
-				Serial.println("opened config file");
+				logger.print(tag, F("\n\t opened config file"));
 				size_t size = configFile.size();
 				// Allocate a buffer to store contents of the file.
 				std::unique_ptr<char[]> buf(new char[size]);
@@ -254,60 +265,60 @@ void readConfig() {
 				JsonObject& json = jsonBuffer.parseObject(buf.get());
 				json.printTo(Serial);
 				if (json.success()) {
-					Serial.println("\nparsed json");
+					logger.print(tag, F("\n\t parsed json"));
 
 					if (json.containsKey("http_server")) {
-						Serial.println("http_server: ");
+						logger.print(tag, F("\n\t http_server: "));
 						String str = json["http_server"];
-						Serial.println(str);
+						logger.print(tag, str);
 						shield.setServerName(str);
 					}
 					if (json.containsKey("http_port")) {
 						Serial.println("http_port: ");
 						String str = json["http_port"];
-						Serial.println(str);
+						logger.print(tag,str);
 						shield.setServerPort(json["http_port"]);
 					}
 					if (json.containsKey("mqtt_server")) {
 						Serial.println("mqtt_server: ");
 						String str = json["mqtt_server"];
-						Serial.println(str);
+						logger.print(tag, str);
 						shield.setMQTTServer(json["mqtt_server"]);
 					}
 					if (json.containsKey("mqtt_port")) {
 						Serial.println("mqtt_port: ");
 						String str = json["mqtt_port"];
-						Serial.println(str);
+						logger.print(tag, str);
 						shield.setMQTTPort(json["mqtt_port"]);
 					}
 					if (json.containsKey("mqtt_user")) {
 						Serial.println("mqtt_user: ");
 						String str = json["mqtt_user"];
-						Serial.println(str);
-						//shield.setMQTTUser(json["mqtt_user"]);
+						logger.print(tag, str);
+						shield.setMQTTUser(json["mqtt_user"]);
 					}
 					if (json.containsKey("mqtt_password")) {
 						Serial.println("mqtt_password: ");
 						String str = json["mqtt_password"];
-						Serial.println(str);
-						//shield.setMQTTPassword(json["mqtt_password"]);
+						logger.print(tag, str);
+						shield.setMQTTPassword(json["mqtt_password"]);
 					}
 					if (json.containsKey("shieldid")) {
 						Serial.println("shieldid: ");
 						String str = json["shieldid"];
-						Serial.println(str);
-						//shield.set(json["shieldid"]);
+						logger.print(tag, str);
+						shield.setShieldId(json["shieldid"]);
 					}
 					// resetsettings
 					if (json.containsKey("resetsettings")) {
 						Serial.println("resetsettings: ");
 						String str = json["resetsettings"];
-						Serial.println(str);
+						logger.print(tag, str);
 						//shield.setResetSettings(json["resetsettings"]);
-					}
+					}					
 				}
 				else {
-					Serial.println("failed to load json config");
+					logger.print(tag, F("\n\t failed to load json config"));
 					//clean FS, for testing
 					SPIFFS.format();
 					writeConfig();
@@ -316,35 +327,104 @@ void readConfig() {
 		}
 	}
 	else {
-		Serial.println("failed to mount FS");
+		logger.print(tag, F("failed to mount FS"));
 	}
+	logger.print(tag, F("<<readConfig"));
 }
 
 void writeConfig() {
 
-	Serial.println("\nsaving config");
+	logger.println(tag, F(">>writeConfig"));
 	DynamicJsonBuffer jsonBuffer;
 	JsonObject& json = jsonBuffer.createObject();
 	json["http_server"] = shield.getServerName();
 	json["http_port"] = shield.getServerPort();
 	json["mqtt_server"] = shield.getMQTTServer();
 	json["mqtt_port"] = shield.getMQTTPort();
-	//json["mqtt_user"] = shield.getMQTTUser();
-	//json["mqtt_password"] = shield.getMQTTPasssword();
-	//json["resetsettings"] = shield.getResetSettings();
-	//json["shieldid"] = shield.getShieldId();
+	json["mqtt_user"] = shield.getMQTTUser();
+	json["mqtt_password"] = shield.getMQTTPassword();
+	json["resetsettings"] = shield.getResetSettings();
+	json["shieldid"] = shield.getShieldId();
 
 	File configFile = SPIFFS.open("/config.json", "w");
 	if (!configFile) {
-		Serial.println("failed to open config file for writing");
+		logger.print(tag, F("<<writeConfig"));
 		return;
 	}
 
 	json.printTo(Serial);
 	json.printTo(configFile);
 	configFile.close();
-	Serial.println("config file writtten");
+	logger.println(tag, F("config file writtten"));
+	logger.println(tag, F("<<writeConfig"));
+}
+
+void writeRebootReason() {
+
+	logger.println(tag, " >>writeRebootReason config");
+	DynamicJsonBuffer jsonBuffer;
+	JsonObject& json = jsonBuffer.createObject();
+	json["rebootreason"] = shield.getRebootReason();
+
+	File configFile = SPIFFS.open("/reason.json", "w");
+	if (!configFile) {
+		logger.print(tag, "\n\t failed to open rebootreason file for writing");
+		return;
+	}
+
+	json.printTo(Serial);
+	json.printTo(configFile);
+	configFile.close();
+	logger.print(tag, "\n\t reason file writtten");
+	logger.println(tag, "writeRebootReason config");
 	//end save
+}
+
+void readRebootReason() {
+
+	logger.println(tag, F(">>readRebootReason"));
+
+	if (SPIFFS.begin()) {
+		logger.print(tag, F("\n\t mounted file system"));
+		if (SPIFFS.exists("/config.json")) {
+			//file exists, reading and loading
+			logger.print(tag, F("\n\t reading config file"));
+			File configFile = SPIFFS.open("/reason.json", "r");
+			if (configFile) {
+				logger.print(tag, F("\n\t opened config file"));
+				size_t size = configFile.size();
+				// Allocate a buffer to store contents of the file.
+				std::unique_ptr<char[]> buf(new char[size]);
+				configFile.readBytes(buf.get(), size);
+				DynamicJsonBuffer jsonBuffer;
+				JsonObject& json = jsonBuffer.parseObject(buf.get());
+				json.printTo(Serial);
+				if (json.success()) {
+					logger.print(tag, F("\n\t parsed json"));
+
+					
+					if (json.containsKey("rebootreason")) {
+						Serial.println("rebootreason: ");
+						String str = json["rebootreason"];
+						logger.print(tag, str);
+						String reason = json["rebootreason"];
+						shield.setRebootReason(str);
+					}
+
+				}
+				else {
+					logger.print(tag, F("\n\t failed to load json config"));
+					//clean FS, for testing
+					SPIFFS.format();
+					writeConfig();
+				}
+			}
+		}
+	}
+	else {
+		logger.print(tag, F("failed to mount FS"));
+	}
+	logger.print(tag, F("<<readRebootReason"));
 }
 
 void setup()
@@ -362,7 +442,7 @@ void setup()
 	shield.setEvent(F("read config.."));
 	shield.invalidateDisplay();
 	readConfig();
-
+	readRebootReason();
 #ifdef ESP8266
 	shield.drawString(0, 0, F("restarting.."), 1, ST7735_WHITE);
 #endif
@@ -498,14 +578,15 @@ void loop()
 	if (currMillis - lastReboot > reboot_interval) {
 		shield.setEvent(F("timeout reboot"));
 		logger.println(tag, F("\n\n\n\-----------lastReboot TIMEOUT REBOOT--------\n\n"));
-		ESP.restart();
+		reboot("daily reboot");
 	}
 
 	currMillis = millis();
 	if (currMillis - shield.lastCheckHealth > shield.checkHealth_timeout) {
 		shield.setEvent(F("check health reboot"));
 		logger.println(tag, F("\n\n\n\-----------CHECK HEALTH TIMEOUT REBOOT--------\n\n"));
-		ESP.restart();
+		//ESP.restart();
+		reboot("Check health Timeout");
 	}
 
 #ifdef ESP8266

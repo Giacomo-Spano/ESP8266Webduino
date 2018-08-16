@@ -25,25 +25,32 @@ SCK			D5
 Logger RFIDSensor::logger;
 String RFIDSensor::tag = "RFIDSensor";
 
-#ifdef dopo
-bool RFIDSensor::getJSON(JSONObject *jObject)
-{
-	//logger.print(tag, "\n");
-	//logger.println(tag, ">>DoorSensor::getJSON");
+/*JsonObject& RFIDSensor::getJson() {
+	logger.print(tag, F("\n\t >>RFIDSensor::getJson"));
 
-	bool res = Sensor::getJSON(jObject);
-	if (!res) return false;
+	DynamicJsonBuffer jsonBuffer;
+	JsonObject& json = jsonBuffer.createObject();
+	Sensor::getJson(json);
 
-	//res = jObject->pushBool("open", openStatus);
+	//JsonObject& json = Sensor::getJson();
+	json["card"] = lastcard;
+	logger.printJson(json);
+	logger.print(tag, F("\n\t <<RFIDSensor::getJson"));
+	return json;
+}*/
 
-	//logger.println(tag, "<<DoorSensor::getJSON");
-	return true;
+void RFIDSensor::getJson(JsonObject& json) {
+
+	logger.print(tag, "\n\t >>RFIDSensor::getJsonx");
+	Sensor::getJson(json);
+	json["card"] = lastcard;
+	logger.printJson(json);
+
+	logger.print(tag, "\n\t <<RFIDSensor::getJsonx");
 }
-#endif
 
-String RFIDSensor::getJSONFields() {
+/*String RFIDSensor::getJSONFields() {
 
-	//logger.println(tag, ">>DoorSensor::getJSONFields");
 	String json = "";
 	json += Sensor::getJSONFields();
 
@@ -51,14 +58,8 @@ String RFIDSensor::getJSONFields() {
 	json += String(",\"card\":\"");
 	json += String(lastcard);
 	json += String("\"");
-	/*if (openStatus)
-		json += String(",\"open\":true");
-	else
-		json += String(",\"open\":false");*/
-
-		//logger.println(tag, "<<DoorSensor::getJSONFields");
 	return json;
-}
+}*/
 
 RFIDSensor::RFIDSensor(int id, uint8_t pin, bool enabled, String address, String name) : Sensor(id, pin, enabled, address, name)
 {
@@ -85,9 +86,13 @@ void RFIDSensor::init()
 	logger.print(tag, "\n\t <<init RFIDSensor");
 }
 
-/*bool DoorSensor::getOpenStatus() {
-	return openStatus;
-}*/
+bool RFIDSensor::receiveCommand(String command, int id, String uuid, String jsonStr)
+{
+	logger.print(tag, "\n\t >>RFIDSensor::receiveCommand");
+	bool res = Sensor::receiveCommand(command, id, uuid, jsonStr);
+	logger.print(tag, "\n\t <<RFIDSensor::receiveCommand=");
+	return res;
+}
 
 bool RFIDSensor::checkStatusChange() {
 

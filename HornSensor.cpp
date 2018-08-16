@@ -9,36 +9,9 @@
 Logger HornSensor::logger;
 String HornSensor::tag = "HornSensor";
 
-#ifdef dopo
-bool HornSensor::getJSON(JSONObject *jObject)
-{
-	//logger.print(tag, "\n");
-	//logger.println(tag, ">>HornSensor::getJSON");
-
-	bool res = Sensor::getJSON(jObject);
-	if (!res) return false;
-
-	//res = jObject->pushBool("alarmactive", alarmActive);
-
-	//logger.println(tag, "<<HornSensor::getJSON");
-	return true;
-}
-#endif
-
-String HornSensor::getJSONFields() {
-
-	//logger.println(tag, ">>HornSensor::getJSONFields");
-	String json = "";
-	json += Sensor::getJSONFields();
-
-	// specific field
-	if (alarmActive)
-		json += String(",\"alarmactive\":true");
-	else
-		json += String(",\"alarmactive\":false");
-
-	//logger.println(tag, "<<HornSensor::getJSONFields");
-	return json;
+void HornSensor::getJson(JsonObject& json) {
+	Sensor::getJson(json);
+	json["alarmactive"] = alarmActive;
 }
 
 HornSensor::HornSensor(int id, uint8_t pin, bool enabled, String address, String name) : Sensor(id, pin, enabled, address, name)

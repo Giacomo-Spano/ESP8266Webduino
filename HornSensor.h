@@ -21,7 +21,7 @@ private:
 	static String tag;
 	static Logger logger;
 
-	virtual String getJSONFields();
+	virtual void getJson(JsonObject& json);
 	bool alarmActive = false;
 	bool testOpenStatus = false;
 

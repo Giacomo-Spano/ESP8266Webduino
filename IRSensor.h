@@ -25,7 +25,6 @@ private:
 	static String tag;
 	static Logger logger;
 
-	virtual String getJSONFields();
 #ifdef ESP8266
 	IRsend *pirsend;
 	IRDaikinESP *pdaikinir;
@@ -39,15 +38,13 @@ private:
 	bool sendHarmanKardonDisc();
 
 public:
-	//const String STATUS_DOOROPEN = "dooropen";
-	//const String STATUS_DOORCLOSED = "doorclosed";
-
+	
 	IRSensor(int id, uint8_t pin, bool enabled, String address, String name);
 	~IRSensor();
 
 	virtual void init();
-	//virtual bool getJSON(JSONObject *jObject);
 	virtual bool checkStatusChange();
-	bool receiveCommand(String command, int id, String uuid, String json);
+	virtual bool receiveCommand(String command, int actuatorId, String uuid, String json);
+
 };
 #endif
