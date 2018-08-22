@@ -31,7 +31,7 @@ IRSensor::~IRSensor()
 
 
 /*JsonObject& IRSensor::getJson() {
-	
+
 	logger.print(tag, F("\n\t >>IRSensor::getJson"));
 
 	JsonObject& json = Sensor::getJson();
@@ -53,15 +53,15 @@ IRSensor::~IRSensor()
 void IRSensor::init()
 {
 	logger.print(tag, "\n\t >>init IRSensor");
-	
+
 #ifdef ESP8266
 	pirsend = new IRsend(pin);
 	pirsend->begin();
-	
+
 	pdaikinir = new IRDaikinESP(pin);
 	pdaikinir->begin();
 #endif // ESP8266	
-	
+
 	logger.print(tag, "\n\t <<init IRSensor");
 }
 
@@ -118,81 +118,85 @@ uint64_t StrToHex(const char* str)
 
 bool IRSensor::receiveCommand(String command, int id, String uuid, String jsonStr)
 {
-	logger.print(tag, "\n\t >>IRSensor::receiveCommand=");
+	logger.print(tag, F("\n\t >>IRSensor::receiveCommand"));
 	bool res = Sensor::receiveCommand(command, id, uuid, jsonStr);
-	//logger.print(tag, "\n\t command=" + command);
-	//int SAMSUNG_BITS = 32;
+
 	
+
 	if (command.equals("send")) {
-		logger.print(tag, "\n\t send command");
+		logger.print(tag, F("\n\t send command received"));
 
 		String codetype, code;
 		uint64_t value;
 		int bit;
 
-
 		size_t size = jsonStr.length();
 		DynamicJsonBuffer jsonBuffer;
 		JsonObject& json = jsonBuffer.parseObject(jsonStr);
+		logger.print(tag, F("\n\t json="));
+		logger.printJson(json);
 
-		//JSON json(jsonStr);
-		if (json.containsKey("codetype")) {
-			String str = json["codetype"];
-			codetype = str;
-			logger.print(tag, "\n\t codetype=" + codetype);
-		}
-		else {
-			logger.print(tag, "\n\t error");
-			logger.print(tag, "\n\t <<IRSensor::receiveCommand=");
-			return false;
-		}
-		if (json.containsKey("code")) {
-			String str = json["code"];
-			code = str;
-			logger.print(tag, "\n\t code=" + code);
 
-			//code = "0x" + code;
-			while (code.length() < 16)
-				code = "0" + code;
-			logger.print(tag, "\n\t code=" + code);
+		////////////
+		if (json.containsKey("codes")) {
+			String str = json["codes"];
+			size_t size = str.length();
+			DynamicJsonBuffer jsonBuffer;
+			JsonArray& codearray = jsonBuffer.parseArray(str);
+			for (int i = 0; i < codearray.size(); i++) {
 
-			uint8_t copy[16];
-			for (int i = 0; i < 16; i++) {
-				copy[i] = code.charAt(i);
-			}
-
-			value = StrToHex(code.c_str());
-		}
-		else {
-			logger.print(tag, "\n\t error");
-			logger.print(tag, "\n\t <<IRSensor::receiveCommand=");
-			return false;
-		}
-		if (json.containsKey("bit")) {
-			bit = json["bit"];
-			logger.print(tag, "\n\t bit=" + String(bit));
-		}
-		else {
-			logger.print(tag, "\n\t error");
-			logger.print(tag, "\n\t <<IRSensor::receiveCommand=");
-			return false;
-		}
+				logger.print(tag, F("\n\n\t code: "));
+				logger.print(tag, i);
+				logger.printJson(codearray[i]);
 				
-		sendCode(codetype, value, bit);
+				sendCode(codearray[i]);
+			}
+		}
+
+		//////////
+
+
+
+
+		/*if (json.containsKey("bit")) {
+			bit = json["bit"];
+			logger.print(tag, F("\n\t bit="));
+			logger.print(tag, String(bit));
+		}
+		else {
+			logger.print(tag, F("\n\t error"));
+			logger.print(tag, F("\n\t <<IRSensor::receiveCommand="));
+			return false;
+		}*/
+
+
+		//sendCode(codetype, code, bit);
+		//sendCode(codetype, value, bit);
+		//sendSamsungTv();
 		//sendHarmanKardonDisc();
 		//sendSamsungTv();
 		//sendRobotClean();
 		//sendRobotHome();
 		//sendDaikin();
-		
+
+		DynamicJsonBuffer jsonBufferResult;
+		JsonObject& jsonresult = jsonBufferResult.createObject();
+		jsonresult["result"] = "success";
+		String jsonStr;
+		logger.print(tag, F("\n\t jsonresult="));
+		logger.printJson(jsonresult);
+		jsonresult.printTo(jsonStr);
+		logger.print(tag, F("\n\t jsonstr="));
+		logger.print(tag, jsonStr);
+		return sendCommandResponse(uuid, jsonStr);
 	}
-	logger.print(tag, "\n\t <<IRSensor::receiveCommand=");
+	logger.print(tag, F("\n\t <<IRSensor::receiveCommand="));
 	return res;
 }
 
-bool IRSensor::sendCode(String codetype, uint64_t code, int bit) {
+/*bool IRSensor::sendCode(String codetype, uint64_t code, int bit) {
 
-	logger.print(tag, "\n\t >>sendCode");
+	logger.print(tag, F("\n\t >>sendCode"));
 #ifdef ESP8266
 
 	pirsend->sendNEC(code, bit);  // Send a raw data capture at 38kHz.
@@ -200,19 +204,64 @@ bool IRSensor::sendCode(String codetype, uint64_t code, int bit) {
 									//pirsend->sendRaw(HK_DISC_rawData, 40, 19);  // Send a raw data capture at 38kHz.
 									//delay(15000);
 #endif
-	logger.print(tag, "\n\t <<sendCode");
+	logger.print(tag, F("\n\t <<sendCode"));
 	return true;
+}*/
+
+
+
+bool IRSensor::sendCode(JsonObject& json) {
+
+	logger.print(tag, F("\n\t >>IRSensor::sendCode"));
+	if (json.containsKey("codetype")) {
+		String str = json["codetype"];
+		String codetype = str;
+		logger.print(tag, String(F("\n\t codetype=")) + codetype);
+
+		if (codetype.equals("SAMSUNGTV")) {
+			logger.print(tag, F("\n\t SAMSUMG"));
+
+			if (json.containsKey("code")) {
+				String codestr = json["code"];
+				int code = codestr.toInt();
+				Serial.print("code: ");
+				Serial.print(code);
+
+
+
+				logger.print(tag, F("\n\t <<IRSensor::sendCode"));
+				return sendSamsungTv(code);
+			}
+			else
+			{
+				logger.print(tag, F("\n\t code not Found"));
+			}
+		}
+		else if (codetype.equals("NEC")) {
+			logger.print(tag, F("\n\t NEC"));
+			//sendNEC(code);
+			//pirsend->sendNEC(code, bit);
+		}
+		else {
+			//
+		}
+
+	}
+	logger.print(tag, F("\n\t <<IRSensor::sendCode"));
+	return false;
 }
 
 
-bool IRSensor::sendSamsungTv() {
+bool IRSensor::sendSamsungTv(int code) {
 
 #ifdef ESP8266
 	Serial.println("sendSamsungTv");
-	#define SAMSUNG_POWER_ON  GenNECXCode(7,7,153)
-	#define SAMSUNG_Channel_Up  GenNECXCode(7,7,18)
-	pirsend->sendSAMSUNG(SAMSUNG_Channel_Up, 32);
-	delayMicroseconds(50);
+	
+//#define SAMSUNG_POWER_ON  GenNECXCode(7,7,153)
+//#define SAMSUNG_Channel_Up  GenNECXCode(7,7,18)
+	uint64_t data = GenNECXCode(7, 7, code);
+	pirsend->sendSAMSUNG(data, 32);
+	delay(1000);
 	Serial.println("SamsungTv sent");
 #endif
 	return true;
@@ -233,7 +282,7 @@ bool IRSensor::sendDaikin() {
 	// Set the current time to 1:33PM (13:33)
 	// Time works in minutes past midnight
 	//daikinir.setCurrentTime((13 * 60) + 33);
-	
+
 	// Turn off about 1 hour later at 2:30PM (15:30)
 	//daikinir.enableOffTimer((14 * 60) + 30);
 
@@ -278,7 +327,7 @@ bool IRSensor::sendRobotClean() {
 #ifdef ESP8266
 	// robot aspirapolvere. Manda due codici di seguito 
 
-	
+
 	Serial.println("NEC");
 	pirsend->sendNEC(clean_data/*0x2AA22DD*/, 32);
 	delayMicroseconds(50);

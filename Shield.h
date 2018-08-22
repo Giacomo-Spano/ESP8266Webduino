@@ -9,12 +9,13 @@
 #include <DallasTemperature.h>
 #include "ESPDisplay.h"
 #ifdef ESP8266
+#include <ESP8266WiFi.h>
 #include "TFTDisplay.h"
 #endif
 #include "DoorSensor.h"
 #include "OnewireSensor.h"
 #include "HornSensor.h"
-#include <ESP8266WiFi.h>
+
 
 class Shield
 {	
@@ -82,6 +83,11 @@ public:
 	void checkTimeUpdateStatus();
 	void checkSettingResquestStatus();
 
+	void readConfig();
+	void writeConfig();
+	void readRebootReason();
+	void writeRebootReason();
+
 	void setFreeMem(int mem);
 
 private:
@@ -101,8 +107,8 @@ protected:
 	//bool onPowerCommand(JSON& json);
 	bool onPowerCommand(JsonObject& json);
 	//bool sendRegister();
-	bool onResetCommand();
-	bool onRebootCommand();
+	//bool onResetSettingsCommand();
+	//bool onRebootCommand();
 	//bool sendUpdateSensorStatus();
 	
 	

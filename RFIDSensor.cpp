@@ -11,15 +11,11 @@ SS/SDA		D8
 MOSI		D7
 MISO		D6
 SCK			D5
+IRQ			DISCONNECTED
+3.3V		3.3
 */
 
 
-//#define SS_PIN D8
-//#define RST_PIN D3
-//MFRC522 mfrc522(SS_PIN, RST_PIN);   // Create MFRC522 instance.
-
-
-//extern bool mqtt_publish(String topic, String message);
 
 
 Logger RFIDSensor::logger;

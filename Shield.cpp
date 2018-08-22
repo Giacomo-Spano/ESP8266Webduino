@@ -45,6 +45,120 @@ Shield::~Shield()
 	sensorList.clearAll();
 }
 
+void Shield::writeConfig() {
+
+	logger.println(tag, F(">>writeConfig"));
+	DynamicJsonBuffer jsonBuffer;
+	JsonObject& json = jsonBuffer.createObject();
+	json["http_server"] = getServerName();
+	json["http_port"] = getServerPort();
+	json["mqtt_server"] = getMQTTServer();
+	json["mqtt_port"] = getMQTTPort();
+	json["mqtt_user"] = getMQTTUser();
+	json["mqtt_password"] = getMQTTPassword();
+	json["resetsettings"] = getResetSettings();
+	json["shieldid"] = getShieldId();
+
+	File configFile = SPIFFS.open("/config.json", "w");
+	if (!configFile) {
+		logger.print(tag, F("<<writeConfig"));
+		return;
+	}
+
+	json.printTo(Serial);
+	json.printTo(configFile);
+	configFile.close();
+	logger.println(tag, F("config file writtten"));
+	logger.println(tag, F("<<writeConfig"));
+}
+
+void Shield::readConfig() {
+
+	logger.println(tag, F(">>readConfig"));
+
+	if (SPIFFS.begin()) {
+		logger.print(tag, F("\n\t mounted file system"));
+		if (SPIFFS.exists("/config.json")) {
+			//file exists, reading and loading
+			logger.print(tag, F("\n\t reading config file"));
+			File configFile = SPIFFS.open("/config.json", "r");
+			if (configFile) {
+				logger.print(tag, F("\n\t opened config file"));
+				size_t size = configFile.size();
+				// Allocate a buffer to store contents of the file.
+				std::unique_ptr<char[]> buf(new char[size]);
+				configFile.readBytes(buf.get(), size);
+				DynamicJsonBuffer jsonBuffer;
+				JsonObject& json = jsonBuffer.parseObject(buf.get());
+				json.printTo(Serial);
+				if (json.success()) {
+					logger.print(tag, F("\n\t parsed json"));
+
+					if (json.containsKey("http_server")) {
+						logger.print(tag, F("\n\t http_server: "));
+						String str = json["http_server"];
+						logger.print(tag, str);
+						setServerName(str);
+					}
+					if (json.containsKey("http_port")) {
+						logger.print(tag, F("\n\t http_port: "));
+						String str = json["http_port"];
+						logger.print(tag, str);
+						setServerPort(json["http_port"]);
+					}
+					if (json.containsKey("mqtt_server")) {
+						logger.print(tag,"\n\t mqtt_server: ");
+						String str = json["mqtt_server"];
+						logger.print(tag, str);
+						setMQTTServer(json["mqtt_server"]);
+					}
+					if (json.containsKey("mqtt_port")) {
+						logger.print(tag, F("\n\t mqtt_port: "));
+						String str = json["mqtt_port"];
+						logger.print(tag, str);
+						setMQTTPort(json["mqtt_port"]);
+					}
+					if (json.containsKey("mqtt_user")) {
+						logger.print(tag, F("\n\t mqtt_user: "));
+						String str = json["mqtt_user"];
+						logger.print(tag, str);
+						setMQTTUser(json["mqtt_user"]);
+					}
+					if (json.containsKey("mqtt_password")) {
+						logger.print(tag, F("\n\t mqtt_password: "));
+						String str = json["mqtt_password"];
+						logger.print(tag, str);
+						setMQTTPassword(json["mqtt_password"]);
+					}
+					if (json.containsKey("shieldid")) {
+						logger.print(tag, F("\n\t shieldid: "));
+						String str = json["shieldid"];
+						logger.print(tag, str);
+						setShieldId(json["shieldid"]);
+					}
+					if (json.containsKey("resetsettings")) {
+						logger.print(tag, F("\n\t resetsettings: "));
+						bool enabled = json["resetsettings"];
+						logger.print(tag, Logger::boolToString(enabled));
+						setResetSettings(json["resetsettings"]);
+					}
+				}
+				else {
+					logger.print(tag, F("\n\t failed to load json config"));
+					//clean FS, for testing
+					SPIFFS.format();
+					writeConfig();
+				}
+			}
+		}
+	}
+	else {
+		logger.print(tag, F("failed to mount FS"));
+	}
+	logger.print(tag, F("<<readConfig"));
+}
+
+
 void Shield::init() {
 	//tftDisplay.init();
 	//display.init();
@@ -166,7 +280,6 @@ void Shield::clearScreen() {
 
 void Shield::parseMessageReceived(String topic, String message) {
 
-	//logger.print(tag, "\n\t >>parseMessageReceived");
 	String str = String(F("fromServer/shield/")) + getMACAddress();
 
 	if (topic.equals(str + F("/settings"))) {
@@ -186,10 +299,9 @@ void Shield::parseMessageReceived(String topic, String message) {
 			logger.print(tag, F("failed to load json config"));
 			return;
 		}
-		
+		setRebootReason("unknown");		
 		if (loadSensors(json)) {
 			writeSensorToFile(json);
-			//writeEPROM();
 			settingFromServerReceived = true;
 			Command command;
 			DynamicJsonBuffer jsonBuffer;
@@ -203,8 +315,13 @@ void Shield::parseMessageReceived(String topic, String message) {
 	else if (topic.equals(str + F("/reboot"))) {
 		logger.print(tag, F("\n\t received reboot request"));
 		setEvent(F("<-received reboot request"));
-		//ESP.restart();
 		reboot("reboot command");
+	}
+	else if (topic.equals(str + F("/resetsettings"))) {
+		logger.print(tag, F("\n\t RESET SETTINGS!!!!!!!!!!!!!!!!"));
+		setResetSettings(true);
+		writeConfig();
+		reboot("reset");
 	}
 	else if (topic.equals(str + F("/time"))) { // risposta a time
 		logger.print(tag, F("\n\t received time"));
@@ -225,13 +342,7 @@ void Shield::parseMessageReceived(String topic, String message) {
 		setEvent(F("<-received command"));
 		receiveCommand(message);
 	}
-	else if (str.equals(F("reset"))) {
-		logger.print(tag, F("\n\t RESET SETTINGS!!!!!!!!!!!!!!!!"));
-		setResetSettings(true);
-		//resetEPROM();
-		//ESP.restart();
-		reboot("reset");
-	}
+	
 	else {
 		logger.print(tag, F("\n\t PARSE NOT FOUND"));
 	}
@@ -241,10 +352,9 @@ void Shield::parseMessageReceived(String topic, String message) {
 
 bool Shield::receiveCommand(String jsonStr) {
 
-	logger.print(tag, F("\n\t >>receiveCommand"));
+	logger.print(tag, F("\n\t >>Shield::receiveCommand"));
 	logger.print(tag, jsonStr);
 
-	//size_t size = jsonStr.length();
 	DynamicJsonBuffer jsonBuffer;
 	JsonObject& json = jsonBuffer.parseObject(jsonStr);
 	if (json.success()) {
@@ -273,8 +383,8 @@ bool Shield::receiveCommand(String jsonStr) {
 			logger.print(tag, String(result));
 			return result;
 		}
-		else if (command.equals(F("reset"))) { // che differenza c'è tra reboot e reset?
-			result = onResetCommand();
+		/*else if (command.equals(F("resetsettings"))) { // che differenza c'è tra reboot e reset?
+			result = onResetSettingsCommand();
 			//result = onRebootCommand(json);
 			logger.print(tag, F("\n\t <<receiveCommand result="));
 			logger.print(tag, String(result));
@@ -285,7 +395,7 @@ bool Shield::receiveCommand(String jsonStr) {
 			logger.print(tag, F("\n\t <<receiveCommand result="));
 			logger.print(tag, String(result));
 			return result;
-		}
+		}*/
 		else if (command.equals(F("checkhealth"))) {
 			logger.printFreeMem(tag, F("++checkhealth"));
 
@@ -335,7 +445,7 @@ bool Shield::receiveCommand(String jsonStr) {
 		}
 	}
 	logger.printFreeMem(tag, F("--receiveCommand"));
-	logger.print(tag, F("\n\t <<receiveCommand"));
+	logger.print(tag, F("\n\t <<Shield::receiveCommand"));
 	return false;
 }
 
@@ -370,20 +480,20 @@ bool Shield::onShieldSettingsCommand(JsonObject& json)
 }
 
 
-bool Shield::onRebootCommand()
+/*bool Shield::onRebootCommand()
 {
 	logger.print(tag, F("\n\t>> onRebootCommand"));
 	//ESP.restart();
 	reboot("onReboot command");
 	return true;
-}
+}*/
 
-bool Shield::onResetCommand()
+/*bool Shield::onResetSettingsCommand()
 {
-	logger.print(tag, F("\n\t>> onResetCommand"));
+	logger.print(tag, F("\n\t>> onResetSettingsCommand"));
 	resetWiFiManagerSettings();
 	return true;
-}
+}*/
 
 bool Shield::onPowerCommand(JsonObject& json)
 {
@@ -763,3 +873,70 @@ void Shield::addSensor(Sensor* pSensor) { // non è usata?????????
 	logger.print(tag, F("\n\t <<addSensor"));
 }
 #endif
+
+void Shield::writeRebootReason() {
+
+	logger.println(tag, " >>writeRebootReason config");
+	DynamicJsonBuffer jsonBuffer;
+	JsonObject& json = jsonBuffer.createObject();
+	json["rebootreason"] = getRebootReason();
+
+	File configFile = SPIFFS.open("/reason.json", "w");
+	if (!configFile) {
+		logger.print(tag, "\n\t failed to open rebootreason file for writing");
+		return;
+	}
+
+	json.printTo(Serial);
+	json.printTo(configFile);
+	configFile.close();
+	logger.print(tag, "\n\t reason file written");
+	logger.println(tag, "writeRebootReason config");
+	//end save
+}
+
+void Shield::readRebootReason() {
+
+	logger.println(tag, F(">>readRebootReason"));
+
+	if (SPIFFS.begin()) {
+		logger.print(tag, F("\n\t mounted file system"));
+		if (SPIFFS.exists("/config.json")) {
+			//file exists, reading and loading
+			logger.print(tag, F("\n\t reading config file"));
+			File configFile = SPIFFS.open("/reason.json", "r");
+			if (configFile) {
+				logger.print(tag, F("\n\t opened config file"));
+				size_t size = configFile.size();
+				// Allocate a buffer to store contents of the file.
+				std::unique_ptr<char[]> buf(new char[size]);
+				configFile.readBytes(buf.get(), size);
+				DynamicJsonBuffer jsonBuffer;
+				JsonObject& json = jsonBuffer.parseObject(buf.get());
+				json.printTo(Serial);
+				if (json.success()) {
+					logger.print(tag, F("\n\t parsed json"));
+
+					if (json.containsKey("rebootreason")) {
+						Serial.println("rebootreason: ");
+						String str = json["rebootreason"];
+						logger.print(tag, str);
+						String reason = json["rebootreason"];
+						setRebootReason(str);
+					}
+				}
+				else {
+					logger.print(tag, F("\n\t failed to load json config"));
+					//clean FS, for testing
+					SPIFFS.format();
+					writeConfig();
+				}
+			}
+		}
+	}
+	else {
+		logger.print(tag, F("failed to mount FS"));
+	}
+	logger.print(tag, F("<<readRebootReason"));
+}
+

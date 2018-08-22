@@ -185,11 +185,11 @@ bool IRReceiveSensor::checkStatusChange() {
 
 bool IRReceiveSensor::receiveCommand(String command, int id, String uuid, String json)
 {
-	logger.print(tag, "\n\t >>IRREceiveSensor::receiveCommand=");
+	logger.print(tag, "\n\t >>IRREceiveSensor::receiveCommand");
 	bool res = Sensor::receiveCommand(command, id, uuid, json);
 
 	if (command.equals("send")) {
-		logger.print(tag, "\n\t send command");
+		logger.print(tag, F("\n\t send command received"));
 		receivedcommanduuid = uuid;
 
 		pirrecv->enableIRIn();  // Start the receiver
@@ -198,8 +198,9 @@ bool IRReceiveSensor::receiveCommand(String command, int id, String uuid, String
 		bit += "0";
 		startMillis = millis();
 		status = STATUS_RECEIVINGIRCODE;	
+		//status = STATUS_RECEIVONEIRCODE;
 	}
-	logger.print(tag, "\n\t <<IRREceiveSensor::receiveCommand=");
+	logger.print(tag, "\n\t <<IRREceiveSensor::receiveCommand");
 	return res;
 }
 

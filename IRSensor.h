@@ -29,10 +29,10 @@ private:
 	IRsend *pirsend;
 	IRDaikinESP *pdaikinir;
 #endif
-	bool sendCode(String codetype, uint64_t code, int bit);
+	bool sendCode(JsonObject& json);
 
 	bool sendDaikin();
-	bool sendSamsungTv();
+	bool sendSamsungTv(int code);
 	bool sendRobotClean();
 	bool sendRobotHome();
 	bool sendHarmanKardonDisc();

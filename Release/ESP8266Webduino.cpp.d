@@ -234,4 +234,30 @@ C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Rel
  C:\Users\giaco\Documents\Arduino\libraries\IRremoteESP8266\src/IRrecv.h \
  C:\Users\giaco\Documents\Arduino\libraries\IRremoteESP8266\src/IRremoteESP8266.h \
  C:\Users\giaco\Documents\Arduino\libraries\IRremoteESP8266\src/IRutils.h \
- C:\Users\giaco\Documents\Arduino\libraries\IRremoteESP8266\src/IRrecv.h
+ C:\Users\giaco\Documents\Arduino\libraries\IRremoteESP8266\src/IRrecv.h \
+ C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\libraries\espsoftwareserial-master/SoftwareSerial.h \
+ C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\NextionDisplay.h \
+ C:\Users\giaco\Documents\Arduino\libraries\ITEADLIB_Arduino_Nextion-master/Nextion.h \
+ C:\Users\giaco\Documents\Arduino\libraries\ITEADLIB_Arduino_Nextion-master/NexConfig.h \
+ C:\Users\giaco\Documents\Arduino\libraries\ITEADLIB_Arduino_Nextion-master/NexTouch.h \
+ C:\Users\giaco\Documents\Arduino\libraries\ITEADLIB_Arduino_Nextion-master/NexObject.h \
+ C:\Users\giaco\Documents\Arduino\libraries\ITEADLIB_Arduino_Nextion-master/NexHardware.h \
+ C:\Users\giaco\Documents\Arduino\libraries\ITEADLIB_Arduino_Nextion-master/NexButton.h \
+ C:\Users\giaco\Documents\Arduino\libraries\ITEADLIB_Arduino_Nextion-master/NexCrop.h \
+ C:\Users\giaco\Documents\Arduino\libraries\ITEADLIB_Arduino_Nextion-master/NexGauge.h \
+ C:\Users\giaco\Documents\Arduino\libraries\ITEADLIB_Arduino_Nextion-master/NexHotspot.h \
+ C:\Users\giaco\Documents\Arduino\libraries\ITEADLIB_Arduino_Nextion-master/NexPage.h \
+ C:\Users\giaco\Documents\Arduino\libraries\ITEADLIB_Arduino_Nextion-master/NexPicture.h \
+ C:\Users\giaco\Documents\Arduino\libraries\ITEADLIB_Arduino_Nextion-master/NexProgressBar.h \
+ C:\Users\giaco\Documents\Arduino\libraries\ITEADLIB_Arduino_Nextion-master/NexSlider.h \
+ C:\Users\giaco\Documents\Arduino\libraries\ITEADLIB_Arduino_Nextion-master/NexText.h \
+ C:\Users\giaco\Documents\Arduino\libraries\ITEADLIB_Arduino_Nextion-master/NexWaveform.h \
+ C:\Users\giaco\Documents\Arduino\libraries\ITEADLIB_Arduino_Nextion-master/NexTimer.h \
+ C:\Users\giaco\Documents\Arduino\libraries\ITEADLIB_Arduino_Nextion-master/NexNumber.h \
+ C:\Users\giaco\Documents\Arduino\libraries\ITEADLIB_Arduino_Nextion-master/NexDualStateButton.h \
+ C:\Users\giaco\Documents\Arduino\libraries\ITEADLIB_Arduino_Nextion-master/NexVariable.h \
+ C:\Users\giaco\Documents\Arduino\libraries\ITEADLIB_Arduino_Nextion-master/NexCheckbox.h \
+ C:\Users\giaco\Documents\Arduino\libraries\ITEADLIB_Arduino_Nextion-master/NexRadio.h \
+ C:\Users\giaco\Documents\Arduino\libraries\ITEADLIB_Arduino_Nextion-master/NexScrolltext.h \
+ C:\Users\giaco\Documents\Arduino\libraries\ITEADLIB_Arduino_Nextion-master/NexGpio.h \
+ C:\Users\giaco\Documents\Arduino\libraries\ITEADLIB_Arduino_Nextion-master/NexRtc.h
