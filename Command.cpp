@@ -1,9 +1,8 @@
 #include "Command.h"
-//#include "Program.h"
 #include "Util.h"
+#include "MQTTMessage.h"
 
-extern bool mqtt_publish(String topic, String message);
-//extern bool _mqtt_publish(char* topic, char* payload);
+extern bool mqtt_publish(MQTTMessage mqttmessage);
 
 Logger Command::logger;
 String Command::tag = "Command";
@@ -21,9 +20,9 @@ bool Command::requestShieldSettings(String MACAddress, String rebootreason)
 	logger.print(tag, F("\n\t>>Command::requestShieldSettings "));
 	logger.print(tag, MACAddress);
 
-
+	MQTTMessage mqttmessage;
 	bool res = false;
-	String topic = "toServer/shield/loadsettings";
+	mqttmessage.topic = "toServer/shield/loadsettings";
 
 	DynamicJsonBuffer jsonBuffer;
 	JsonObject& json = jsonBuffer.createObject();
@@ -31,9 +30,8 @@ bool Command::requestShieldSettings(String MACAddress, String rebootreason)
 	json["MACAddress"] = MACAddress;
 	logger.printJson(json);
 
-	String jsonStr;
-	json.printTo(jsonStr);
-	res = mqtt_publish(topic, jsonStr);
+	json.printTo(mqttmessage.message);
+	res = mqtt_publish(mqttmessage);
 	if (!res)
 		logger.print(tag, F("\n\t<<Command::requestShieldSettings failed"));
 	logger.print(tag, F("\n\t<<Command::requestShieldSettings"));
@@ -43,10 +41,10 @@ bool Command::requestShieldSettings(String MACAddress, String rebootreason)
 bool Command::requestTime(String macAddress)
 {
 	logger.print(tag, F("\n\t >>requestTime\n"));
-
-	String topic = "toServer/shield/time";
-	String json = macAddress;
-	bool res = mqtt_publish(topic, String(json));
+	MQTTMessage mqttmessage;
+	mqttmessage.topic = "toServer/shield/time";
+	mqttmessage.message = macAddress;
+	bool res = mqtt_publish(mqttmessage);
 	logger.print(tag, F("\n\t <<requestTime res="));
 	logger.print(tag, Logger::boolToString(res));
 	return res;
@@ -57,11 +55,12 @@ boolean Command::sendSensorStatus(JsonObject& json)
 	logger.print(tag, F("\n\t >>Command::sendSensorStatus"));
 
 	bool res = false;
-	String topic = "toServer/shield/sensor/update";
-	String jsonStr;
-	logger.print(tag, F("\n\t jsonStr="));
-	json.printTo(jsonStr);
-	res = mqtt_publish(topic, jsonStr);
+	MQTTMessage mqttmessage;
+	mqttmessage.topic = "toServer/shield/sensor/update";
+	//mqttmessage.jsonStr;
+	//logger.print(tag, F("\n\t jsonStr="));
+	json.printTo(mqttmessage.message);
+	res = mqtt_publish(mqttmessage);
 	logger.print(tag, F("\n\t <<Command::sendSensorStatus res="));
 	logger.print(tag, Logger::boolToString(res));
 	return res;
@@ -71,8 +70,10 @@ boolean Command::sendShieldStatus(String json)
 {
 	logger.print(tag, F("\n\t>>sendShieldStatus"));
 	bool res = false;
-	String topic = "toServer/shield/update";
-	res = mqtt_publish(topic, String(json));
+	MQTTMessage mqttmessage;
+	mqttmessage.topic = "toServer/shield/update";
+	mqttmessage.message = json;
+	res = mqtt_publish(mqttmessage);
 	logger.print(tag, F("\n\t<<sendShieldStatus\n res="));
 	logger.print(tag, Logger::boolToString(res));
 	return res;
@@ -87,10 +88,11 @@ boolean Command::requestZoneTemperature(int id, String json)
 		logger.print(tag, F("\n\tID NON VALIDO"));
 		return false;
 	}
-
+	MQTTMessage mqttmessage;
 	bool res = false;
-	String topic = "toServer/shield/" + String(id) + String("/requestzonetemperature");
-	res = mqtt_publish(topic, String(json));
+	mqttmessage.topic = "toServer/shield/" + String(id) + String("/requestzonetemperature");
+	mqttmessage.message = json;
+	res = mqtt_publish(mqttmessage);
 
 	logger.println(tag, F("<<Command::requestZoneTemperature\n"));
 	return res;

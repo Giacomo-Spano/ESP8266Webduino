@@ -4,7 +4,6 @@
 #include <string.h>
 //#include "Actuator.h"
 #include "Sensor.h"
-#include "List.h"
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include "ESPDisplay.h"
@@ -15,6 +14,8 @@
 #include "DoorSensor.h"
 #include "OnewireSensor.h"
 #include "HornSensor.h"
+#include <SimpleList.h>
+#include <LinkedList.h>
 
 
 class Shield
@@ -41,10 +42,10 @@ public:
 	int checkHealth_timeout = 15*60*1000;
 	unsigned long lastCheckHealth;
 	String swVersion;
-	static const int shieldNameLen = 30;
-	static const int serverNameLen = 30;
-	static const char networkSSIDLen = 32;// = "ssid";
-	static const char networkPasswordLen = 96;// = "password";
+	//static const int shieldNameLen = 30;
+	//static const int serverNameLen = 30;
+	//static const char networkSSIDLen = 32;// = "ssid";
+	//static const char networkPasswordLen = 96;// = "password";
 
 	bool settingFromServerReceived = false;
 	//bool settingFromServerRequested = false;
@@ -101,19 +102,9 @@ private:
 	String oldDate;
 
 protected:
-	//bool onUpdateSensorListCommand(JSON& json);
-	//bool onShieldSettingsCommand(JSON& json);
-	bool onShieldSettingsCommand(JsonObject& json);
-	//bool onPowerCommand(JSON& json);
-	bool onPowerCommand(JsonObject& json);
-	//bool sendRegister();
-	//bool onResetSettingsCommand();
-	//bool onRebootCommand();
-	//bool sendUpdateSensorStatus();
-	
-	
 
-	//bool temperatureChanged = false; // indica se la temperatura � cambiata dall'ultima chiamata a flash()
+	bool onShieldSettingsCommand(JsonObject& json);
+	bool onPowerCommand(JsonObject& json);
 	void checkSensorsStatus();	
 
 	
@@ -124,13 +115,12 @@ protected:
 
 public:
 
-	List sensorList;
+	LinkedList<Sensor*> sensors = LinkedList<Sensor*>();
 	
 	Shield();
 	~Shield();
 	void init();
 	virtual void getJson(JsonObject& json);
-	//String getJson();
 	void checkStatus();	
 	void setStatus(String txt);
 	void setEvent(String txt);
@@ -165,8 +155,6 @@ public:
 
 		return String(baseMacChr);
 #endif
-
-		//return String(MAC_char);
 	}
 
 	String getSWVersion()
@@ -290,29 +278,6 @@ public:
 		localPort = port;
 		logger.print(tag, "\n\t localPort="+ String(localPort));
 	}
-
-	/*static String getNetworkSSID()
-	{
-		return networkSSID;
-	}
-
-	static void setNetworkSSID(String ssid)
-	{
-		//logger.print(tag, "\n\t >>setNetworkSSID: " + ssid);
-		networkSSID = ssid;
-		//logger.print(tag, "\n\t networkSSID="+ networkSSID);
-	}
-
-	static String getNetworkPassword()
-	{
-
-		return networkPassword;
-	}
-
-	static void setNetworkPassword(String password)
-	{
-		networkPassword = password;
-	}*/
 
 	String getServerName()
 	{

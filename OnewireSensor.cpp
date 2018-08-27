@@ -34,7 +34,7 @@ OnewireSensor::OnewireSensor(int id, uint8_t pin, bool enabled, String address, 
 
 void OnewireSensor::loadChildren(JsonArray& jsonarray) {
 	//logger.println(tag, ">>loadChildren jarray=" + jarray.toString());
-	childsensors.show();
+	//childsensors.show();
 
 	//String jsonChild = jarray.getFirst();
 	int current = 0;
@@ -59,7 +59,7 @@ void OnewireSensor::loadChildren(JsonArray& jsonarray) {
 		//jsonChild = jarray.getNext();
 	}
 
-	childsensors.show();
+	//childsensors.show();
 	//logger.println(tag, "<<loadChildren");
 }
 
@@ -89,7 +89,7 @@ void OnewireSensor::beginTemperatureSensors()
 	tempSensorNum = 0;
 
 	//SensorFactory factory;
-	childsensors.clearAll();
+	childsensors.clear();
 
 	logger.print(tag, F("\n\t search for 1-Wire devices....."));
 	while (oneWirePtr->search(_address) && tempSensorNum < OnewireSensor::maxTempSensors) {
@@ -134,12 +134,12 @@ void OnewireSensor::beginTemperatureSensors()
 			childsensors.add(child);
 			tempSensorNum++;
 
-			childsensors.show();
+			//childsensors.show();
 		}
 	}
 	oneWirePtr->reset_search();
 
-	childsensors.show();
+	//childsensors.show();
 	logger.println(tag, F("<<beginTemperatureSensors\n"));
 }
 
@@ -166,7 +166,7 @@ bool OnewireSensor::readTemperatures() {
 	pDallasSensors->requestTemperatures(); // Send the command to get temperatures
 
 	//logger.print(tag, F("\n\t childsensors.length(): ") + String(childsensors.length()));
-	for (int i = 0; i < /*tempSensorNum*/childsensors.length(); i++) {
+	for (int i = 0; i < /*tempSensorNum*/childsensors.size(); i++) {
 		TemperatureSensor* tempSensor = (TemperatureSensor*)childsensors.get(i);
 		
 		// call dallasSensors.requestTemperatures() to issue a global temperature 

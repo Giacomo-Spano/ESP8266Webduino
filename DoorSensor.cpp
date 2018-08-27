@@ -2,8 +2,9 @@
 #include "Util.h"
 #include "ESP8266Webduino.h"
 #include "Shield.h"
+//#include "MQTTMessage.h"
 
-extern bool mqtt_publish(String topic, String message);
+//extern bool mqtt_publish(MQTTMessage mqttmessage);
 
 
 Logger DoorSensor::logger;

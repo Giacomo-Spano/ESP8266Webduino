@@ -201,8 +201,8 @@ C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Rel
  C:\Users\giaco\Documents\Arduino\libraries\ArduinoJson-master\src/ArduinoJson/Polyfills/parseFloat.hpp \
  C:\Users\giaco\Documents\Arduino\libraries\ArduinoJson-master\src/ArduinoJson/Polyfills/parseInteger.hpp \
  C:\Users\giaco\Documents\Arduino\libraries\ArduinoJson-master\src/ArduinoJson/Serialization/JsonSerializerImpl.hpp \
- C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\List.h \
  C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\CommandResponse.h \
+ C:\Users\giaco\Documents\Arduino\libraries\LinkedList-master/LinkedList.h \
  C:\Users\giaco\Documents\Arduino\libraries\OneWire/OneWire.h \
  C:\Users\giaco\Documents\Arduino\libraries\DallasTemperature/DallasTemperature.h \
  C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\SensorFactory.h \
@@ -216,6 +216,7 @@ C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Rel
  C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\libraries\SPI/SPI.h \
  C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\ESP8266Webduino.h \
  C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\MQTTClientClass.h \
+ C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\MQTTMessage.h \
  C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\libraries\ArduinoOTA/ArduinoOTA.h \
  C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\Shield.h \
  C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\ESPDisplay.h \
@@ -224,6 +225,7 @@ C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Rel
  C:\Users\giaco\Documents\Arduino\libraries\esp8266-oled-ssd1306/SSD1306Wire.h \
  C:\Users\giaco\Documents\Arduino\libraries\esp8266-oled-ssd1306/OLEDDisplay.h \
  C:\Users\giaco\Documents\Arduino\libraries\esp8266-oled-ssd1306/OLEDDisplayFonts.h \
+ C:\Users\giaco\Documents\Arduino\libraries\Arduino-SimpleList-master/SimpleList.h \
  C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\Command.h \
  C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\POSTData.h \
  C:\Users\giaco\AppData\Local\arduino15\packages\esp8266\hardware\esp8266\2.4.1\libraries\Ticker/Ticker.h \

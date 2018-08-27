@@ -1,25 +1,26 @@
 #pragma once
 #include "Arduino.h"
 #include "Logger.h"
-#include "ObjectClass.h"
-#include "List.h"
 #include "CommandResponse.h"
 #include <ArduinoJson.h>          //https://github.com/bblanchon/ArduinoJson
+#include <LinkedList.h>
 
-class Sensor : public ObjectClass
+class Sensor/* : public ObjectClass*/
 {
 private:
 	static String tag;
 	static Logger logger;
 
 public:
+	Sensor();
 	Sensor(int id, uint8_t pin, bool enabled, String address, String name);
 	~Sensor();
 
 	const String STATUS_IDLE = "idle";
 	//const String STATUS_OFFLINE = "offline";
 
-	List childsensors;
+	//List childsensors;
+	LinkedList<Sensor*> childsensors = LinkedList<Sensor*>();
 	int sensorid;
 	String sensorname;
 	String type;

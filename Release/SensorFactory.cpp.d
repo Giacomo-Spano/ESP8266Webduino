@@ -146,9 +146,8 @@ C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Rel
  C:\Users\giaco\Documents\Arduino\libraries\ArduinoJson-master\src/ArduinoJson/Polyfills/parseFloat.hpp \
  C:\Users\giaco\Documents\Arduino\libraries\ArduinoJson-master\src/ArduinoJson/Polyfills/parseInteger.hpp \
  C:\Users\giaco\Documents\Arduino\libraries\ArduinoJson-master\src/ArduinoJson/Serialization/JsonSerializerImpl.hpp \
- C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\ObjectClass.h \
- C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\List.h \
  C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\CommandResponse.h \
+ C:\Users\giaco\Documents\Arduino\libraries\LinkedList-master/LinkedList.h \
  C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\TemperatureSensor.h \
  C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\HeaterSensor.h \
  C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\DoorSensor.h \
@@ -207,4 +206,5 @@ C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Rel
  C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\esp8266_nodemcuv2\Release\TFTDisplay.h \
  C:\Users\giaco\Documents\Arduino\libraries\Adafruit-GFX-Library-master/Adafruit_GFX.h \
  C:\Users\giaco\Documents\Arduino\libraries\Adafruit-GFX-Library-master/gfxfont.h \
- C:\Users\giaco\Documents\Arduino\libraries\Adafruit_ST7735/Adafruit_ST7735.h
+ C:\Users\giaco\Documents\Arduino\libraries\Adafruit_ST7735/Adafruit_ST7735.h \
+ C:\Users\giaco\Documents\Arduino\libraries\Arduino-SimpleList-master/SimpleList.h

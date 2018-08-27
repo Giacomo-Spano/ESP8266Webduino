@@ -1,11 +1,12 @@
 #include "Sensor.h"
 #include "Shield.h"
 #include "Logger.h"
+#include "MQTTMessage.h"
 
 Logger Sensor::logger;
 String Sensor::tag = "Sensor";
 
-extern bool mqtt_publish(String topic, String message);
+extern bool mqtt_publish(MQTTMessage mqttmessage);
 
 Sensor::Sensor(int id, uint8_t pin, bool enabled, String address, String name)
 {
@@ -19,9 +20,13 @@ Sensor::Sensor(int id, uint8_t pin, bool enabled, String address, String name)
 	lastCheckStatus = 0;// = 0;//-flash_interval;
 }
 
+Sensor::Sensor()
+{
+}
+
 Sensor::~Sensor()
 {
-	childsensors.clearAll();
+	childsensors.clear();
 }
 
 void Sensor::show() {
@@ -41,32 +46,10 @@ void Sensor::show() {
 String Sensor::toString()
 {
 	String str = "sensor: " + sensorname + ";type: " + type + ";sensorid: " + sensorid;
-	if (childsensors.count > 0)
-		str += ";chidren:" + String(childsensors.count);
+	if (childsensors.size() > 0)
+		str += ";chidren:" + String(childsensors.size());
 	return str;
 }
-
-/*String Sensor::getChildren() {
-
-	//logger.print(tag, "\n");
-	//logger.println(tag, ">>getChildren child num=" + String(childsensors.length()));
-
-	String json = "";
-	if (childsensors.length() > 0) {
-
-		json += ",\"children\":";
-		json += "[";
-		for (int i = 0; i < childsensors.length(); i++) {
-			if (i > 0)
-				json += ",";
-			Sensor* child = (Sensor*)childsensors.get(i);
-			json += child->getJSON();
-		}
-		json += "]";
-	}
-	//logger.println(tag, "<<getChildren" + json);
-	return json;
-}*/
 
 Sensor * Sensor::getSensorFromId(int id)
 {
@@ -74,17 +57,14 @@ Sensor * Sensor::getSensorFromId(int id)
 
 	if (sensorid == id)
 		return (Sensor*)this;
-
-	//logger.print(tag, "\n\t childsensors.count " + String(childsensors.length()));
-
-	if (childsensors.length() > 0) {
-		for (int i = 0; i < childsensors.length(); i++) {
+	
+	if (childsensors.size() > 0) {
+		for (int i = 0; i < childsensors.size(); i++) {
 			//logger.print(tag, "\n\t i= " + String(i));
 			Sensor* child = (Sensor*)childsensors.get(i);
 			Sensor* sensor = child->getSensorFromId(id);
 			if (sensor->sensorid == id)
 				return (Sensor*)this;
-
 		}
 	}
 	logger.println(tag, F("<<Sensor::getSensorFromId"));
@@ -97,11 +77,10 @@ void Sensor::getJson(JsonObject& json) {
 	json["status"] = status;
 	json["addr"] = address;
 	logger.printJson(json);
-
-	
-	if (childsensors.length() > 0) {
+		
+	if (childsensors.size() > 0) {
 		JsonArray& children = json.createNestedArray("children");
-		for (int i = 0; i < childsensors.length(); i++) {
+		for (int i = 0; i < childsensors.size(); i++) {
 			Sensor* child = (Sensor*)childsensors.get(i);
 			DynamicJsonBuffer jsonBuffer;
 			JsonObject& childjson = jsonBuffer.createObject();
@@ -154,7 +133,9 @@ bool Sensor::receiveCommand(String command, int id, String uuid, String jsoncmd)
 bool Sensor::sendCommandResponse(String uuid, String response)
 {
 	logger.print(tag, "\n\t sendCommandResponse uuid=" + uuid + "response" + response);
-	String topic = "toServer/response/" + uuid + "/success";
-	return mqtt_publish(topic, response);
+	MQTTMessage mqttmessage;
+	mqttmessage.topic = "toServer/response/" + uuid + "/success";
+	mqttmessage.message = response;
+	return mqtt_publish(mqttmessage);
 }
 

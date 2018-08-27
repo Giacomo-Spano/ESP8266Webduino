@@ -30,6 +30,7 @@
 #endif
 #include "ESP8266Webduino.h"
 #include "MQTTClientClass.h"
+#include "MQTTMessage.h"
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
 #include "Logger.h"
@@ -66,9 +67,6 @@
 NextionDisplay nextDisplay;
 
 
-
-
-
 //void triggerUpdateTime();
 
 /*Ticker updatetimeTimer(triggerUpdateTime, 30000); // once, immediately
@@ -79,31 +77,22 @@ void triggerUpdateTime() {
 	timeNotUpdated = true;
 }*/
 extern void resetWiFiManagerSettings();
-extern bool mqtt_publish(String topic, String message);
+extern bool mqtt_publish(MQTTMessage mqttmessage);
 extern void reboot(String reason);
 
 
-//bool checkHTTPUpdate = true; //true;
-//bool mqttLoaded = false; //true;
 bool shouldSaveConfig = true;
 WiFiManager wifiManager;
-//ESPDisplay espDisplay;
 Logger logger;
 String tag = "Webduino";
 Shield shield;
 MQTTClientClass mqttclient;
+LinkedList<MQTTMessage*> mqttmessagelist = LinkedList<MQTTMessage*>();
 
-//WiFiServer server(80);
 WiFiClient client;
 
-//unsigned long lastCommandFailed = 0;
-//const int commandFailed_interval = 60000 * 30;// *12;// 60 secondi * 15 minuti
 unsigned long lastReboot = 0;
-const int reboot_interval = 3600000 * 24;// 24 ore
-
-
-
-
+const int reboot_interval = 3600000 * 2;// 24 ore
 
 void resetWiFiManagerSettings() {
 	logger.print(tag, F("\n\n\t >>resetWiFiManagerSettings"));
@@ -272,7 +261,6 @@ void setup()
 	Serial.begin(115200);
 	delay(10);
 
-
 	Logger::init();
 	logger.print(tag, F("\n\t >>setup"));
 	logger.print(tag, F("\n\n *******************RESTARTING************************"));
@@ -280,11 +268,6 @@ void setup()
 	shield.init();
 
 	nextDisplay.init();
-	//swSer1.begin(9600);
-	//nexInit();
-	//t0.setText("State: xxxxx");
-	//b0.attachPop(bOnPopCallback, &b0);
-
 
 	shield.setEvent(F("read config.."));
 	shield.invalidateDisplay();
@@ -323,32 +306,51 @@ void setup()
 	logger.println(tag, F("\n\t<<setup\n\n"));
 }
 
-bool mqtt_publish(String topic, String message) {
+bool mqtt_publish(MQTTMessage mqttmessage) {
 
-	logger.print(tag, F("\n\t >>mqtt_publish"));
-	logger.print(tag, F("\n\t topic: "));
-	logger.print(tag, topic);
-	logger.print(tag, F("\n\t message: "));
-	logger.print(tag, message);
+	logger.print(tag, String(F("\n\t >>mqtt_publish* \n\t topic:")) + mqttmessage.topic);
+	logger.print(tag, String(F("\n\t message:")) + mqttmessage.message);
+	mqttmessagelist.add(&mqttmessage);
 
+	logger.print(tag, F("\n\t size:"));
+	logger.print(tag, mqttmessagelist.size());
+
+
+	if (mqttmessagelist.size() > 10) {
+		reboot(F("too many message"));
+	}
+
+	for (int i = 0; i < mqttmessagelist.size(); i++)
+	{
 #ifdef ESP8266
-	ESP.wdtFeed();
+		ESP.wdtFeed();
 #endif // ESP8266
 
-	bool res = false;
-	if (!client.connected()) {
-		logger.print(tag, F("\n\t OFFLINE - payload NOT sent!!!\n"));
-	}
-	else {
-		res = mqttclient.publish(topic.c_str(), message.c_str());
-		if (!res) {
-			logger.print(tag, F("\n\t lastcommandfailed"));
-			//lastCommandFailed = millis();
+		MQTTMessage* message = (MQTTMessage*)mqttmessagelist.get(i);
+		logger.print(tag, F("\n\t message:"));
+		logger.print(tag, mqttmessage.message);
+
+		//bool res = mqtt_publish(message->topic, message->message);
+		bool res = false;
+		if (!client.connected()) {
+			logger.print(tag, F("\n\t OFFLINE - payload NOT sent!!!\n"));
 		}
+		else {
+			res = mqttclient.publish(message->topic.c_str(), message->message.c_str());
+			if (!res) {
+				logger.print(tag, F("\n\t MQTT Message not sent!!!\n"));
+				return false;
+			} else {
+				mqttmessagelist.remove(i);
+				i--;
+				logger.print(tag, F("\n\t MQTT Message sent!!!\n"));
+				continue;
+			}
+		}
+		
 	}
-	logger.print(tag, F("\n\t <<mqtt_publish res="));
-	logger.print(tag, Logger::boolToString(res));
-	return res;
+	logger.print(tag, F("\n\t << mqtt_publish*"));
+	return true;
 }
 
 void checkForSWUpdate() {
@@ -358,7 +360,6 @@ void checkForSWUpdate() {
 	logger.println(tag, F(">>checkForSWUpdate"));
 	//delay(2000);
 
-	//t_httpUpdate_return ret = ESPhttpUpdate.update("http://192.168.1.3:8080//webduino/ota",Shield::swVersion);
 	String updatePath = "http://" + shield.getServerName() + ":" + shield.getServerPort() + "//webduino/ota";
 	logger.print(tag, "\n\t check for sw update " + updatePath);
 	logger.print(tag, "\n\t current version " + shield.swVersion);
@@ -401,6 +402,7 @@ bool initMQTTServer() {
 
 void loop()
 {	
+	//logger.println(tag, F("\nloop"));
 	//nexLoop(nex_listen_list);
 	nextDisplay.loop();
 
