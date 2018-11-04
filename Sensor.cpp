@@ -71,23 +71,68 @@ Sensor * Sensor::getSensorFromId(int id)
 	return nullptr;
 }
 
+String prova;
+
 void Sensor::getJson(JsonObject& json) {
 
+	logger.println(tag, F(">>Sensor::getJson\n"));
 	json["sensorid"] = sensorid;
 	json["status"] = status;
 	json["addr"] = address;
-	logger.printJson(json);
+	json["statustext"] = getStatusText();
 		
+	/*if (childsensors.size() > 0) {
+
+		
+		for (int i = 0; i < childsensors.size(); i++) {
+			Sensor* child = (Sensor*)childsensors.get(i);
+			JsonArray& children = json["children"];
+			JsonObject& childjson = children[i];
+
+			child->getJson(childjson);
+		}
+	}*/
+	logger.printJson(json);
+
+	logger.println(tag, F("<<Sensor::getJson"));
+}
+
+String Sensor::getStrJson() {
+
+	logger.println(tag, F(">>Sensor::getStrJson\n"));
+
+	DynamicJsonBuffer jsonBuffer;
+	JsonObject& json = jsonBuffer.createObject();
+	/*json["sensorid"] = sensorid;
+	json["status"] = status;
+	json["addr"] = address;*/
+	getJson(json);
+	
 	if (childsensors.size() > 0) {
 		JsonArray& children = json.createNestedArray("children");
 		for (int i = 0; i < childsensors.size(); i++) {
 			Sensor* child = (Sensor*)childsensors.get(i);
-			DynamicJsonBuffer jsonBuffer;
+			/*DynamicJsonBuffer jsonBuffer;
+			JsonObject& childjson = jsonBuffer.createObject();*/
+			StaticJsonBuffer<300> jsonBuffer;
 			JsonObject& childjson = jsonBuffer.createObject();
 			child->getJson(childjson);
-			children.add(child);
+			children.add(childjson);
 		}
+		boolean res = json.set("children", children);
+		logger.print(tag, F("res="));
+		logger.print(tag, Logger::boolToString(res));
 	}
+	//logger.printJson(json);
+
+	String str;
+	json.printTo(str);
+	logger.print(tag, str);
+
+	logger.println(tag, F("str="));
+	logger.println(tag, str);
+	logger.println(tag, F("<<Sensor::getStrJson"));
+	return str;
 }
 
 void Sensor::loadChildren(JsonArray& json)

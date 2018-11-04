@@ -41,6 +41,7 @@ public:
 	unsigned long lastCheckStatus;// = 0;//-flash_interval;
 	Sensor* getSensorFromId(int id);
 	virtual void getJson(JsonObject& json);
+	String getStrJson();
 	virtual void loadChildren(JsonArray& jsonarray);
 	virtual void show();
 	virtual String toString();	

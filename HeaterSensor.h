@@ -46,20 +46,21 @@ private:
 
 public:
 	const char* command_KeepTemperature = "keeptemperature";
+	const char* command_Stop_KeepTemperature = "stopkeeptemperature";
 	const char* command_Off = "off";
 	const char* command_sendTemperature = "sendtemperature";
-	const char* command_Manual = "manual";
+	//const char* command_Manual = "manual";
 	
 	//const String STATUS_DISABLED = "disabled"
 	const String STATUS_OFF = "off";
 	const String STATUS_KEEPTEMPERATURE = "keeptemperature";
-	const String STATUS_MANUAL = "manual";
+	//const String STATUS_MANUAL = "manual";
 
 	HeaterSensor(int id, uint8_t pin, bool enabled, String address, String name);
 	~HeaterSensor();
 	
 	void updateReleStatus();
-	bool changeStatus(String command, long duration, float remotetemperature, float target, int actionid, String commanddate, String enddate, int zone);
+	bool changeStatus(String command, long duration, float remotetemperature, float target, int actionid, String commanddate, String enddate, int zoneid, int zonesensorid);
 	
 	//CommandResponse receiveCommand(int actuatorId, String uuid, String json);
 	bool receiveCommand(String command, int id, String uuid, String json);
@@ -68,10 +69,11 @@ public:
 
 	void setStatus(String status);
 	String getStatus();
+	void setZone(int _zoneid, int _zonesensorid);
 	
-	void setReleStatus(int status);
-	int getReleStatus();
-	void enableRele(boolean on);
+	void setReleStatus(bool status);
+	bool getReleStatus();
+	void enableRele(bool on);
 	void setRemoteTemperature(float temp);
 	bool statusChanged();
 	bool releStatusChanged();
@@ -97,7 +99,8 @@ private:
 	bool oldReleStatus = false;
 	float targetTemperature = 0.0;
 	float remoteTemperature = 0;
-	int zoneId = 0; 
+	int zoneid = 0; 
+	int zonesensorid = 0;
 	int activescenario = -1;
 
 	int remainingSeconds = 0;

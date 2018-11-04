@@ -120,11 +120,19 @@ bool testWifi() {
 	String serverport = String(shield.getServerPort());
 	String mqttserver = shield.getMQTTServer();
 	String mqttport = String(shield.getMQTTPort());
-
+	//bool oleddisplay = String(shield.getOledDisplay());
+	
 	WiFiManagerParameter custom_server("server", "server", server.c_str(), 40);
 	WiFiManagerParameter custom_server_port("port", "port", serverport.c_str(), 5);
 	WiFiManagerParameter custom_mqtt_server("mqttserver", "mqtt server", mqttserver.c_str(), 40);
 	WiFiManagerParameter custom_mqtt_port("mqttport", "mqtt port", mqttport.c_str(), 5);
+	
+	/*char customhtml[24] = "type=\"checkbox\"";
+	if (oleddisplay) {
+		strcat(customhtml, " checked");
+	}
+	WiFiManagerParameter p_sensorDht22("sensordht22", "DHT-22 Sensor", "T", 2, customhtml, WFM_LABEL_AFTER);*/
+
 
 	// put your setup code here, to run once:
 	//WiFiManager wifiManager;
@@ -404,7 +412,11 @@ void loop()
 {	
 	//logger.println(tag, F("\nloop"));
 	//nexLoop(nex_listen_list);
+#ifdef NEXTDISPLAY
+
 	nextDisplay.loop();
+
+#endif
 
 #ifdef ESP8266
 	ESP.wdtFeed();

@@ -59,12 +59,31 @@ boolean Command::sendSensorStatus(JsonObject& json)
 	mqttmessage.topic = "toServer/shield/sensor/update";
 	//mqttmessage.jsonStr;
 	//logger.print(tag, F("\n\t jsonStr="));
+	logger.printJson(json);
 	json.printTo(mqttmessage.message);
 	res = mqtt_publish(mqttmessage);
 	logger.print(tag, F("\n\t <<Command::sendSensorStatus res="));
 	logger.print(tag, Logger::boolToString(res));
 	return res;
 }
+
+boolean Command::sendStrSensorStatus(String strJson)
+{
+	logger.print(tag, F("\n\t >>Command::sendStrSensorStatus"));
+
+	bool res = false;
+	MQTTMessage mqttmessage;
+	mqttmessage.topic = "toServer/shield/sensor/update";
+	//logger.printJson(json);
+	//json.printTo(mqttmessage.message);
+	mqttmessage.message = strJson;
+	res = mqtt_publish(mqttmessage);
+	logger.print(tag, Logger::boolToString(res));
+	logger.print(tag, F("\n\t <<Command::sendStrSensorStatus res="));
+	
+	return res;
+}
+
 
 boolean Command::sendShieldStatus(String json)
 {

@@ -20,6 +20,7 @@ public:
 	bool requestShieldSettings(String MACAddress, String rebootreason);
 	bool requestTime(String macAddress);
 	boolean sendSensorStatus(JsonObject& json);
+	boolean sendStrSensorStatus(String strJson);
 	boolean sendShieldStatus(String json);
 	boolean requestZoneTemperature(int id, String json);
 };

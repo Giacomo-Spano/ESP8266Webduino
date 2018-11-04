@@ -176,28 +176,24 @@ Sensor * SensorFactory::createSensor(JSONObject* json)
 Sensor * SensorFactory::createSensor(JsonObject& json)
 {
 	logger.print(tag, F("\n"));
-	logger.println(tag, F("\n\t >>createSensor2  json = "));
-	//logger.println(tag, logger.formattedJson(json->toString()));
+	logger.println(tag, F("\n\t >>createSensor  json = "));
 	json.printTo(Serial);
 	logger.printFreeMem(tag, F("start create sensor"));
 
-	//int sensorid;
-	//String type;
-	//String address;
 	uint8_t pin = 0;
 	bool enabled = true;
 	String name = "";
-
-
-	if (!json.containsKey("type") || !json.containsKey("subaddress") || !json.containsKey("id")) {
+		if (!json.containsKey("type") || !json.containsKey("subaddress") || !json.containsKey("id")) {
 		logger.print(tag, F("\n\t invalid address and typ="));
 		return nullptr;
 	}
 	String type = json["type"];
+	type.replace("\r\n", "");
 	String address = json[F("subaddress")];
 	int sensorid = json["id"];	
 	if (json.containsKey(F("pin"))) {
-		String strPin = json["pin"];
+		String strPin = json[F("pin")];
+		strPin.replace("\r\n", ""); // importante!!
 		pin = Shield::pinFromStr(strPin);
 	}
 	if (json.containsKey(F("enabled"))) {

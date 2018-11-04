@@ -21,7 +21,7 @@ String Shield::tag = "Shield";
 Shield::Shield()
 {
 	lastRestartDate = "";
-	swVersion = "1.75";
+	swVersion = "1.82";
 
 	id = 0; //// inizializzato a zero perch� viene impostato dalla chiamata a registershield
 	localPort = 80;
@@ -33,6 +33,9 @@ Shield::Shield()
 	mqttUser = "";
 	mqttPassword = "";
 	mqttMode = true;// true;
+	oleddisplay = false;
+	nexiondisplay = false;
+
 	configMode = false;// true;
 	resetSettings = false;// true;
 	powerStatus = "on"; // da aggiungere
@@ -188,16 +191,16 @@ Sensor* Shield::getSensorFromAddress(String addr) {
 Sensor* Shield::getSensorFromId(int id) { /// sidsogna aggiungere anche richerca nei child
 	logger.print(tag, F("\n\t >>Shield::getSensorFromId"));
 
-	logger.print(tag, String(F("\n\t sensors.size=")) + String(sensors.size()));
+	//logger.print(tag, String(F("\n\t sensors.size=")) + String(sensors.size()));
 	for (int i = 0; i < sensors.size(); i++)
 	{
 		Sensor* sensor = (Sensor*)sensors.get(i);
-		logger.print(tag, String(F("\n\t sensorid=")) + String(sensor->sensorid));
+		//logger.print(tag, String(F("\n\t sensorid=")) + String(sensor->sensorid));
 		if (sensor->sensorid == id) {
 			logger.print(tag, String(F("\n\t <<>Shield::getSensorFromId - found")));
 			return sensor;
 		}
-		logger.print(tag, String(F("\n\t childsensors.size=")) + String(sensor->childsensors.size()));
+		//logger.print(tag, String(F("\n\t childsensors.size=")) + String(sensor->childsensors.size()));
 		for (int k = 0; k < sensor->childsensors.size(); k++) {
 			Sensor* child = (Sensor*)sensor->childsensors.get(k);
 			logger.print(tag, String(F("\n\t childsensorid=")) + String(child->sensorid));
@@ -207,7 +210,7 @@ Sensor* Shield::getSensorFromId(int id) { /// sidsogna aggiungere anche richerca
 			}
 		}
 	}
-	logger.print(tag, String(F("\n\t <<>Shield::getSensorFromId - NOTb found!")));
+	logger.print(tag, String(F("\n\t <<>Shield::getSensorFromId - NOT found!")));
 	return nullptr;
 }
 
@@ -421,11 +424,11 @@ bool Shield::receiveCommand(String jsonStr) {
 			logger.print(tag, String(result));
 			return res;
 		}
-		else if (json.containsKey("actuatorid") && json.containsKey("uuid")) {	// se c'è il campo actuatorid
+		else if (json.containsKey("sensorid") && json.containsKey("uuid")) {	// se c'è il campo actuatorid
 
 			logger.print(tag, F("\n\treceived actuator command"));
-			int id = json["actuatorid"];
-			logger.print(tag, F("\n\t actuatorid="));
+			int id = json["sensorid"];
+			logger.print(tag, F("\n\t sensorid="));
 			logger.print(tag, String(id));
 			String uuid = json["uuid"];
 			Sensor* sensor = getSensorFromId(id);
@@ -608,11 +611,29 @@ void Shield::checkSensorsStatus()
 
 		if (sendUpdate) {
 			Command command;
-			DynamicJsonBuffer jsonBuffer;
+			/*DynamicJsonBuffer jsonBuffer;
 			JsonObject& json = jsonBuffer.createObject();
-			sensor->getJson(json);
-			json["date"] = logger.getStrDate();
-			bool res = command.sendSensorStatus(json);
+			sensor->getJson(json);*/
+
+			/*StaticJsonBuffer<500> jsonBuffer;
+			JsonObject& json = jsonBuffer.createObject();*/
+			
+			//json["date"] = logger.getStrDate();
+
+			/*String str2;
+			json.printTo(str2);
+			logger.print(tag, str2);
+
+			sensor->getJson(json);*/
+
+			/*String str;
+			json.printTo(str);
+			logger.print(tag, str);*/
+			String strJson = sensor->getStrJson();
+			
+
+			//bool res = command.sendSensorStatus(json);
+			bool res = command.sendStrSensorStatus(strJson);
 			logger.print(tag, F("\n\t SENSOR STATUS SENT - res="));
 			logger.print(tag, Logger::boolToString(res));
 			if (res) {

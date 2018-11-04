@@ -29,6 +29,8 @@ protected:
 	String mqttServer;
 	int mqttPort;
 	String shieldName;
+	bool nexiondisplay;
+	bool oleddisplay;
 
 	bool mqttMode;
 	bool configMode;
@@ -171,7 +173,31 @@ public:
 	{		
 		logger.print(tag, "\n\t >>setServerPort");
 		serverPort = port;
-		logger.print(tag, "\n\t serverPort=" + String(serverPort));
+		logger.print(tag, "\n\t <<serverPort=" + String(serverPort));
+	}
+
+	int getNextionDisplay()
+	{
+		return nexiondisplay;
+	}
+
+	void setNextionDisplay(bool enable)
+	{
+		logger.print(tag, "\n\t >>setnextionDisplay");
+		nexiondisplay = enable;
+		logger.print(tag, "\n\t <<setnextionDisplay=" + Logger::boolToString(nexiondisplay));
+	}
+
+	int getOledDisplay()
+	{
+		return oleddisplay;
+	}
+
+	void setOledDisplay(bool enable)
+	{
+		logger.print(tag, "\n\t >>setOledDisplay");
+		oleddisplay = enable;
+		logger.print(tag, "\n\t <<setOledDisplay=" + Logger::boolToString(oleddisplay));
 	}
 
 	static String getStrPin(uint8_t pin)
@@ -210,12 +236,14 @@ public:
 
 	static uint8_t pinFromStr(String str)
 	{
-#ifdef ESP8266
-		if (str.equals("D0"))
+		logger.print(tag, "\n\t >> pinFromStr strPin=");
+		logger.print(tag, str);
+//#ifdef ESP8266
+		if (str.equalsIgnoreCase("D0"))
 			return D0;
 		if (str.equals("D1"))
 			return D1;
-		if (str.equals("D2"))
+		if (str.equalsIgnoreCase("D2"))
 			return D2;
 		if (str.equals("D3"))
 			return D3;
@@ -237,8 +265,8 @@ public:
 		if (str.equals("D10"))
 			return D10;
 #endif
-		else
-#else
+		/*else
+//#else
 		if (str.equals("D0"))
 				return 0;
 		if (str.equals("D1"))
@@ -261,8 +289,9 @@ public:
 			return 9;
 		if (str.equals("D10"))
 			return 10;
-		else
-#endif // ESP8266
+		else*/
+//#endif // ESP8266
+			logger.print(tag, "\n\t PIN NOT FOUND");
 			return 0;
 	}
 
@@ -276,7 +305,7 @@ public:
 	{
 		logger.print(tag, "\n\t >>setLocalPort");
 		localPort = port;
-		logger.print(tag, "\n\t localPort="+ String(localPort));
+		logger.print(tag, "\n\t >> localPort="+ String(localPort));
 	}
 
 	String getServerName()
