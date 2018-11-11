@@ -159,6 +159,7 @@ String Sensor::getStatusText()
 bool Sensor::receiveCommand(String command, int id, String uuid, String jsoncmd)
 {
 	logger.print(tag, F("\n\t >>Sensor::receiveCommand"));
+	logger.print(tag, String(F("\n\t >>command=")) + command);
 	if (command.equals("requestsensorstatus")) {// richiesta stato di un singolo sensore
 		logger.print(tag, F("\n\t requestsensorstatus"));
 		DynamicJsonBuffer jsonBuffer;

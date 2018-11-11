@@ -21,7 +21,7 @@ String Shield::tag = "Shield";
 Shield::Shield()
 {
 	lastRestartDate = "";
-	swVersion = "1.82";
+	swVersion = "1.84";
 
 	id = 0; //// inizializzato a zero perch� viene impostato dalla chiamata a registershield
 	localPort = 80;

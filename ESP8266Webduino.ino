@@ -270,7 +270,7 @@ void setup()
 	delay(10);
 
 	Logger::init();
-	logger.print(tag, F("\n\t >>setup"));
+	//logger.print(tag, F("\n\t >>setup"));
 	logger.print(tag, F("\n\n *******************RESTARTING************************"));
 
 	shield.init();

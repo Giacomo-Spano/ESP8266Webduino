@@ -24,25 +24,21 @@ HeaterSensor::~HeaterSensor()
 
 bool HeaterSensor::receiveCommand(String command, int id, String uuid, String jsonStr)
 {
-	logger.print(tag, "\n\t >>HeaterSensor::receiveCommand=");
+	logger.print(tag, "\n\t >>HeaterSensor::receiveCommand=" + command);
 	bool res = Sensor::receiveCommand(command, id, uuid, jsonStr);
-	if (res) // se è true vuol dire che è stato inviato il comando base
+	if (res) {// se è true vuol dire che è stato inviato il comando base
+		logger.print(tag, "\n\t <<HeaterSensor::receiveCommand res=" + Logger::boolToString(res));
 		return true;
-
-	logger.print(tag, "\n\n\t >>receiveCommand=");
-
+	}
+		
 	size_t size = jsonStr.length();
 	DynamicJsonBuffer jsonBuffer;
 	JsonObject& json = jsonBuffer.parseObject(jsonStr);
-
-	//JSON json(jsonStr);
 	// duration
 	int duration = 0;
 	if (json.containsKey("duration")) {
 		duration = json["duration"];
 		logger.print(tag, "\n\t duration=" + String(duration) + " secondi");
-		//duration = duration * 1000;
-		//logger.print(tag, "\n\t duration=" + String(duration) + " millisecondi");
 	}
 	// remote temperature
 	float rTemperature = 0;
@@ -76,14 +72,12 @@ bool HeaterSensor::receiveCommand(String command, int id, String uuid, String js
 		enddate = str;
 		logger.print(tag, "\n\t enddate=" + enddate);
 	}
-
 	// zone
 	int zone = 0;
 	if (json.containsKey("zoneid")) {
 		zone = json["zoneid"];
 		logger.print(tag, "\n\t zoneid=" + String(zoneid));
 	}
-
 	// zonesensor
 	int zonesensorid = 0;
 	if (json.containsKey("zonesensorid")) {
@@ -218,14 +212,7 @@ void HeaterSensor::init()
 
 bool HeaterSensor::checkStatusChange()
 {
-	//logger.print(tag, "\n\n\t >>HeaterActuator::checkStatusChange");
-
 	bool sendStatus = false;
-
-	/*if (remoteTemperatureUpdate()) {
-		sendStatus = true;
-		logger.print(tag, "\n\n\t HEATER::REMOTE TEMPERATURE TIMEOUT \n\n");
-	}*/
 
 	// controlla se è mpassato un minuto
 	if (status.equals(STATUS_KEEPTEMPERATURE)) {
@@ -251,7 +238,7 @@ bool HeaterSensor::checkStatusChange()
 	// notifica il server se è cambiato lo stato del rele
 	if (releStatusChanged()) {
 
-		logger.println(tag, "\t!->rele status changed");
+		//logger.println(tag, "\t!->rele status changed");
 		saveOldReleStatus();
 		sendStatus = true;
 
@@ -303,16 +290,9 @@ bool HeaterSensor::programEnded()
 			// � iniutile mandare un sendstatus perch� tanto cambia lo stato dopo e verrebbe inviato due volte
 			setStatus(STATUS_OFF);
 			updateReleStatus();
-			//enableRele(false);
+			enableRele(false);
 			return true;
-		} /*else if (currMillis - las > programDuration) {
-			logger.println(tag, "END PROGRAM");
-			// � iniutile mandare un sendstatus perch� tanto cambia lo stato dopo e verrebbe inviato due volte
-			setStatus(STATUS_OFF);
-			updateReleStatus();
-			//enableRele(false);
-			return true;
-		}*/
+		} 
 	}
 	return false;
 }
@@ -346,7 +326,7 @@ void HeaterSensor::updateReleStatus() {
 
 	logger.print(tag, "\n\n\t >>updateReleStatus" + String(remoteTemperature));
 
-	logger.print(tag, "\n\t ConsumptionStartTime=" + String(ConsumptionStartTime));
+	/*logger.print(tag, "\n\t ConsumptionStartTime=" + String(ConsumptionStartTime));
 	logger.print(tag, "\n\t totalConsumptionTime=" + String(totalConsumptionTime));
 	logger.print(tag, "\n\t lastConsumptionEnableTime=" + String(lastConsumptionEnableTime));
 	logger.print(tag, "\n\t targetTemperature=" + String(targetTemperature));
@@ -357,7 +337,7 @@ void HeaterSensor::updateReleStatus() {
 	logger.print(tag, "\n\t zoneid=" + String(zoneid));
 	logger.print(tag, "\n\t zonesensorid=" + String(zonesensorid));
 	logger.print(tag, "\n\t remoteTemperature=" + String(remoteTemperature));
-	logger.print(tag, "\n\n");
+	logger.print(tag, "\n\n");*/
 
 	if (!enabled || status.equals(STATUS_OFF)) {
 
@@ -367,15 +347,13 @@ void HeaterSensor::updateReleStatus() {
 	}
 	else if (status.equals(STATUS_KEEPTEMPERATURE)) {
 
-		logger.print(tag, "\n\t STATUS_KEEPTEMPERATURE");
-
 		if (remoteTemperature < targetTemperature) {
 
-			logger.print(tag, F("-LOW TEMPERATURE"));
+			logger.print(tag, F("STATUS_KEEPTEMPERATURE-LOW TEMPERATURE"));
 			enableRele(true);
 		}
 		else {
-			logger.print(tag, F("-HIGH TEMPERATURE"));
+			logger.print(tag, F("STATUS_KEEPTEMPERATURE-HIGH TEMPERATURE"));
 			enableRele(false);
 		}
 	}
@@ -385,8 +363,7 @@ void HeaterSensor::updateReleStatus() {
 bool HeaterSensor::changeStatus(String command, long duration, float rtemp, float target, int actionid, String commanddate,String enddate, int zoneid, int zonesensorid) {
 
 	logger.print(tag, F("\n\t >>HeaterSensor::changeStatus"));
-
-	logger.print(tag, String("\n\t current status=") + status);
+	/*logger.print(tag, String("\n\t current status=") + status);
 	logger.print(tag, String("\n\t command=") + command);
 	logger.print(tag, String("\n\t duration=") + String(duration));
 	logger.print(tag, String("\n\t remotetemperature=") + String(rtemp));
@@ -395,8 +372,7 @@ bool HeaterSensor::changeStatus(String command, long duration, float rtemp, floa
 	logger.print(tag, String("\n\t commanddate=") + String(commanddate));
 	logger.print(tag, String("\n\t enddate=") + String(enddate));
 	logger.print(tag, String("\n\t zoneid=") + String(zoneid));
-	logger.print(tag, String("\n\t zonesensorid=") + String(zonesensorid));
-
+	logger.print(tag, String("\n\t zonesensorid=") + String(zonesensorid));*/
 
 	if (!enabled) {
 		logger.print(tag, F("\n\t sensor not enabled "));
@@ -440,22 +416,22 @@ bool HeaterSensor::changeStatus(String command, long duration, float rtemp, floa
 		logger.print(tag, String("\n\t remotetemperature=") + String(rtemp));
 		setRemoteTemperature(rtemp);
 		lastTemperatureUpdate = commanddate;
-		enableRele(false);
+		//enableRele(false);
 		lastCommandDate = commanddate;
 
 	}
 	else {
-		logger.print(tag, F("\n\t invalid command "));
+		//logger.print(tag, F("\n\t invalid command "));
 		logger.print(tag, F("\n\t <<HeaterSensor::changeStatus failed"));
 		return false;
 	}
 
-	logger.print(tag, "\n\t --HeaterSensor::changeStatus status=" + status);
+	logger.print(tag, String(F("\n\t --HeaterSensor::changeStatus status=")) + status);
 	logger.print(tag, " oldStatus=" + oldStatus);
 
 	updateReleStatus();
 
-	logger.print(tag, "\n\t --HeaterSensor::changeStatus status=" + status);
+	//logger.print(tag, "\n\t --HeaterSensor::changeStatus status=" + status);
 	logger.print(tag, " oldStatus=" + oldStatus);
 
 	logger.print(tag, F("\n\t <<HeaterSensor::changeStatus"));
@@ -468,10 +444,9 @@ void HeaterSensor::setStatus(String sensorstatus)
 	//oldStatus = status;
 	logger.print(tag, "\n\t oldStatus=" + oldStatus);
 	status = sensorstatus;
-	logger.print(tag, F("\n\t <<HeaterSensor::setStatus"));
+	//logger.print(tag, F("\n\t <<HeaterSensor::setStatus"));
 
-	logger.print(tag, "\n\t --HeaterSensor::changeStatus status=" + status);
-	logger.print(tag, " oldStatus=" + oldStatus);
+	logger.print(tag, "\n\t <<HeaterSensor::setStatus=" + status);
 }
 
 void HeaterSensor::setZone(int _zoneid, int _zonesensorid)
@@ -513,14 +488,14 @@ void HeaterSensor::enableRele(bool on) {
 
 	oldReleStatus = releStatus;
 	if (on) {
-		logger.print(tag, F("\n\t enableRele:: RELE ON"));
+		logger.print(tag, F("\n\t RELE ON"));
 		digitalWrite(pin, RELE_ON);
 		releStatus = true;
 
 		lastConsumptionEnableTime = millis();
 	}
 	else {
-		logger.print(tag, F("\n\t enableRele:: RELE OFF"));
+		logger.print(tag, F("\n\t RELE OFF"));
 		digitalWrite(pin, RELE_OFF);
 		releStatus = false;
 	}
@@ -529,8 +504,8 @@ void HeaterSensor::enableRele(bool on) {
 
 bool HeaterSensor::statusChanged() {
 	if (!oldStatus.equals(status)) {
-		logger.print(tag, "\n\t HeaterSensor::statusChanged oldstatus=" + oldStatus);
-		logger.print(tag, " newstatus=" + status);
+		//logger.print(tag, "\n\t HeaterSensor::statusChanged oldstatus=" + oldStatus);
+		//logger.print(tag, " newstatus=" + status);
 		return true;
 	}
 	return false;
@@ -538,8 +513,8 @@ bool HeaterSensor::statusChanged() {
 
 bool HeaterSensor::releStatusChanged() {
 	if (oldReleStatus != releStatus) {
-		logger.print(tag, "\n\t HeaterSensor::statusChanged oldReleStatus=" + String(oldReleStatus));
-		logger.print(tag, " releStatus=" + String(releStatus));
+		//logger.print(tag, "\n\t HeaterSensor::statusChanged oldReleStatus=" + String(oldReleStatus));
+		//logger.print(tag, " releStatus=" + String(releStatus));
 		return true;
 	}
 	return false;
