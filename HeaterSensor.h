@@ -49,6 +49,7 @@ public:
 	const char* command_Stop_KeepTemperature = "stopkeeptemperature";
 	const char* command_Off = "off";
 	const char* command_sendTemperature = "sendtemperature";
+	const char* command_Idle = "idle";
 	//const char* command_Manual = "manual";
 	
 	//const String STATUS_DISABLED = "disabled"

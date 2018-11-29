@@ -15,7 +15,7 @@ HeaterSensor::HeaterSensor(int id, uint8_t pin, bool enabled, String address, St
 	checkStatus_interval = 10000;
 	lastCheckStatus = 0;
 	type = "heatersensor";
-	setStatus(STATUS_OFF);
+	setStatus(STATUS_IDLE);
 }
 
 HeaterSensor::~HeaterSensor()
@@ -288,7 +288,7 @@ bool HeaterSensor::programEnded()
 		if (currMillis - programStartTime > 1000 * programDuration) { 
 			logger.println(tag, "END PROGRAM");
 			// � iniutile mandare un sendstatus perch� tanto cambia lo stato dopo e verrebbe inviato due volte
-			setStatus(STATUS_OFF);
+			setStatus(STATUS_IDLE);
 			updateReleStatus();
 			enableRele(false);
 			return true;
@@ -339,7 +339,7 @@ void HeaterSensor::updateReleStatus() {
 	logger.print(tag, "\n\t remoteTemperature=" + String(remoteTemperature));
 	logger.print(tag, "\n\n");*/
 
-	if (!enabled || status.equals(STATUS_OFF)) {
+	if (!enabled || status.equals(STATUS_IDLE) || status.equals(STATUS_OFF)) {
 
 		logger.print(tag, "\n\t disabled");
 		enableRele(false);
@@ -401,6 +401,15 @@ bool HeaterSensor::changeStatus(String command, long duration, float rtemp, floa
 		lastCommandDate = commanddate;
 		endDate = "";
 		
+	}
+	else if (command.equals(command_Idle)) {
+
+		logger.print(tag, F("\n\t command idle "));
+		enableRele(false);
+		setStatus(STATUS_IDLE);
+		lastCommandDate = commanddate;
+		endDate = "";
+
 	}
 	else if (command.equals(command_Off)) {
 
