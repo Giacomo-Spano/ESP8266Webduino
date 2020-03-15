@@ -7,6 +7,8 @@
 #include <WiFi.h>          
 #endif
 
+// nuova versione
+
 //needed for library
 #include <DNSServer.h>
 #if defined ESP8266
