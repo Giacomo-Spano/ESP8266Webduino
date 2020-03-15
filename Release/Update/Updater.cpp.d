@@ -1,4 +1,4 @@
-C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\espressif_esp32doit-devkit-v1\Release\Update\Updater.cpp.o: \
+C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\espressif_heltec_wifi_lora_32\Release\Update\Updater.cpp.o: \
  C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32\libraries\Update\src\Updater.cpp \
  C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32\libraries\Update\src\Update.h \
  C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32\cores\esp32/Arduino.h \
@@ -126,7 +126,7 @@ C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\espressif_esp32doit-d
  C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32\cores\esp32/IPAddress.h \
  C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32\cores\esp32/HardwareSerial.h \
  C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32\cores\esp32/Esp.h \
- C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32\variants\doitESP32devkitV1/pins_arduino.h \
+ C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32\variants\heltec_wifi_lora_32/pins_arduino.h \
  C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32\cores\esp32/MD5Builder.h \
  C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32/tools/sdk/include/esp32/rom/md5_hash.h \
  C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32/tools/sdk/include/spi_flash/esp_partition.h \

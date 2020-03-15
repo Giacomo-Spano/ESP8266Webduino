@@ -11,6 +11,7 @@
 #include <DNSServer.h>
 #if defined ESP8266
 #include <ESP8266WebServer.h>
+
 #else
 #include <WebServer.h>
 #endif
@@ -52,9 +53,11 @@
 #include <IRremoteESP8266.h>
 #include <IRrecv.h>
 #include <IRutils.h>
-#endif
 
 #include "SoftwareSerial.h"
+#endif
+
+
 //SoftwareSerial swSer1(D1, D2, false, 256);
 //extern SoftwareSerial* swSer1;
 //extern SoftwareSerial swSer1(D1, D2, false, 256);
@@ -62,10 +65,11 @@
 //extern SoftwareSerial *swSer1;
 //extern SoftwareSerial nextionSoftwareSerial;
 
-#include "NextionDisplay.h"
-//#include "Nextion.h"
-NextionDisplay nextDisplay;
 
+#ifdef ESP8266
+//#include "NextionDisplay.h"
+//NextionDisplay nextDisplay;
+#endif
 
 //void triggerUpdateTime();
 
@@ -78,6 +82,9 @@ void triggerUpdateTime() {
 }*/
 extern void resetWiFiManagerSettings();
 extern bool mqtt_publish(MQTTMessage mqttmessage);
+extern bool mqtt_subscribe(String topic);
+extern void messageReceived(char* topic, byte* payload, unsigned int length);
+//extern void messageReceived(String topic, String message);
 extern void reboot(String reason);
 
 
@@ -92,7 +99,7 @@ LinkedList<MQTTMessage*> mqttmessagelist = LinkedList<MQTTMessage*>();
 WiFiClient client;
 
 unsigned long lastReboot = 0;
-const int reboot_interval = 3600000 * 2;// 24 ore
+const int reboot_interval = 86400000;// 24 ore
 
 void resetWiFiManagerSettings() {
 	logger.print(tag, F("\n\n\t >>resetWiFiManagerSettings"));
@@ -147,6 +154,29 @@ bool testWifi() {
 		shield.setResetSettings(false);
 
 	}
+	//wifiManager.resetSettings();
+	/*WiFi.persistent(true);
+	WiFi.disconnect(true);
+	WiFi.persistent(false);
+	wifiManager.resetSettings();
+	wifiManager.setBreakAfterConfig(true);*/
+
+	logger.println(tag, F("before autoconnect..."));
+	//wifiManager.setConfigPortalBlocking(false);
+
+	if (!wifiManager.autoConnect("WifiSetup")) {
+		Serial.println("failed to connect, we should reset as see if it connects");
+		delay(3000);
+		ESP.restart();
+		delay(5000);
+	}
+	else {
+		Serial.println("Configportal running");
+	}
+	logger.println(tag, F("after autoconnect..."));
+
+
+
 
 	//add all your parameters here
 	wifiManager.addParameter(&custom_server);
@@ -163,6 +193,7 @@ bool testWifi() {
 	//first parameter is name of access point, second is the password
 	//wifiManager.autoConnect("AP-NAME", "passwd");
 
+	logger.println(tag, F("trying to connect..."));
 	//wifiManager.autoConnect("AP-NAME");
 	//or if you want to use and auto generated name from 'ESP' and the esp's Chip ID use
 	//wifiManager.autoConnect();
@@ -180,6 +211,8 @@ bool testWifi() {
 	logger.println(tag, F("connected..."));
 	shield.setEvent(F("Wifi connected"));
 	shield.invalidateDisplay();
+
+
 
 	if (shouldSaveConfig) {
 
@@ -218,9 +251,24 @@ void messageReceived(char* topic, byte* payload, unsigned int length) {
 	for (int i = 0; i < length; i++) {
 		message += char(payload[i]);
 	}
+		
 	shield.parseMessageReceived(String(topic), message);
+	//messageReceived(String(topic), message);
 	logger.println(tag, F("<<messageReceived"));
 }
+
+/*void messageReceived(String topic, String message) {
+
+	logger.print(tag, F("\n\t **>>messageReceived"));
+	logger.print(tag, F("\n\t **topic="));
+	logger.print(tag, topic);
+	logger.print(tag, F("\n\t **message="));
+	logger.print(tag, message);
+
+	shield.parseMessageReceived(topic, message);
+	logger.println(tag, F("\n\t **<<messageReceived"));
+}*/
+
 
 bool reconnect() {
 	logger.print(tag, F("\n\n\t >>reconnect"));
@@ -236,14 +284,26 @@ bool reconnect() {
 		logger.print(tag, F("\n\t temptative "));
 		logger.print(tag, String(i));
 		// Attempt to connect			
-		if (mqttclient.connect(clientId)) {
+		if (mqttclient.connect(clientId,shield.getMQTTUser(),shield.getMQTTPassword())) {
 			logger.print(tag, F("\n\t connected"));
 			// Once connected, publish an announcement...
-			//mqttclient.publish("send"/*topic.c_str()*/, "hello world");
 			String topic = "fromServer/shield/" + shield.getMACAddress() + "/#";
-			logger.print(tag, F("\n\t Subscribe to topic:"));
-			logger.print(tag, topic);
 			mqttclient.subscribe(topic.c_str());
+
+			if (shield.getLoRaGatewayServer()) {
+				String topic = "fromServer/shield/" + shield.getLoRaGatewayTargetAddress() + "/#";
+				logger.print(tag, F("\n\t Subscribe to topic:"));
+				logger.print(tag, topic);
+				mqttclient.subscribe(topic.c_str());
+			}
+			/*if (shield.getLoRaGatewayServer()) {
+				String topic2 = "fromServer/shield/" + shield.getLoRaGatewayTargetAddress() + "/#";
+				logger.print(tag, F("\n\t Subscribe to topic:"));
+				logger.print(tag, topic);
+				
+				mqttclient.subscribe(topic2.c_str());
+			}*/
+
 			shield.setStatus(F("ONLINE"));
 			logger.print(tag, F("\n\t <<reconnect\n\n"));
 			return true;
@@ -263,8 +323,68 @@ bool reconnect() {
 	return false;
 }
 
+//#ifndef ESP8266
+//#include <FS.h> //this needs to be first, or it all crashes and burns...
+//#include "SPIFFS.h"
+//#endif
+//#include "LittleFS.h"
+#include "FS.h"
+
+void listAllFiles() {
+
+	
+	/*File f = SPIFFS.open("/", "r");
+	if (!f) {
+		Serial.println("file open failed");
+	}*/
+
+	logger.print(tag, F("\n\n listAllFiles"));
+	logger.print(tag, F("\n\tname \t\tsize"));
+	Dir dir = SPIFFS.openDir("/");
+	while (dir.next()) {
+		//Serial.print(dir.fileName());
+		logger.print(tag, F("\n\t"));
+		logger.print(tag, dir.fileName());
+		File f = dir.openFile("r");
+		logger.print(tag, F("\t"));
+		logger.print(tag, f.size());
+		//Serial.println(f.size());
+
+		logger.print(tag, F("\n"));
+		String data = f.readString();
+		Serial.println(data);
+		f.close();
+		logger.print(tag, F("\n"));
+
+	}
+	logger.print(tag, F("\n"));
+
+
+	//File file = root.openNextFile();
+
+	/*while (file) {
+
+		Serial.print("FILE: ");
+		Serial.println(file.name());
+
+		file = root.openNextFile();
+	}*/
+
+}
+
 void setup()
 {
+#ifdef TTGO
+	pinMode(16, OUTPUT);
+	pinMode(2, OUTPUT);
+
+	digitalWrite(16, LOW); // set GPIO16 low to reset OLED
+	delay(50);
+	digitalWrite(16, HIGH); // while OLED is running, GPIO16 must go high
+	
+#endif // TTGO
+	//Wire.begin(D4,D3/*sdaPin, sclPin*/);
+
 	//Serial.begin(9600);
 	Serial.begin(115200);
 	delay(10);
@@ -273,9 +393,42 @@ void setup()
 	//logger.print(tag, F("\n\t >>setup"));
 	logger.print(tag, F("\n\n *******************RESTARTING************************"));
 
+	////////
+	
+	Serial.println(F("Inizializing FS..."));
+	if (SPIFFS.begin()) {
+		Serial.println(F("done."));
+	}
+	else {
+		Serial.println(F("fail."));
+	}
+	if (!SPIFFS.begin()) {
+		Serial.println("An Error has occurred while mounting SPIFFS");
+		return;
+	}
+
+	Serial.println("\n\n----Listing files before format----");
+	listAllFiles();
+
+	/*bool formatted = SPIFFS.format();
+
+	if (formatted) {
+		Serial.println("\n\nSuccess formatting");
+	}
+	else {
+		Serial.println("\n\nError formatting");
+	}*/
+
+	////////////////
+
+
+
+
 	shield.init();
 
-	nextDisplay.init();
+#ifdef ESP8266
+//	nextDisplay.init();
+#endif
 
 	shield.setEvent(F("read config.."));
 	shield.invalidateDisplay();
@@ -290,7 +443,10 @@ void setup()
 	logger.print(tag, shield.swVersion);
 		
 	// Connect to WiFi network
-	if (testWifi()) {
+	if (shield.getLoRaGateway() && !shield.getLoRaGatewayServer()) {
+		shield.setEvent(F("lora gateway client"));
+		shield.readSensorFromFile();
+	} else if (testWifi()) {
 
 		shield.setEvent(F("connecting wifi.."));
 		shield.invalidateDisplay();
@@ -314,15 +470,40 @@ void setup()
 	logger.println(tag, F("\n\t<<setup\n\n"));
 }
 
+bool mqtt_subscribe(String topic) {
+	
+	logger.print(tag, F("\n\t mqtt_subscribe"));
+	if (mqttclient.connected())
+		mqttclient.subscribe(topic.c_str());
+}
+
 bool mqtt_publish(MQTTMessage mqttmessage) {
 
-	logger.print(tag, String(F("\n\t >>mqtt_publish* \n\t topic:")) + mqttmessage.topic);
+	logger.print(tag, String(F("\n\t >>mqtt_publish \n\t topic:")) + mqttmessage.topic);
 	logger.print(tag, String(F("\n\t message:")) + mqttmessage.message);
+
+	//logger.print(tag, String(F("\n\t shield.getLoRaGateway():")) + Logger::boolToString(shield.getLoRaGateway()));
+	//logger.print(tag, String(F("\n\t shield.getLoRaGatewayServer():")) + Logger::boolToString(shield.getLoRaGatewayServer()));
+
+	if (shield.getLoRaGateway() && !shield.getLoRaGatewayServer()) {		
+		// se è un client lora manda un messaggio lora la server
+		// invece di pubblicare il messaggio MQQT
+		
+		logger.print(tag, "\n\n\t ----LORA CLIENT ------");
+		logger.print(tag, "\n\n\t >PUBISH LORA MESSAGE");
+
+		String payload = String(mqttmessage.topic.length()) + ";" + mqttmessage.topic + ";" +
+			String(mqttmessage.message.length()) + ";" + mqttmessage.message;
+		logger.print(tag, "\n\t >>payload= " + payload);
+
+		shield.sendLoRaMessage(payload);
+		logger.print(tag, "\n\n\t > LORA MESSAGE PUBLISHED");
+		return true;
+	}
+
 	mqttmessagelist.add(&mqttmessage);
-
-	logger.print(tag, F("\n\t size:"));
+	logger.print(tag, F("\n\t mqttmessagelist size:"));
 	logger.print(tag, mqttmessagelist.size());
-
 
 	if (mqttmessagelist.size() > 10) {
 		reboot(F("too many message"));
@@ -357,7 +538,7 @@ bool mqtt_publish(MQTTMessage mqttmessage) {
 		}
 		
 	}
-	logger.print(tag, F("\n\t << mqtt_publish*"));
+	logger.print(tag, F("\n\t << mqtt_publish"));
 	return true;
 }
 
@@ -428,14 +609,15 @@ void loop()
 		shield.setEvent(F("timeout reboot"));
 		logger.println(tag, F("\n\n\n\-----------lastReboot TIMEOUT REBOOT--------\n\n"));
 		reboot("daily reboot");
+		lastReboot = currMillis;
 	}
 
 	currMillis = millis();
 	if (currMillis - shield.lastCheckHealth > shield.checkHealth_timeout) {
 		shield.setEvent(F("check health reboot"));
 		logger.println(tag, F("\n\n\n\-----------CHECK HEALTH TIMEOUT REBOOT--------\n\n"));
-		//ESP.restart();
-		reboot("Check health Timeout");
+		//reboot("Check health Timeout");
+		shield.lastCheckHealth = currMillis;
 	}
 
 #ifdef ESP8266
@@ -450,9 +632,13 @@ void loop()
 		mqttclient.loop();
 	}
 	else {
-		logger.println(tag, F("\n\n\tSERVER DISCONNECTED!!!\n"));
-		shield.setEvent(F("server disconnected"));
-		reconnect();
-		delay(5000);
+		if (shield.getLoRaGateway() && !shield.getLoRaGatewayServer()) {
+
+		} else {
+			logger.println(tag, F("\n\n\tSERVER DISCONNECTED!!!\n"));
+			shield.setEvent(F("server disconnected"));
+			reconnect();
+			delay(5000);
+		}
 	}
 }

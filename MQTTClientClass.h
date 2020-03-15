@@ -33,7 +33,7 @@ public:
 	PubSubClient& setCallback(MQTT_CALLBACK_SIGNATURE);
 
 	boolean connected();
-	boolean connect(String id);
+	boolean connect(String id, String user, String password);
 	int state();
 	void disconnect();
 

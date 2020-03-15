@@ -1,6 +1,7 @@
 #include "Logger.h"
 #include "NextionDisplay.h"
 
+#ifdef ESP8266x
 
 extern SoftwareSerial swSer1(D1, D0, false, 256);
 SoftwareSerial* swSer2;// = new SoftwareSerial(*swSer2);;
@@ -65,3 +66,5 @@ void NextionDisplay::loop()
 {
 	nexLoop(nex_listen_list);
 }
+
+#endif

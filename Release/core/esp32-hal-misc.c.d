@@ -1,4 +1,4 @@
-C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\espressif_esp32doit-devkit-v1\Release\core\esp32-hal-misc.c.o: \
+C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\espressif_heltec_wifi_lora_32\Release\core\esp32-hal-misc.c.o: \
  C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32\cores\esp32\esp32-hal-misc.c \
  C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32/tools/sdk/include/config/sdkconfig.h \
  C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32/tools/sdk/include/freertos/freertos/FreeRTOS.h \

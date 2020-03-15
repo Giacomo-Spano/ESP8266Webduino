@@ -4,6 +4,9 @@
 #define _ESP8266WEBDUINO_h
 
 #define ESP8266
+//#define TTGO	1
+//#define ESP32
+
 
 #if defined(ARDUINO) && ARDUINO >= 100
 	#include "arduino.h"

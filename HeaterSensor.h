@@ -35,8 +35,8 @@ private:
 	//static char* statusStr[];// = { "unused", "idle", "program", "manual", "disabled", "restarted", "manualoff" };
 		
 	int manualMode;
-	const bool RELE_ON = HIGH;//LOW
-	const bool RELE_OFF = LOW;//LOW
+	const bool RELE_ON = LOW;//HIGH
+	const bool RELE_OFF = HIGH;//LOW
 	
 	unsigned long last_RemoteSensor = 0;
 	unsigned long programUpdateTimeout = 5* 60 * 1000; // tempo dopo il quale il programa si disattiva
@@ -55,6 +55,7 @@ public:
 	//const String STATUS_DISABLED = "disabled"
 	const String STATUS_OFF = "off";
 	const String STATUS_KEEPTEMPERATURE = "keeptemperature";
+	const String STATUS_KEEPTEMPERATURE_RELEOFF = "keeptemperaturereleoff";
 	//const String STATUS_MANUAL = "manual";
 
 	HeaterSensor(int id, uint8_t pin, bool enabled, String address, String name);

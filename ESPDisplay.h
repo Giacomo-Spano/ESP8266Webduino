@@ -1,7 +1,7 @@
 // Display.h
 
 #ifndef _ESPDISPLAY_h
-#define _ESPDDISPLAY_h
+#define _ESPDISPLAY_h
 
 #if defined(ARDUINO) && ARDUINO >= 100
 	#include "arduino.h"
@@ -36,7 +36,7 @@ public:
 	void init(uint8_t sda, uint8_t scl);
 	void update();
 	void clear();
-	void drawString(int x, int y, String txt, const char* font);
+	void drawString(int x, int y, String txt, const uint8_t* font);
 	void drawString(int x, int y, String txt);
 
 	

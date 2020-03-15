@@ -1,4 +1,4 @@
-C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\espressif_esp32doit-devkit-v1\Release\WiFi\ETH.cpp.o: \
+C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\espressif_heltec_wifi_lora_32\Release\WiFi\ETH.cpp.o: \
  C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32\libraries\WiFi\src\ETH.cpp \
  C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32\libraries\WiFi\src\ETH.h \
  C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32\libraries\WiFi\src\WiFi.h \
@@ -169,7 +169,7 @@ C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\espressif_esp32doit-d
  C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32\cores\esp32/Stream.h \
  C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32\cores\esp32/HardwareSerial.h \
  C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32\cores\esp32/Esp.h \
- C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32\variants\doitESP32devkitV1/pins_arduino.h \
+ C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32\variants\heltec_wifi_lora_32/pins_arduino.h \
  C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32\cores\esp32/Client.h \
  C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32\libraries\WiFi\src\WiFiServer.h \
  C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32\cores\esp32/Server.h \

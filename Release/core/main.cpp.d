@@ -1,4 +1,4 @@
-C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\espressif_esp32doit-devkit-v1\Release\core\main.cpp.o: \
+C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\espressif_heltec_wifi_lora_32\Release\core\main.cpp.o: \
  C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32\cores\esp32\main.cpp \
  C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32/tools/sdk/include/freertos/freertos/FreeRTOS.h \
  C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32/tools/sdk/include/newlib/sys/reent.h \
@@ -126,4 +126,4 @@ C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\espressif_esp32doit-d
  C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32\cores\esp32\HardwareSerial.h \
  C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32\cores\esp32\Esp.h \
  C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32\cores\esp32/Arduino.h \
- C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32\variants\doitESP32devkitV1/pins_arduino.h
+ C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32\variants\heltec_wifi_lora_32/pins_arduino.h

@@ -103,14 +103,15 @@ String Sensor::getStrJson() {
 
 	DynamicJsonBuffer jsonBuffer;
 	JsonObject& json = jsonBuffer.createObject();
-	/*json["sensorid"] = sensorid;
-	json["status"] = status;
-	json["addr"] = address;*/
 	getJson(json);
 	
 	if (childsensors.size() > 0) {
+		
 		JsonArray& children = json.createNestedArray("children");
 		for (int i = 0; i < childsensors.size(); i++) {
+			logger.println(tag, F("\nchild "));
+			logger.println(tag, i);
+
 			Sensor* child = (Sensor*)childsensors.get(i);
 			/*DynamicJsonBuffer jsonBuffer;
 			JsonObject& childjson = jsonBuffer.createObject();*/

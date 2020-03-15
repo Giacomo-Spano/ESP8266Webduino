@@ -1,4 +1,4 @@
-C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\espressif_esp32doit-devkit-v1\Release\core\wiring_shift.c.o: \
+C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\espressif_heltec_wifi_lora_32\Release\core\wiring_shift.c.o: \
  C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32\cores\esp32\wiring_shift.c \
  C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32\cores\esp32\esp32-hal.h \
  C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32/tools/sdk/include/newlib/stdint.h \
@@ -109,4 +109,4 @@ C:\Users\giaco\AppData\Local\Temp\VMBuilds\ESP8266Webduino\espressif_esp32doit-d
  C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32\cores\esp32\esp8266-compat.h \
  C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32\cores\esp32\stdlib_noniso.h \
  C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32\cores\esp32\binary.h \
- C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32\variants\doitESP32devkitV1/pins_arduino.h
+ C:\Users\giaco\Documents\Arduino\hardware\espressif\esp32\variants\heltec_wifi_lora_32/pins_arduino.h

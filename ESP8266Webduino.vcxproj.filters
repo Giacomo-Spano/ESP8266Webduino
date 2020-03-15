@@ -94,9 +94,6 @@
     <ClInclude Include="ESP8266Webduino.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="html.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ESPDisplay.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -149,6 +146,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MQTTMessage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LoRaGateway.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__vm\.ESPWebduino.vsarduino.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -217,6 +220,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MQTTMessage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="LoRaGateway.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

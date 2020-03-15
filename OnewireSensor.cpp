@@ -139,6 +139,8 @@ void OnewireSensor::beginTemperatureSensors()
 	}
 	oneWirePtr->reset_search();
 
+	if (tempSensorNum == 0)
+		logger.println(tag, F("NO TEMPERATURE SENSOR FOUND\n"));
 	//childsensors.show();
 	logger.println(tag, F("<<beginTemperatureSensors\n"));
 }

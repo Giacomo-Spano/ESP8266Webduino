@@ -1,9 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.2026
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29709.97
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ESP8266Webduino", "ESP8266Webduino.vcxproj", "{C5F80730-F44F-4478-BDAE-6634EFC2CA88}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "provaSPIFFS", "E:\OneDrive\Documenti\Arduino\provaSPIFFS\provaSPIFFS.vcxproj", "{8EE481A3-39AA-4356-AB9B-2D2EBA357F03}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ESP32CAMduino", "E:\OneDrive\Documenti\Arduino\ESP32CAMduino\ESP32CAMduino.vcxproj", "{C6042235-61F7-4136-8EB7-0FE02B2C2323}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -25,6 +29,26 @@ Global
 		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Release|Mixed Platforms.Build.0 = Release|Win32
 		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Release|Win32.ActiveCfg = Release|Win32
 		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Release|Win32.Build.0 = Release|Win32
+		{8EE481A3-39AA-4356-AB9B-2D2EBA357F03}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{8EE481A3-39AA-4356-AB9B-2D2EBA357F03}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{8EE481A3-39AA-4356-AB9B-2D2EBA357F03}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{8EE481A3-39AA-4356-AB9B-2D2EBA357F03}.Debug|Win32.ActiveCfg = Debug|Win32
+		{8EE481A3-39AA-4356-AB9B-2D2EBA357F03}.Debug|Win32.Build.0 = Debug|Win32
+		{8EE481A3-39AA-4356-AB9B-2D2EBA357F03}.Release|Any CPU.ActiveCfg = Release|Win32
+		{8EE481A3-39AA-4356-AB9B-2D2EBA357F03}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{8EE481A3-39AA-4356-AB9B-2D2EBA357F03}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{8EE481A3-39AA-4356-AB9B-2D2EBA357F03}.Release|Win32.ActiveCfg = Release|Win32
+		{8EE481A3-39AA-4356-AB9B-2D2EBA357F03}.Release|Win32.Build.0 = Release|Win32
+		{C6042235-61F7-4136-8EB7-0FE02B2C2323}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{C6042235-61F7-4136-8EB7-0FE02B2C2323}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{C6042235-61F7-4136-8EB7-0FE02B2C2323}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{C6042235-61F7-4136-8EB7-0FE02B2C2323}.Debug|Win32.ActiveCfg = Debug|Win32
+		{C6042235-61F7-4136-8EB7-0FE02B2C2323}.Debug|Win32.Build.0 = Debug|Win32
+		{C6042235-61F7-4136-8EB7-0FE02B2C2323}.Release|Any CPU.ActiveCfg = Release|Win32
+		{C6042235-61F7-4136-8EB7-0FE02B2C2323}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{C6042235-61F7-4136-8EB7-0FE02B2C2323}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{C6042235-61F7-4136-8EB7-0FE02B2C2323}.Release|Win32.ActiveCfg = Release|Win32
+		{C6042235-61F7-4136-8EB7-0FE02B2C2323}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -11,8 +11,15 @@
 #include <ArduinoJson.h>          //https://github.com/bblanchon/ArduinoJson
 #include "MQTTMessage.h"
 
+#ifndef ESP8266
+#include <FS.h> //this needs to be first, or it all crashes and burns...
+#include "SPIFFS.h"
+#endif
+
 extern void resetWiFiManagerSettings();
 extern bool mqtt_publish(MQTTMessage mqttmessage);
+extern bool mqtt_subscribe(String topic);
+
 extern void reboot(String reason);
 
 Logger Shield::logger;
@@ -21,20 +28,22 @@ String Shield::tag = "Shield";
 Shield::Shield()
 {
 	lastRestartDate = "";
-	swVersion = "1.86";
+	swVersion = "1.90";
 
 	id = 0; //// inizializzato a zero perch� viene impostato dalla chiamata a registershield
 	localPort = 80;
-	serverName = "giacomohome.ddns.net";
-	mqttServer = "giacomohome.ddns.net";
+	serverName = /*"192.168.1.209"; //*/"giacomocasa.duckdns.org";
+	mqttServer = /*"192.168.1.209"; //*/"giacomocasa.duckdns.org";
 	mqttPort = 1883;
-	serverPort = 8080;
+	serverPort = 8080;////9090;// 8080;
 	shieldName = "shieldName";
-	mqttUser = "";
-	mqttPassword = "";
+	mqttUser = "giacomo";
+	mqttPassword = "giacomo";
 	mqttMode = true;// true;
 	oleddisplay = false;
-	nexiondisplay = false;
+	nexiondisplay = 
+
+	loragatewayEnabled = false;
 
 	configMode = false;// true;
 	resetSettings = false;// true;
@@ -61,6 +70,11 @@ void Shield::writeConfig() {
 	json["mqtt_password"] = getMQTTPassword();
 	json["resetsettings"] = getResetSettings();
 	json["shieldid"] = getShieldId();
+	json["oled"] = getOledDisplay();
+	json["loragateway"] = getLoRaGateway();
+	json["loraaddress"] = getLoRaGatewayTargetAddress();
+	json["loraserver"] = getLoRaGatewayServer();
+
 
 	File configFile = SPIFFS.open(F("/config.json"), "w");
 	if (!configFile) {
@@ -145,20 +159,53 @@ void Shield::readConfig() {
 						logger.print(tag, Logger::boolToString(enabled));
 						setResetSettings(json["resetsettings"]);
 					}
+					if (json.containsKey("oled")) {
+						logger.print(tag, F("\n\t oled: "));
+						bool enabled = json["oled"];
+						logger.print(tag, Logger::boolToString(enabled));
+						setOledDisplay(json["oled"]);
+					}
+					if (json.containsKey("loragateway")) {
+						logger.print(tag, F("\n\t loragateway: "));
+						bool enabled = /*false;//*/ json["loragateway"];
+						logger.print(tag, Logger::boolToString(enabled));
+						String targetaddress = "";
+						if (json.containsKey("loraaddress")) {
+							logger.print(tag, F("\n\t loraaddress: "));
+							String address = json["loraaddress"];
+							targetaddress = address;
+							logger.print(tag, address);
+						}
+						bool serverenabled = false;
+						if (json.containsKey("loraserver")) {
+							logger.print(tag, F("\n\t loraserver: "));
+							serverenabled = json["loraserver"];
+							logger.print(tag, Logger::boolToString(serverenabled));
+
+						}
+						setLoRaGateway(enabled, targetaddress,serverenabled);
+
+					}
+					//writeConfig();
 				}
 				else {
 					logger.print(tag, F("\n\t failed to load json config"));
 					//clean FS, for testing
-					SPIFFS.format();
+					//SPIFFS.format();
 					writeConfig();
 				}
 			}
 		}
 	}
 	else {
-		logger.print(tag, F("failed to mount FS"));
+		logger.print(tag, F("\n failed to mount FS"));
+		//SPIFFS.format();
+		//logger.print(tag, F("\n\t loraserver: "));
+		//serverenabled = json["loraserver"];
+		//logger.print(tag, Logger::boolToString(serverenabled));
+		
 	}
-	logger.print(tag, F("<<readConfig"));
+	logger.print(tag, F("\n<<readConfig"));
 }
 
 
@@ -168,7 +215,19 @@ void Shield::init() {
 	status = "restart";
 	shieldEvent = "";
 
+#ifdef ESP8266
 	espDisplay.init(D3, D4);
+	//espDisplay.init(SDA, SCL); //sda scl
+	//espDisplay.init(D4, D3); //sda scl
+#endif
+
+#ifdef TTGO
+	espDisplay.init(4, 15);
+#endif
+
+	//espDisplay.init(SDA, SCL);
+
+	
 }
 
 void Shield::clearAllSensors() {
@@ -240,6 +299,12 @@ void Shield::drawDateTime() {
 	espDisplay.drawString(0, 20, txt);
 }
 
+void Shield::drawLora() {
+
+	//String txt = logger.getStrDate();
+	espDisplay.drawString(0, 40, "++" + loraMessage);
+}
+
 void Shield::drawSensorsStatus() {
 
 	int lines = 3;
@@ -274,7 +339,7 @@ the line "#include <avr/pgmspace.h>".After that, everything worked fine for me.*
 //#include <avr/pgmspace.h>
 #define temperature_width 32
 #define temperature_height 32
-static const uint8_t PROGMEM temperature_bits[] = {
+static const uint8_t /*PROGMEM*/ temperature_bits[] = {
 	0x00, 0x80, 0x01, 0x00, 0x00, 0xe0, 0x07, 0x00, 0x00, 0x70, 0x0e, 0x00,
 	0x00, 0x18, 0x18, 0x00, 0x00, 0x08, 0x18, 0x00, 0x00, 0x18, 0x18, 0x00,
 	0x00, 0x18, 0x10, 0x00, 0x00, 0x78, 0x10, 0x00, 0x00, 0x18, 0x10, 0x00,
@@ -296,7 +361,31 @@ void Shield::clearScreen() {
 void Shield::parseMessageReceived(String topic, String message) {
 
 	logger.print(tag, F("\n\t >>parseMessageReceived"));
+	
+	if (loraGateway != nullptr && loraGateway->getGatewayServer()) {
+
+		logger.print(tag, "\n\n\t >PARSE MESSAGE AND SEND LORA MESSAGE");
+
+		String topic2 = topic;
+		topic2.replace("fromServer/shield/", "");
+		topic2 = topic2.substring(0, 17);
+		logger.print(tag, F("\n\t >>mac addr= "));
+		logger.print(tag, topic2);
+	
+		//String topic = "prova/toserver";
+		//String message = "{\"MAC\":\"24:0A : C4 : 08 : F7 : 5C\",\"swversion\":\"1.88\",\"lastreboot\":\"\",\"lastcheckhealth\":\"26600\",\"freemem\":\"215180\",\"localIP\":\"192.168.1.65\",\"localPort\":\"80\"}";
+
+		String payload = String(topic.length()) + ";" + topic + ";" + 
+						 String(message.length()) + ";" + message;
+		logger.print(tag, "\n\t >>payload= " + payload);
+		loraGateway->sendLoraMessage(payload);
+		logger.print(tag, "\n\n\t >LORA MESSAGE SENT \n");
+		return;
+	}
+
+	
 	String str = String(F("fromServer/shield/")) + getMACAddress();
+	logger.print(tag, String(F("\n\t str: ")) + str);
 
 	logger.print(tag, String(F("\n\t topic: ")) + topic);
 	if (topic.equals(str + F("/settings"))) {
@@ -327,6 +416,8 @@ void Shield::parseMessageReceived(String topic, String message) {
 			String str;
 			json.printTo(str);
 			command.sendShieldStatus(str);
+
+			writeConfig();
 		}
 	}
 	else if (topic.equals(str + F("/reboot"))) {
@@ -365,6 +456,12 @@ void Shield::parseMessageReceived(String topic, String message) {
 	}
 	logger.printFreeMem(tag, F("parseMessageReceived"));
 	logger.print(tag, F("\n\t <<parseMessageReceived"));
+}
+
+bool Shield::sendLoRaMessage(String payload)
+{
+	if (loraGateway != nullptr)
+		loraGateway->sendLoraMessage(payload);
 }
 
 bool Shield::receiveCommand(String jsonStr) {
@@ -534,6 +631,7 @@ void Shield::invalidateDisplay() {
 	drawEvent();
 	drawDateTime();
 	drawSensorsStatus();
+	drawLora();
 	espDisplay.update();
 }
 
@@ -550,11 +648,24 @@ void Shield::checkStatus()
 	unsigned long timeDiff = currMillis - lastTimeUpdate;
 
 	if (timeDiff > 1000) {
+		//logger.print(tag, "Shield::checkStatus");
+
 		lastTimeUpdate = currMillis;
 
 		invalidateDisplay();
+
+		if (loraGateway != nullptr) {
+			//loraGateway->senderloop();		
+		}
 	}
 
+	if (loraGateway != nullptr) {
+		String incoming = loraGateway->receiverloop();
+		if (!incoming.equals("")) {
+			logger.print(tag, "\n\t incoming = " + incoming);
+			loraMessage = incoming;
+		}
+	}
 
 	/*display.clear();
 	uint32_t getVcc = ESP.getVcc();// / 1024;
@@ -610,6 +721,7 @@ void Shield::checkSensorsStatus()
 		}
 
 		if (sendUpdate) {
+			logger.print(tag, F("\n\t SEND SENSOR UPDATE"));
 			Command command;
 			/*DynamicJsonBuffer jsonBuffer;
 			JsonObject& json = jsonBuffer.createObject();
@@ -757,6 +869,7 @@ void Shield::readSensorFromFile() {
 	}
 	else {
 		logger.print(tag, F("\n\t failed to mount FS"));
+		//SPIFFS.format();
 	}
 	logger.print(tag, F("\n\t <<readSensorFromFile"));
 }
@@ -794,6 +907,34 @@ bool  Shield::loadSensors(JsonObject& json) {
 		logger.print(tag, F("\n\t name="));
 		logger.print(tag, name);
 		setShieldName(name);
+	}
+
+	if (json.containsKey("loragateway")) {
+		bool loragateway = json["loragateway"];
+		logger.print(tag, F("\n\t loragateway="));
+		logger.print(tag, loragateway);
+
+		String targetaddress;
+		if (json.containsKey("loraaddress")) {
+			String address = json["loraaddress"];
+			targetaddress = address;
+			logger.print(tag, F("\n\t loraaddress="));
+			logger.print(tag, targetaddress);
+		}
+		bool serverenable;
+		if (json.containsKey("loraserver")) {
+			serverenable = json["loraserver"];
+			logger.print(tag, F("\n\t loraserver="));
+			logger.print(tag, serverenable);
+		}
+		setLoRaGateway(loragateway, targetaddress,serverenable);
+	}
+
+	if (json.containsKey("oled")) {
+		bool oled = json["oled"];
+		logger.print(tag, F("\n\t oled="));
+		logger.print(tag, oled);
+		setOledDisplay(oled);
 	}
 
 	if (json.containsKey("sensors")) {
@@ -841,6 +982,32 @@ void Shield::addSensor(Sensor* pSensor) { // non è usata?????????
 	logger.print(tag, F("\n\t <<addSensor"));
 }
 #endif
+
+void Shield::setLoRaGateway(bool enable, String address, bool serverenabled)
+{
+	logger.print(tag, "\n\t >>setLoRaGateway");
+	loragatewayEnabled = enable;
+
+	if (!enable && loraGateway != nullptr) {
+		delete loraGateway;
+	}
+	else if (enable && loraGateway == nullptr) {
+		loraGateway = new LoRaGateway();
+		loraGateway->init(address, serverenabled, &espDisplay);
+
+
+		/*if (serverenabled) {
+			String topic = "fromServer/shield/" + loraGateway->getTargetAddress() + "/#";
+			logger.print(tag, F("\n\t Subscribe to topic:"));
+			logger.print(tag, topic);
+			mqtt_subscribe(topic.c_str());
+		}*/
+
+
+	}
+
+	logger.print(tag, "\n\t <<setLoRaGateway=" + Logger::boolToString(loragatewayEnabled));
+}
 
 void Shield::writeRebootReason() {
 

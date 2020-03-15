@@ -17,6 +17,8 @@
 #include <SimpleList.h>
 #include <LinkedList.h>
 
+#include "LoRaGateway.h"
+
 
 class Shield
 {	
@@ -31,6 +33,7 @@ protected:
 	String shieldName;
 	bool nexiondisplay;
 	bool oleddisplay;
+	bool loragatewayEnabled;
 
 	bool mqttMode;
 	bool configMode;
@@ -38,10 +41,13 @@ protected:
 	String mqttUser;
 	String mqttPassword;
 	String rebootreason;
+	String loraMessage;
+
+	LoRaGateway* loraGateway = nullptr;
 
 public:
 	int freeMemory = 0;
-	int checkHealth_timeout = 15*60*1000;
+	int checkHealth_timeout = 86400000 / 2;  //12 ore
 	unsigned long lastCheckHealth;
 	String swVersion;
 	//static const int shieldNameLen = 30;
@@ -75,6 +81,7 @@ public:
 	void parseMessageReceived(String topic, String message);
 	void drawString(int x, int y, String txt, int size, int color);
 	void drawDateTime();
+	void drawLora();
 	void drawStatus();
 	void drawMemory();
 	void drawEvent();
@@ -90,6 +97,9 @@ public:
 	void writeConfig();
 	void readRebootReason();
 	void writeRebootReason();
+
+	void setLoRaGateway(bool enable, String address, bool serverenabled);
+	bool sendLoRaMessage(String payload);
 
 	void setFreeMem(int mem);
 
@@ -188,7 +198,7 @@ public:
 		logger.print(tag, "\n\t <<setnextionDisplay=" + Logger::boolToString(nexiondisplay));
 	}
 
-	int getOledDisplay()
+	bool getOledDisplay()
 	{
 		return oleddisplay;
 	}
@@ -199,6 +209,28 @@ public:
 		oleddisplay = enable;
 		logger.print(tag, "\n\t <<setOledDisplay=" + Logger::boolToString(oleddisplay));
 	}
+
+	bool getLoRaGateway()
+	{
+		return loragatewayEnabled;
+	}
+
+	bool getLoRaGatewayServer()
+	{
+		if (loraGateway != nullptr)
+			return loraGateway->getGatewayServer();
+		else
+			return false;
+	}
+
+	String getLoRaGatewayTargetAddress() {
+		if (loraGateway != nullptr)
+			return loraGateway->getTargetAddress();
+		else
+			return "";
+	}
+
+	
 
 	static String getStrPin(uint8_t pin)
 	{
@@ -384,7 +416,7 @@ public:
 
 	String getMQTTServer()
 	{
-		return /*"192.168.1.41";//*/  mqttServer;
+		return /*"192.168.1.21";////*/  mqttServer /*serverName*/;
 	}
 
 	void setMQTTServer(String server)
@@ -392,6 +424,30 @@ public:
 		logger.print(tag, "\n\t>> setMQTTServer");
 		mqttServer = server;
 		logger.print(tag, "\n\t<< setMQTTServer=" + String(mqttServer));
+	}
+
+	String getMQTTUser()
+	{
+		return mqttUser;
+	}
+
+	void setMQTTUser(String user)
+	{
+		logger.print(tag, "\n\t>> setMQTTUser");
+		mqttUser = user;
+		logger.print(tag, "\n\t<< setMQTTUser=" + String(mqttUser));
+	}
+
+	String getMQTTPassword()
+	{
+		return mqttPassword;
+	}
+
+	void setMQTTPassword(String password)
+	{
+		logger.print(tag, "\n\t>> setMQTTPassword");
+		mqttPassword = password;
+		logger.print(tag, "\n\t<< setMQTTPassword=" + String(mqttPassword));
 	}
 
 
@@ -404,30 +460,6 @@ public:
 	{
 		//logger.print(tag, "\n\t>> setMQTTPort");
 		mqttPort = port;
-		//logger.print(tag, "\n\t<< setMQTTPort=" + String(mqttPort));
-	}
-
-	String getMQTTUser()
-	{
-		return mqttUser;
-	}
-
-	void setMQTTUser(String user)
-	{
-		//logger.print(tag, "\n\t>> setMQTTPort");
-		mqttUser = user;
-		//logger.print(tag, "\n\t<< setMQTTPort=" + String(mqttPort));
-	}
-
-	String getMQTTPassword()
-	{
-		return mqttPassword;
-	}
-
-	void setMQTTPassword(String password)
-	{
-		//logger.print(tag, "\n\t>> setMQTTPort");
-		mqttPassword = password;
 		//logger.print(tag, "\n\t<< setMQTTPort=" + String(mqttPort));
 	}
 

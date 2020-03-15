@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef ESP8266x
+
 #include "SoftwareSerial.h"
 
 extern SoftwareSerial swSer1;
@@ -23,4 +25,6 @@ public:
 
 	
 };
+
+#endif
 

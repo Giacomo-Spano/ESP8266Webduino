@@ -116,7 +116,7 @@ void HeaterSensor::getJson(JsonObject& json) {
 
 	Sensor::getJson(json);
 	json["relestatus"] = getReleStatus();
-	if (status.equals(STATUS_KEEPTEMPERATURE)) {
+	if (status.equals(STATUS_KEEPTEMPERATURE) || status.equals(STATUS_KEEPTEMPERATURE_RELEOFF)) {
 
 		json["remotetemp"] = getRemoteTemperature();
 		json["duration"] = programDuration;
@@ -215,7 +215,7 @@ bool HeaterSensor::checkStatusChange()
 	bool sendStatus = false;
 
 	// controlla se è mpassato un minuto
-	if (status.equals(STATUS_KEEPTEMPERATURE)) {
+	if (status.equals(STATUS_KEEPTEMPERATURE) || status.equals(STATUS_KEEPTEMPERATURE_RELEOFF)) {
 		//logger.print(tag, "\n\n\t HEATER::REMAINING TIME :  " + String(getRemaininTime()));
 		
 		remainingSeconds = getRemaininTime();
@@ -282,7 +282,7 @@ bool HeaterSensor::programEnded()
 {
 	unsigned long currMillis = millis();
 
-	if (status.equals(STATUS_KEEPTEMPERATURE)) {
+	if (status.equals(STATUS_KEEPTEMPERATURE) || status.equals(STATUS_KEEPTEMPERATURE_RELEOFF)) {
 
 		// ferma il programma se è passato troppo tempo dall'ultimo aggiornamento ricevuto dal server
 		if (currMillis - programStartTime > 1000 * programDuration) { 
@@ -345,15 +345,17 @@ void HeaterSensor::updateReleStatus() {
 		enableRele(false);
 
 	}
-	else if (status.equals(STATUS_KEEPTEMPERATURE)) {
+	else if (status.equals(STATUS_KEEPTEMPERATURE) || status.equals(STATUS_KEEPTEMPERATURE_RELEOFF)) {
 
 		if (remoteTemperature < targetTemperature) {
 
 			logger.print(tag, F("STATUS_KEEPTEMPERATURE-LOW TEMPERATURE"));
+			setStatus(STATUS_KEEPTEMPERATURE);
 			enableRele(true);
 		}
 		else {
 			logger.print(tag, F("STATUS_KEEPTEMPERATURE-HIGH TEMPERATURE"));
+			setStatus(STATUS_KEEPTEMPERATURE_RELEOFF);
 			enableRele(false);
 		}
 	}
